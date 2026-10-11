@@ -123,7 +123,7 @@ function render(user) {
 }
 
 /* ---------- Нижняя панель выбранного заказа ---------- */
-const TABS = [["main", "Основное"], ["survey", "Замеры"], ["estimate", "Смета"], ["pay", "Оплата"], ["exp", "Расходы"], ["comments", "Комментарии"], ["hist", "История"]];
+const TABS = [["main", "Основное"], ["survey", "Замеры"], ["estimate", "Смета"], ["pay", "Оплата"], ["exp", "Расходы"], ["hist", "История"]];
 
 function sheetMain(r) {
   const master = db.find("masters", r.master_id);
@@ -139,7 +139,10 @@ function sheetMain(r) {
       <dt>Оформлен</dt><dd>${dateTime(r.created_at)}${r.source ? ` · ${esc(r.source)}` : ""}</dd>
       ${r.done_at ? `<dt>Завершён</dt><dd>${dateTime(r.done_at)}</dd>` : ""}
       ${r.note ? `<dt>Со слов клиента</dt><dd>${esc(r.note)}</dd>` : ""}
-    </dl>`;
+    </dl>
+    <div class="sheet-comments"><h4>Комментарии</h4>${commentsHtml(r.comments)}
+      ${warehouse ? "" : `<form class="chat-form" data-form="sheetComment"><textarea name="text" rows="2" maxlength="1000" required placeholder="Написать комментарий" aria-label="Комментарий"></textarea>
+        <button class="btn primary" type="submit">Отправить</button></form>`}</div>`;
 }
 
 function sheetPay(r) {
@@ -171,7 +174,7 @@ function sheetHtml() {
   if (!r) return "";
   const tabs = TABS.filter(([id]) => !(["pay", "survey", "estimate"].includes(id) && isWarehouse(me)));
   if (!tabs.some(([id]) => id === tab)) tab = "main";
-  const body = tab === "survey" ? surveyHtml(r, { edit: false }) : tab === "estimate" ? estimateTab(r, me) : tab === "comments" ? `<div class="sheet-cols"><div>${commentsHtml(r.comments)}</div><div>${commentForm("sheetComment")}</div></div>` : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
+  const body = tab === "survey" ? surveyHtml(r, { edit: false }) : tab === "estimate" ? estimateTab(r, me) : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
   return `<div class="sheet-space" style="height:${sheetH}vh"></div><section class="sheet" style="height:${sheetH}vh" aria-label="Заказ №${r.id}">
     <div class="sheet-grip" role="separator" aria-orientation="horizontal" aria-label="Потяните, чтобы изменить высоту" tabindex="0"></div>
     <header class="sheet-head">${isWarehouse(me) ? `<b>Заказ №${r.id}</b>` : `<button type="button" class="link order-no" data-act="open" data-id="${r.id}">Заказ №${r.id}</button>`}${statusPill(r.status)}

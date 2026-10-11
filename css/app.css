@@ -507,3 +507,7 @@ button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .de
 .btn.big { min-height: 52px; padding: 0 36px; font-size: 16px; }
 .btn.big:disabled { opacity: .45; }
 .survey textarea { width: 100%; }
+.sheet-comments { margin-top: 16px; }
+.sheet-comments h4 { margin: 0 0 8px; font-size: 14px; }
+.sheet-comments .chat-form { flex-direction: column; align-items: stretch; margin-top: 10px; }
+.sheet-comments .chat-form .btn { align-self: flex-end; }
