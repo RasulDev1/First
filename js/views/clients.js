@@ -33,7 +33,7 @@ function render(user) {
       <label class="flt"><span>Имя</span><input type="search" name="name" value="${esc(CF.name)}" placeholder="Имя или название"></label>
       <label class="flt"><span>Номер телефона</span><input type="search" name="phone" value="${esc(CF.phone)}" placeholder="+7 900…"></label>
       <button class="btn" type="submit">Найти</button>
-      <button class="btn" type="button" data-act="reset"${active ? "" : " disabled"}>Сброс</button>
+      <button class="btn" type="button" data-act="reset">Сброс</button>
       <button class="btn primary" type="button" data-act="create">Новый клиент</button>
     </form>
     <div class="table-wrap"><table class="tbl"><thead><tr><th>Клиент</th><th>Телефон</th><th class="r">Заказов</th><th class="r">Сумма завершённых</th><th>Последний заказ</th></tr></thead>

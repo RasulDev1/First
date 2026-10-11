@@ -52,7 +52,7 @@ function stockTab() {
       ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}">`)}
       ${flt("Место на складе", `<input type="search" name="place" value="${esc(WF.place)}" placeholder="Б-2-1">`)}
       <button class="btn" type="submit">Найти</button>
-      <button class="btn" type="button" data-act="whReset"${active ? "" : " disabled"}>Сброс</button>
+      <button class="btn" type="button" data-act="whReset">Сброс</button>
       <button class="btn primary" type="button" data-act="receive">Приём</button>
       <button class="btn primary" type="button" data-act="expense">Расход</button>
     </form>

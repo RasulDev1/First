@@ -113,7 +113,7 @@ function render(user) {
       ${flt("Улица", `<input type="search" name="street" value="${esc(F.street)}" placeholder="Улица, дом">`)}
       ${flt("Статус заказа", `<select name="status">${options(STATUSES, F.status, { empty: "Все статусы" })}</select>`)}
       <button class="btn" type="submit">Найти</button>
-      <button class="btn" type="button" data-act="resetFilters"${active ? "" : " disabled"}>Сбросить</button>
+      <button class="btn" type="button" data-act="resetFilters">Сбросить</button>
       ${warehouse ? "" : `<button class="btn primary" type="button" data-act="create">Создать заказ</button>`}
     </div>
     <div class="table-wrap"><table class="tbl req-tbl"><thead>
