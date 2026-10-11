@@ -502,3 +502,4 @@ button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .de
 .est-bar.low { background: #a8321f; }
 .est-bar small { margin-left: auto; }
 .inline-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.order-no { font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }

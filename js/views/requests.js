@@ -78,7 +78,7 @@ function sorted(list) {
 
 function rowHtml(r) {
   return `<tr class="clickable${r.id === sel ? " selected" : ""}" data-act="select" data-id="${r.id}">
-    <td class="num"><b>№${r.id}</b></td>
+    <td class="num"><button type="button" class="link order-no" data-act="open" data-id="${r.id}" aria-label="Открыть карточку заказа №${r.id}">№${r.id}</button></td>
     <td class="num nowrap">${dateShort(r.created_at)}</td>
     <td class="num nowrap">${r.done_at ? dateShort(r.done_at) : `<span class="muted">—</span>`}</td>
     <td><b class="num nowrap">${esc(r.phone)}</b><small>${esc(r.client)}</small></td>
@@ -174,9 +174,9 @@ function sheetHtml() {
   const body = tab === "survey" ? surveyHtml(r, { edit: false }) : tab === "estimate" ? estimateTab(r, me) : tab === "comments" ? `<div class="sheet-cols"><div>${commentsHtml(r.comments)}</div><div>${commentForm("sheetComment")}</div></div>` : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
   return `<div class="sheet-space" style="height:${sheetH}vh"></div><section class="sheet" style="height:${sheetH}vh" aria-label="Заказ №${r.id}">
     <div class="sheet-grip" role="separator" aria-orientation="horizontal" aria-label="Потяните, чтобы изменить высоту" tabindex="0"></div>
-    <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
+    <header class="sheet-head">${isWarehouse(me) ? `<b>Заказ №${r.id}</b>` : `<button type="button" class="link order-no" data-act="open" data-id="${r.id}">Заказ №${r.id}</button>`}${statusPill(r.status)}
       <nav class="sheet-tabs">${tabs.map(([id, title]) => `<button type="button" data-act="tab" data-id="${id}" aria-pressed="${id === tab}">${esc(title)}</button>`).join("")}</nav>
-      <span class="sheet-tools">${editButton(r, "btn sm")}${isWarehouse(me) ? "" : `<button type="button" class="btn sm" data-act="open" data-id="${r.id}">Открыть карточку</button>`}
+      <span class="sheet-tools">
         <button type="button" class="icon-btn" data-act="closeSheet" aria-label="Закрыть">✕</button></span></header>
     <div class="sheet-body">${body}</div></section>`;
 }
@@ -576,7 +576,6 @@ export default {
     select(el) { const id = Number(el.dataset.id); sel = sel === id ? null : id; refresh(); },
     closeSheet() { sel = null; refresh(); },
     tab(el) { tab = el.dataset.id; refresh(); },
-    editMode: () => toggleEdit(sel),
     sheetAmount: guard(() => selected(), (fd) => {
       const r = selected(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
       if (amount === (r.amount || 0) || !amountAllowed(r, amount)) return;
