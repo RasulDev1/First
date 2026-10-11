@@ -512,23 +512,25 @@ button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .de
 .sheet-comments .chat-form { flex-direction: column; align-items: stretch; margin-top: 10px; }
 .sheet-comments .chat-form .btn { align-self: flex-end; }
 
-/* ---------- Оформление: меню и шапка тёмные, кнопки трёх видов ---------- */
-:root { --nav: #0f172a; --nav-2: #1e293b; --main-pad-x: clamp(16px, 3vw, 36px); --main-pad-top: 24px; }
-.demo-bar { background: var(--nav); color: #cbd5e1; }
-.sidebar { background: var(--nav); border-right: 0; color: #cbd5e1; }
-.brand { color: #fff; }
-.brand-name b { background: none; color: #38bdf8; -webkit-background-clip: initial; background-clip: initial; }
-.nav-item { color: #cbd5e1; }
-.nav-item:hover { background: var(--nav-2); color: #fff; }
-.nav-item[aria-current] { background: #0284c7; color: #fff; }
-.nav-item[aria-current] .nav-badge { background: #fff; color: #0369a1; }
-.me-box { background: var(--nav-2); }
-.me-name { color: #fff; }
-.me-role { color: #7dd3fc; }
-.main { padding-top: 0; }
-.topbar { background: var(--nav); margin: 0 calc(-1 * var(--main-pad-x)); padding: 18px var(--main-pad-x); }
-.topbar h1 { color: #fff; }
-@media (max-width: 900px) { .sidebar { border-bottom: 0; } :root { --main-pad-x: 16px; } }
+/* ---------- Оформление: светлый минимализм. Меню белое с тонкой границей, активный пункт — только цвет ---------- */
+:root { --bg: #f1f5f9; --heading: #0f172a; --main-pad-x: clamp(16px, 3vw, 36px); --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 20px rgba(15, 23, 42, .05); }
+h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
+.demo-bar { background: #fff; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+.demo-bar button { color: #475569; }
+.sidebar { background: #fff; border-right: 1px solid #e2e8f0; color: #64748b; }
+.brand-name b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.nav-item { color: #64748b; background: none; }
+.nav-item:hover { background: none; color: #0f172a; }
+.nav-item[aria-current] { background: none; color: #0284c7; }
+.nav-item[aria-current] .nav-badge { background: #0284c7; color: #fff; }
+.me-box { background: #fff; border: 1px solid #e2e8f0; }
+.me-name { color: #0f172a; }
+.me-role { align-self: flex-start; margin-top: 2px; padding: 1px 10px; border-radius: 999px; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; }
+.main { padding-top: 24px; }
+.topbar { background: none; margin: 0; padding: 0; }
+.topbar h1 { color: #0f172a; }
+.card, .kpi, .panel, .table-wrap, .login-card { background: #fff; border-color: #e2e8f0; box-shadow: var(--shadow); }
+@media (max-width: 900px) { .sidebar { border-bottom: 1px solid #e2e8f0; border-right: 0; } .main { padding-top: 18px; } .me-box { background: none; border: 0; } }
 
 /* Второстепенное действие — по умолчанию */
 .btn, .btn.ghost { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
@@ -543,5 +545,5 @@ button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .de
 .btn.primary:disabled:hover { background: #0284c7; }
 .est-steps button { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
 .est-steps button[aria-pressed="true"] { background: #0369a1; border-color: #0369a1; color: #fff; }
-.est-bar { background: #0f172a; }
+.est-bar { background: #0369a1; }
 .est-bar.low { background: #b91c1c; }
