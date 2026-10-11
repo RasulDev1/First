@@ -16,12 +16,14 @@ import staff from "./views/staff.js";
 import myorders from "./views/myorders.js";
 import mystats from "./views/mystats.js";
 import clients from "./views/clients.js";
+import calc from "./views/calc.js";
 
-const VIEWS = { home, requests, masters, tasks, warehouse, analytics, staff, myorders, mystats, clients };
+const VIEWS = { home, requests, masters, tasks, warehouse, analytics, staff, myorders, mystats, clients, calc };
 const NAV = [
   ["home", "Главная", "M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],
   ["requests", "Заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
   ["clients", "Клиенты", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6"],
+  ["calc", "Калькулятор", "M6 3h12v18H6zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"],
   ["masters", "Мастера", "M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"],
   ["tasks", "Задачи", "M4 6l2 2 3-3M4 13l2 2 3-3M12 7h8M12 14h8M12 20h8"],
   ["warehouse", "Склад", "M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10"],

@@ -12,7 +12,7 @@ const ACCESS = {
   master: "Только «Мои заказы»: статус своих заказов и сколько мастер заработает в этом месяце. Аккаунты мастеров создаёт руководитель в разделе «Мастера».",
   warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заказах только выписывает материал в «Расходы».",
 };
-const SECTION_NAMES = { home: "Главная", requests: "Заказы", clients: "Клиенты", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы", mystats: "Моя статистика" };
+const SECTION_NAMES = { home: "Главная", requests: "Заказы", clients: "Клиенты", calc: "Калькулятор", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы", mystats: "Моя статистика" };
 const loginLink = () => location.href.split(/[?#]/)[0];
 const activeDirectors = () => db.list("staff").filter((s) => s.active && s.role === "director");
 

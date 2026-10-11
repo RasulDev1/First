@@ -547,3 +547,8 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 .est-steps button[aria-pressed="true"] { background: #0369a1; border-color: #0369a1; color: #fff; }
 .est-bar { background: #0369a1; }
 .est-bar.low { background: #b91c1c; }
+.calc { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+.calc-form { background: #fff; border: 1px solid #e2e8f0; padding: 16px; box-shadow: var(--shadow); position: sticky; top: 16px; }
+.calc-out { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.calc-out h4 { margin: 4px 0 0; font-size: 14px; color: var(--heading); }
+@media (max-width: 900px) { .calc { grid-template-columns: minmax(0, 1fr); } .calc-form { position: static; } }
