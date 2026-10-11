@@ -1,22 +1,22 @@
-/* CRM для компании по установке вентиляции. Бирюзовая палитра с графитовым текстом на светлом фоне.
+/* CRM для компании по установке вентиляции. Светлый фон, тёмное меню и шапка (#0F172A), синие главные кнопки.
    Раскладка: боковое меню слева, раздел справа, карточки и формы — в выезжающей справа панели. На телефоне меню сверху. */
 :root {
-  --bg: #f3f7f7;          /* фон страницы: белый с лёгкой бирюзой */
+  --bg: #f8fafc;          /* фон страницы */
   --surface: #ffffff;
-  --surface-2: #ebf3f3;
-  --ink: #1e2729;         /* графит логотипа */
-  --ink-2: #48585b;
-  --muted: #6f8083;
-  --line: #d8e3e3;
-  --teal: #12898a;        /* основной бирюзовый */
-  --teal-deep: #0c6566;
-  --teal-soft: #d3eeed;
-  --mint: #63c9c5;
+  --surface-2: #f1f5f9;
+  --ink: #334155;         /* основной текст */
+  --ink-2: #475569;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --teal: #0284c7;        /* главное действие */
+  --teal-deep: #0369a1;
+  --teal-soft: #e0f2fe;
+  --mint: #38bdf8;
   --on-teal: #ffffff;
-  --grad: linear-gradient(135deg, #63c9c5 0%, #1a9798 50%, #0c6566 100%);
+  --grad: linear-gradient(135deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
   --ok: #24804b;  --ok-soft: #dcf1e4;
   --warn: #9a5b00; --warn-soft: #fbecd0;
-  --bad: #b3261e;  --bad-soft: #fbe0de;
+  --bad: #dc2626;  --bad-soft: #fbe0de;
   --st-new: #2563c9; --st-new-soft: #dfe9fb;
   --st-assigned: #7444c2; --st-assigned-soft: #ece4f9;
   --st-work: #9a5b00; --st-work-soft: #fbecd0;
@@ -24,7 +24,7 @@
   --st-off: #5f6b6d; --st-off-soft: #e7ecec;
   --st-measure: #0b7a8a; --st-measure-soft: #d8f0f3;
   --st-price: #a8386b; --st-price-soft: #f9e1ec;
-  --shadow: 0 1px 2px rgba(20, 50, 52, .06), 0 8px 24px rgba(20, 50, 52, .06);
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
   --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
   --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --radius: 12px;
@@ -511,3 +511,37 @@ button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .de
 .sheet-comments h4 { margin: 0 0 8px; font-size: 14px; }
 .sheet-comments .chat-form { flex-direction: column; align-items: stretch; margin-top: 10px; }
 .sheet-comments .chat-form .btn { align-self: flex-end; }
+
+/* ---------- Оформление: меню и шапка тёмные, кнопки трёх видов ---------- */
+:root { --nav: #0f172a; --nav-2: #1e293b; --main-pad-x: clamp(16px, 3vw, 36px); --main-pad-top: 24px; }
+.demo-bar { background: var(--nav); color: #cbd5e1; }
+.sidebar { background: var(--nav); border-right: 0; color: #cbd5e1; }
+.brand { color: #fff; }
+.brand-name b { background: none; color: #38bdf8; -webkit-background-clip: initial; background-clip: initial; }
+.nav-item { color: #cbd5e1; }
+.nav-item:hover { background: var(--nav-2); color: #fff; }
+.nav-item[aria-current] { background: #0284c7; color: #fff; }
+.nav-item[aria-current] .nav-badge { background: #fff; color: #0369a1; }
+.me-box { background: var(--nav-2); }
+.me-name { color: #fff; }
+.me-role { color: #7dd3fc; }
+.main { padding-top: 0; }
+.topbar { background: var(--nav); margin: 0 calc(-1 * var(--main-pad-x)); padding: 18px var(--main-pad-x); }
+.topbar h1 { color: #fff; }
+@media (max-width: 900px) { .sidebar { border-bottom: 0; } :root { --main-pad-x: 16px; } }
+
+/* Второстепенное действие — по умолчанию */
+.btn, .btn.ghost { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
+.btn:hover, .btn.ghost:hover { background: #e2e8f0; border-color: #e2e8f0; }
+/* Главное действие */
+.btn.primary { background: #0284c7; border-color: #0284c7; color: #fff; }
+.btn.primary:hover { background: #0369a1; border-color: #0369a1; }
+/* Опасное действие */
+.btn.danger, .btn.ghost.danger, .btn[data-armed] { background: #dc2626; border-color: #dc2626; color: #fff; }
+.btn.danger:hover, .btn.ghost.danger:hover, .btn[data-armed]:hover { background: #b91c1c; border-color: #b91c1c; }
+.btn:disabled:hover { background: #f1f5f9; }
+.btn.primary:disabled:hover { background: #0284c7; }
+.est-steps button { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
+.est-steps button[aria-pressed="true"] { background: #0369a1; border-color: #0369a1; color: #fff; }
+.est-bar { background: #0f172a; }
+.est-bar.low { background: #b91c1c; }
