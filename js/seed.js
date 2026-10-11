@@ -3,6 +3,7 @@
 import { LOCATIONS } from "./stock.js";
 import { SERVICES, OBJECTS, SOURCES } from "./config.js";
 import { hashPassword } from "./db.js";
+import { buildEstimate, totals } from "./estimate.js";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
 function rng(seedValue) {
@@ -124,7 +125,7 @@ export function seed() {
       salt, password_hash: hashPassword(DEMO_PASSWORD, salt), active: true };
   });
   const managers = staff.filter((s) => s.role === "manager");
-  const masters = MASTERS.map(([name, phone, level], i) => ({ id: i + 1, created_at: iso(now - 180 * DAY), name, phone, level, rate: level === "trainee" ? 10 : 20, active: true }));
+  const masters = MASTERS.map(([name, phone, level], i) => ({ id: i + 1, created_at: iso(now - 180 * DAY), name, phone, level, rate: level === "trainee" ? 10 : 20, active: true, comments: [] }));
 
   const products = PRODUCTS.map(([category, sku, name, specs, unit, cost, price, min], i) =>
     ({ id: i + 1, created_at: iso(now - 120 * DAY), category, sku, name, specs, unit, cost, price, min_qty: min }));
@@ -163,8 +164,9 @@ export function seed() {
     const age = Math.floor((i / 46) * 90 + rand() * 2);
     const created = now - age * DAY - Math.floor(rand() * 9) * 3600e3;
     const service = pick(SERVICES);
-    const status = age < 2 ? (rand() < 0.7 ? "new" : "assigned") : age < 7 ? pick(["assigned", "measure", "pricing", "in_work", "in_work", "new", "done"])
-      : rand() < 0.78 ? "done" : rand() < 0.5 ? "cancelled" : "in_work";
+    // Свежие заказы — на разных этапах, чтобы в демо были все статусы; старые в основном выполнены
+    const FRESH = ["new", "new", "assigned", "measure", "new", "pricing", "in_work", "pricing", "assigned", "in_work", "measure", "in_work"];
+    const status = i < FRESH.length ? FRESH[i] : i === 15 || i === 27 ? "cancelled" : rand() < 0.88 ? "done" : "in_work";
     const manager = status === "new" ? null : pick(managers);
     const master = ["assigned", "measure", "pricing", "in_work", "done"].includes(status) ? pick(masters) : null;
     const big = /рекуперац|ресторан|приточной/i.test(service);
@@ -201,6 +203,38 @@ export function seed() {
     });
   }
   requests.sort((a, b) => a.id - b.id);
+
+  // Замеры, сметы, оплаты: у заказов, где замер уже сделан, всё связано между собой — смета считается из замера, сумма договора равна смете,
+  // расходы со склада идут по материалам сметы
+  const ROOMS = ["Кухня", "Гостиная", "Санузел", "Спальня", "Кабинет", "Зал", "Цех"], AC_ROOMS = ["Спальня", "Гостиная", "Кабинет", "Зал"];
+  const SURVEY_NOTES = ["Перекрытия бетонные, выход на улицу через стену.", "Потолок подвесной, место под воздуховод есть.", "Подъезд со двора, парковка рядом.", "Клиент просит закончить до выходных."];
+  const round05 = (n) => Math.round(n * 2) / 2;
+  for (const r of requests) {
+    if (!["pricing", "in_work", "done"].includes(r.status) || !r.master_id || !/Монтаж|вентиляци|рекуперац|кухни/i.test(r.service)) continue;
+    const ac = /кондиционер/i.test(r.service), at = Date.parse(r.created_at) + DAY;
+    const rooms = Array.from({ length: ac ? 1 + Math.floor(rand() * 2) : 1 + Math.floor(rand() * 3) }, (_, i) => ({
+      name: ac ? AC_ROOMS[(i + r.id) % AC_ROOMS.length] : ROOMS[(i + r.id) % ROOMS.length], area: Math.round(12 + rand() * 28), height: 2.7, ac }));
+    const routes = ac ? [] : rooms.map((room) => ({ name: `${room.name} → улица`, diameter: pick([125, 160, 200]), length: round05(4 + rand() * 10), bends: 1 + Math.floor(rand() * 4) }));
+    r.survey = { rooms, routes, photos: [], note: pick(SURVEY_NOTES), at: past(at), by: staff.find((x) => x.id === r.manager_id)?.name || "", saved: true };
+    r.history.push({ at: past(at), by: r.survey.by, text: "Замеры сохранены" });
+    const lines = buildEstimate(r, products);
+    if (!lines.length) continue;
+    const sum = totals(lines);
+    r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by };
+    r.amount = Math.round(sum.total / 100) * 100;
+    r.history.push({ at: past(at + 3600e3), by: r.survey.by, text: `Смета: ${Math.round(sum.total).toLocaleString("ru-RU")} ₽` });
+    const spend = r.status === "done" ? lines.filter((l) => l.kind === "mat") : r.status === "in_work" ? lines.filter((l) => l.kind === "mat").slice(0, 3) : [];
+    r.expenses = spend.map((l) => ({ product_id: l.product_id, qty: Math.ceil(l.qty), loc: stock.find((x) => x.product_id === l.product_id)?.loc || null, cost: l.cost,
+      at: past(at + DAY), by: DEMO_ACCOUNTS[4].name }));
+  }
+  // Оплаты: завершённые оплачены полностью, в работе — предоплата 50%
+  for (const r of requests) {
+    if (!r.amount) continue;
+    const by = staff.find((x) => x.id === r.manager_id)?.name || "";
+    if (r.status === "done") r.payments = [{ sum: Math.round(r.amount / 2), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by },
+      { sum: r.amount - Math.round(r.amount / 2), note: "Остаток после монтажа", at: r.done_at, by }];
+    else if (r.status === "in_work") r.payments = [{ sum: Math.round(r.amount / 2), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by }];
+  }
   // Чтобы у демо-мастера и демо-стажёра (аккаунты master и trainee) были заказы в работе
   [1, 5].forEach((masterId, i) => {
     const r = requests.filter((x) => ["in_work", "pricing", "measure", "assigned"].includes(x.status) && x.master_id)[i];
@@ -222,7 +256,9 @@ export function seed() {
   const some = requests.filter((r) => r.manager_id && r.status !== "cancelled").slice(-3);
   if (some[0]) some[0].comments.push({ at: past(now - 2 * DAY), by: managers[0].name, text: "Клиент просит приехать после 15:00, по утрам никого нет." });
   if (some[1]) some[1].comments.push({ at: past(now - DAY), by: managers[1].name, text: "Договорились о замере, клиент попросил позвонить за час." },
-    { at: past(now - 20 * 3600e3), by: staff[0].name, text: "Проверь, чтобы выезд не пересёкся со вторым автомобилем." });
+    { at: past(now - 20 * 3600e3), by: staff[0].name, text: "Проверь смету: цены не ниже порога, потом согласуй с клиентом." });
+  masters[0].comments.push({ at: past(now - 5 * DAY), by: staff[0].name, text: "Аккуратно работает, клиенты довольны. Можно ставить на сложные объекты." });
+  masters[1].comments.push({ at: past(now - 9 * DAY), by: managers[0].name, text: "Просил не назначать выезды раньше десяти." });
   tasks[0].comments = [{ at: past(now - DAY), by: staff[0].name, text: "Начни с тех, кто оставил заявку в выходные." }];
 
   return { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], seq: {} };

@@ -35,7 +35,6 @@ export function minAmount(r) {
 }
 
 /* ---------- Расчёт из замера ---------- */
-const bySku = (sku) => db.list("products").find((p) => p.sku === sku);
 const ceil1 = (n) => Math.ceil(n - 1e-9);
 const FAN = { 100: "VK-100", 125: "VK-160", 160: "VK-160", 200: "VK-200", 250: "VK-200" };
 const BEND = { 100: "O90-125", 125: "O90-125", 160: "O90-160", 200: "O90-200", 250: "O90-200" };
@@ -50,7 +49,8 @@ export function workLine(w, qty) {
   return { id: nextId(), kind: "work", work: w.id, name: w.name, unit: w.unit, qty, cost: 0, price: w.price };
 }
 
-export function buildEstimate(r) {
+export function buildEstimate(r, products = db.list("products")) {
+  const bySku = (sku) => products.find((p) => p.sku === sku);
   const s = surveyOf(r), mats = new Map(), works = new Map();
   const mat = (sku, qty) => { const p = bySku(sku); if (p && qty > 0) mats.set(sku, { p, qty: (mats.get(sku)?.qty || 0) + qty }); };
   const work = (id, qty) => { if (qty > 0) works.set(id, (works.get(id) || 0) + qty); };
