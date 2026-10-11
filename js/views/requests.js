@@ -280,11 +280,14 @@ function detailHtml(id) {
       <button class="btn" type="submit">Назначить</button></form></section>` : ""}
 
     <section class="d-sec"><h3>Мастер</h3>
+      ${r.master_id ? `<p><b>${esc(masterName(r.master_id))}</b> · ${esc(levelTitle(db.find("masters", r.master_id)))}</p>
+        <p class="muted small">Переназначить мастера можно только после того, как он откажется от заказа в «Мои заказы».</p>`
+      : `${r.declined_by ? `<p class="note warn">${esc(r.declined_by)} отказался от заказа. Назначьте другого мастера.</p>` : ""}
       <form data-form="assign" class="grid2">
-        ${field("Мастер", `<select name="master">${options(masters.map((m) => ({ id: m.id, title: `${m.name} · ${levelTitle(m)}` })), r.master_id, { empty: "Выберите мастера" })}</select>`)}
+        ${field("Мастер", `<select name="master">${options(masters.map((m) => ({ id: m.id, title: `${m.name} · ${levelTitle(m)}` })), null, { empty: "Выберите мастера" })}</select>`)}
         <div class="form-actions span2"><button class="btn primary" type="submit"${closed ? " disabled" : ""}>Назначить мастера</button></div>
       </form>
-      <p class="muted small">Мастер видит заказ у себя в «Мои заказы» и сам отмечает, что выехал на замеры. Время выезда запишется тогда.</p>
+      <p class="muted small">Мастер видит заказ у себя в «Мои заказы» и сам отмечает, что выехал на замеры. Время выезда запишется тогда.</p>`}
     </section>
 
     <section class="d-sec btn-row">
@@ -491,7 +494,9 @@ const detailActions = {
   },
   assign: guard(() => current(), (fd, form) => {
     const r = current(), masterId = Number(fd.get("master")) || null;
+    if (r.master_id) return toast("Мастер уже назначен: переназначить можно после его отказа", "bad");
     if (!masterId) return formError(form, "Выберите мастера");
+    r.declined_by = null;
     if (masterId !== r.master_id) log(r, `Назначен мастер: ${db.find("masters", masterId).name}`);
     r.master_id = masterId;
     if (!r.manager_id) r.manager_id = me.id;

@@ -47,6 +47,7 @@ function detailHtml(id) {
       <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}</dd>
       <dt>Вы заработаете</dt><dd class="num"><b>${earn(r)}</b></dd></dl></section>
     ${r.status === "assigned" ? `<section class="d-sec"><button class="btn primary big" data-act="depart" data-id="${r.id}">Выехал на замеры</button></section>` : ""}
+    ${["assigned", "measure"].includes(r.status) ? `<section class="d-sec"><button class="btn danger" data-act="decline" data-id="${r.id}">Отказаться от заказа</button></section>` : ""}
     ${r.status === "measure" && !r.measured_at ? `<section class="d-sec"><button class="btn primary big" data-act="measured" data-id="${r.id}">Замеры сделаны</button></section>` : ""}
     ${r.status === "in_work" ? `<section class="d-sec"><button class="btn primary big" data-act="finish" data-id="${r.id}">Завершён</button></section>` : ""}
     <section class="d-sec"><h3>Статусы</h3><ol class="history">${hist.map((h) => `<li><b>${esc(h.text.replace("Статус: ", ""))}</b><small>${dateTime(h.at)}</small></li>`).join("")}</ol></section>`;
@@ -67,6 +68,18 @@ export default {
   actions: {
     open: (el) => openDrawer(() => detailHtml(Number(el.dataset.id)), {
       depart(btn) { step(Number(btn.dataset.id), "assigned", "measure", "Выезд на замеры: время записано"); },
+      decline(btn) {
+        if (!armed(btn, "Точно отказаться?")) return;
+        const r = mine().find((x) => x.id === Number(btn.dataset.id));
+        if (!r || !["assigned", "measure"].includes(r.status)) return;
+        r.declined_by = me.name;
+        r.master_id = null; r.visit_at = null; r.measured_at = null;
+        setStatus(r, "new", me.name);
+        r.history.push({ at: new Date().toISOString(), by: me.name, text: "Мастер отказался от заказа" });
+        db.batch(() => {});
+        document.getElementById("drawerClose").click();
+        toast("Вы отказались от заказа", "ok");
+      },
       measured(btn) {
         const r = mine().find((x) => x.id === Number(btn.dataset.id));
         if (!r || r.status !== "measure" || r.measured_at) return;
