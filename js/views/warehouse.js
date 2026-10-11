@@ -49,7 +49,7 @@ function stockTab() {
   return `<form data-form="whFind" class="filterbar wh">
       ${flt("Название", `<input type="search" name="name" value="${esc(WF.name)}" placeholder="Название, артикул">`)}
       ${flt("Тип", `<select name="type">${options(CATEGORIES, WF.type, { empty: "Все типы" })}</select>`)}
-      ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}" placeholder="Ближе к, ₽">`)}
+      ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}">`)}
       ${flt("Место на складе", `<input type="search" name="place" value="${esc(WF.place)}" placeholder="Б-2-1">`)}
       <button class="btn" type="submit">Найти</button>
       <button class="btn" type="button" data-act="whReset"${active ? "" : " disabled"}>Сброс</button>
