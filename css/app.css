@@ -8,16 +8,16 @@
   --ink-2: #475569;
   --muted: #64748b;
   --line: #e2e8f0;
-  --teal: #0284c7;        /* главное действие */
-  --teal-deep: #0369a1;
-  --teal-soft: #e0f2fe;
-  --mint: #38bdf8;
+  --teal: #003399;        /* главное действие */
+  --teal-deep: #002673;
+  --teal-soft: #e6ecf7;
+  --mint: #3366cc;
   --on-teal: #ffffff;
-  --grad: linear-gradient(135deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
+  --grad: linear-gradient(135deg, #3366cc 0%, #003399 55%, #002673 100%);
   --ok: #24804b;  --ok-soft: #dcf1e4;
   --warn: #9a5b00; --warn-soft: #fbecd0;
   --bad: #dc2626;  --bad-soft: #fbe0de;
-  --st-new: #2563c9; --st-new-soft: #dfe9fb;
+  --st-new: #003399; --st-new-soft: #e6ecf7;
   --st-assigned: #7444c2; --st-assigned-soft: #ece4f9;
   --st-work: #9a5b00; --st-work-soft: #fbecd0;
   --st-done: #24804b; --st-done-soft: #dcf1e4;
@@ -521,11 +521,11 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 .brand-name b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .nav-item { color: #64748b; background: none; }
 .nav-item:hover { background: none; color: #0f172a; }
-.nav-item[aria-current] { background: none; color: #0284c7; }
-.nav-item[aria-current] .nav-badge { background: #0284c7; color: #fff; }
+.nav-item[aria-current] { background: none; color: #003399; }
+.nav-item[aria-current] .nav-badge { background: #003399; color: #fff; }
 .me-box { background: #fff; border: 1px solid #e2e8f0; }
 .me-name { color: #0f172a; }
-.me-role { align-self: flex-start; margin-top: 2px; padding: 1px 10px; border-radius: 999px; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; }
+.me-role { align-self: flex-start; margin-top: 2px; padding: 1px 10px; border-radius: 999px; background: #e6ecf7; color: #002673; font-size: 12px; font-weight: 700; }
 .main { padding-top: 24px; }
 .topbar { background: none; margin: 0; padding: 0; }
 .topbar h1 { color: #0f172a; }
@@ -536,16 +536,16 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 .btn, .btn.ghost { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
 .btn:hover, .btn.ghost:hover { background: #e2e8f0; border-color: #e2e8f0; }
 /* Главное действие */
-.btn.primary { background: #0284c7; border-color: #0284c7; color: #fff; }
-.btn.primary:hover { background: #0369a1; border-color: #0369a1; }
+.btn.primary { background: #003399; border-color: #003399; color: #fff; }
+.btn.primary:hover { background: #002673; border-color: #002673; }
 /* Опасное действие */
 .btn.danger, .btn.ghost.danger, .btn[data-armed] { background: #dc2626; border-color: #dc2626; color: #fff; }
 .btn.danger:hover, .btn.ghost.danger:hover, .btn[data-armed]:hover { background: #b91c1c; border-color: #b91c1c; }
 .btn:disabled:hover { background: #f1f5f9; }
-.btn.primary:disabled:hover { background: #0284c7; }
+.btn.primary:disabled:hover { background: #003399; }
 .est-steps button { background: #f1f5f9; border-color: #f1f5f9; color: #334155; }
-.est-steps button[aria-pressed="true"] { background: #0369a1; border-color: #0369a1; color: #fff; }
-.est-bar { background: #0369a1; }
+.est-steps button[aria-pressed="true"] { background: #002673; border-color: #002673; color: #fff; }
+.est-bar { background: #002673; }
 .est-bar.low { background: #b91c1c; }
 .calc { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
 .calc-form { background: #fff; border: 1px solid #e2e8f0; padding: 16px; box-shadow: var(--shadow); position: sticky; top: 16px; }
@@ -555,6 +555,6 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 
 /* Пункты меню: при наведении — слегка затемнённый синий фон поверх, на выбранном пункте он остаётся */
 .nav-item { transition: background-color .15s, color .15s; }
-.nav-item:hover { background: rgba(3, 105, 161, .09); color: #0369a1; }
-.nav-item[aria-current] { background: rgba(3, 105, 161, .14); color: #0284c7; }
-.nav-item:active { background: rgba(3, 105, 161, .18); }
+.nav-item:hover { background: rgba(0, 51, 153, .09); color: #002673; }
+.nav-item[aria-current] { background: rgba(0, 51, 153, .14); color: #003399; }
+.nav-item:active { background: rgba(0, 51, 153, .18); }
