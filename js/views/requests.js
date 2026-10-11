@@ -76,25 +76,26 @@ function rowsHtml() {
 }
 
 const COLS = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
-const date = (name) => `<input type="date" name="${name}" value="${F[name]}" aria-label="Фильтр по дате">`;
+const flt = (label, control, cls = "") => `<label class="flt${cls}"><span>${esc(label)}</span>${control}</label>`;
 
 function render(user) {
   me = user;
   const warehouse = isWarehouse(user);
   const th = ([key, title]) => `<th><button type="button" class="th-sort" data-act="sort" data-id="${key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   const active = query || Object.values(F).some(Boolean);
-  return `<form data-form="find"><div class="toolbar filters">
-      <input class="search" type="search" name="q" placeholder="Поиск: клиент, адрес, №" value="${esc(query)}" aria-label="Поиск заказов">
-      <button class="btn" type="submit">Найти</button>
-      ${active ? `<button class="btn ghost" type="button" data-act="resetFilters">Сбросить</button>` : ""}
-      ${warehouse ? "" : `<button class="btn primary" type="button" data-act="create">Создать заказ</button>`}
+  return `<form data-form="find"><div class="filterbar">
+      ${flt("Поиск", `<input type="search" name="q" placeholder="Клиент, адрес, №" value="${esc(query)}">`)}
+      ${flt("Дата оформления", `<input type="date" name="created" value="${F.created}">`, " date")}
+      ${flt("Дата завершения", `<input type="date" name="done" value="${F.done}">`, " date")}
+      ${flt("Номер клиента", `<input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…">`)}
+      ${flt("Адрес клиента", `<input type="search" name="address" value="${esc(F.address)}" placeholder="Улица, дом…">`)}
+      ${flt("Статус", `<select name="status">${options(STATUSES, F.status, { empty: "Все статусы" })}</select>`)}
+      <div class="flt-btns"><button class="btn" type="submit">Найти</button>
+        ${active ? `<button class="btn ghost" type="button" data-act="resetFilters">Сбросить</button>` : ""}
+        ${warehouse ? "" : `<button class="btn primary" type="button" data-act="create">Создать заказ</button>`}</div>
     </div>
     <div class="table-wrap"><table class="tbl req-tbl"><thead>
       <tr>${COLS.map(th).join("")}</tr>
-      <tr class="filter-row"><th></th><th>${date("created")}</th><th>${date("done")}</th>
-        <th><input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…" aria-label="Фильтр по номеру"></th>
-        <th><input type="search" name="address" value="${esc(F.address)}" placeholder="Улица, дом…" aria-label="Фильтр по адресу"></th>
-        <th><select name="status" aria-label="Фильтр по статусу">${options(STATUSES, F.status, { empty: "Все статусы" })}</select></th></tr>
     </thead><tbody id="reqList">${rowsHtml()}</tbody></table></div></form>`;
 }
 
