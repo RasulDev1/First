@@ -10,8 +10,8 @@ export const SHELVES = 3;
 
 // Роли. «Закупщик» и «Складовщик» — одна роль с разными должностями: оба управляют складом.
 export const ROLES = {
-  director: { title: "Руководитель", sections: ["home", "requests", "masters", "tasks", "warehouse", "analytics", "staff"] },
-  manager: { title: "Менеджер по продажам", sections: ["home", "requests", "tasks", "mystats"] },
+  director: { title: "Руководитель", sections: ["home", "requests", "clients", "masters", "tasks", "warehouse", "analytics", "staff"] },
+  manager: { title: "Менеджер по продажам", sections: ["home", "requests", "clients", "tasks", "mystats"] },
   warehouse: { title: "Склад", sections: ["home", "requests", "warehouse"] },
   master: { title: "Мастер", sections: ["myorders"] },
 };
@@ -36,7 +36,11 @@ export const STATUSES = [
 ];
 export const ACTIVE_STATUSES = ["new", "assigned", "measure", "pricing", "in_work"];
 export const SERVICES = ["Монтаж приточной вентиляции", "Монтаж вытяжной вентиляции", "Приточно-вытяжная с рекуперацией",
-  "Вентиляция кухни / ресторана", "Обслуживание и чистка", "Ремонт оборудования", "Проектирование и замер"];
+  "Вентиляция кухни / ресторана", "Монтаж кондиционера", "Обслуживание кондиционера", "Обслуживание и чистка", "Ремонт оборудования", "Проектирование и замер"];
+
+// Автомобили компании: каждый выезд закрепляется за машиной, чтобы не было накладок
+export const CARS = [{ id: 1, title: "Автомобиль 1" }, { id: 2, title: "Автомобиль 2" }];
+export const VISIT_HOURS = 3; // сколько машина занята на одном выезде
 export const OBJECTS = ["Квартира", "Частный дом", "Офис", "Ресторан / кафе", "Магазин", "Производство / склад"];
 export const SOURCES = ["Сайт", "Звонок", "Авито", "Рекомендация", "2ГИС", "Повторный клиент"];
 
@@ -49,6 +53,7 @@ export const CATEGORIES = [
   { id: "valves", title: "Клапаны и автоматика" },
   { id: "filters", title: "Фильтры и шумоглушители" },
   { id: "materials", title: "Крепёж и расходники" },
+  { id: "ac", title: "Кондиционирование" },
 ];
 export const UNITS = ["шт.", "м", "м²", "уп."];
 
@@ -56,4 +61,19 @@ export const UNITS = ["шт.", "м", "м²", "уп."];
 export const MASTER_LEVELS = [
   { id: "master", title: "Мастер" },
   { id: "trainee", title: "Стажёр" },
+];
+
+// Автосмета. Закупочные цены берутся из склада, цена для клиента = закупка + наценка.
+export const MARKUP = 40;      // наценка по умолчанию, %
+export const MIN_MARGIN = 25;  // нижний порог маржи по умолчанию, % (руководитель меняет в «Смете»)
+// Прайс работ. Цены ориентировочные: работы пока не оценены, поэтому себестоимость работ принята за 0.
+export const WORKS = [
+  { id: "visit", name: "Выезд и замер", unit: "шт.", price: 1500 },
+  { id: "duct", name: "Монтаж воздуховода", unit: "м", price: 450 },
+  { id: "bend", name: "Монтаж отвода и фасонных частей", unit: "шт.", price: 300 },
+  { id: "grille", name: "Монтаж решётки или диффузора", unit: "шт.", price: 600 },
+  { id: "fan", name: "Монтаж вентилятора", unit: "шт.", price: 4000 },
+  { id: "start", name: "Пусконаладка", unit: "шт.", price: 3000 },
+  { id: "ac", name: "Монтаж кондиционера", unit: "шт.", price: 9000 },
+  { id: "ac_route", name: "Прокладка трассы кондиционера", unit: "м", price: 700 },
 ];

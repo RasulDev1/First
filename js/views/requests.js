@@ -2,12 +2,18 @@
 // сумма договора, расходы со склада (их добавляет только складовщик) и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
 import { storage, esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
-import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
+import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES, CARS, VISIT_HOURS } from "../config.js";
+import { carConflict, carTitle } from "../cars.js";
 import { db } from "../db.js";
+import { ensureClient, findByPhone } from "../clients.js";
+import { commentsHtml, commentForm, pushComment } from "../comments.js";
+import { surveyHtml, shrinkPhoto, touch, MAX_PHOTOS } from "../survey.js";
+import { estimateWizard, estimateTab, buildEstimate, materialLine, workLine, totals, floorOf, minAmount, setMinMargin, minMargin } from "../estimate.js";
+import { WORKS } from "../config.js";
 import { isDirector, isWarehouse, currentUser } from "../auth.js";
 import { openExpense } from "./warehouse.js";
 import { levelTitle } from "./masters.js";
-import { openDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
+import { openDrawer, refreshDrawer, closeDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
 import { product, expenseTotal, locChip } from "../stock.js";
 
 let sort = { key: "updated", dir: -1 }; // по умолчанию — по последней смене статуса, свежие сверху
@@ -118,7 +124,7 @@ function render(user) {
 }
 
 /* ---------- Нижняя панель выбранного заказа ---------- */
-const TABS = [["main", "Основное"], ["pay", "Оплата"], ["exp", "Расходы"], ["hist", "История"]];
+const TABS = [["main", "Основное"], ["survey", "Замеры"], ["estimate", "Смета"], ["pay", "Оплата"], ["exp", "Расходы"], ["comments", "Комментарии"], ["hist", "История"]];
 
 function sheetMain(r) {
   const master = db.find("masters", r.master_id);
@@ -129,12 +135,11 @@ function sheetMain(r) {
       ${warehouse ? "" : `<dt>Клиент</dt><dd>${esc(r.client)}</dd><dt>Телефон</dt><dd class="num">${esc(r.phone)}</dd>`}
       <dt>Услуга</dt><dd>${esc(r.service)}${r.object ? ` · ${esc(r.object)}` : ""}</dd>
       <dt>Мастер</dt><dd>${master ? `${esc(master.name)} · ${esc(levelTitle(master))}` : `<span class="muted">не назначен</span>`}</dd>
-      <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}</dd>
+      <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}${r.car_id ? ` · ${esc(carTitle(r.car_id))}` : ""}</dd>
       ${warehouse ? "" : `<dt>Менеджер</dt><dd>${r.manager_id ? esc(staffName(r.manager_id)) : "—"}</dd>`}
       <dt>Оформлен</dt><dd>${dateTime(r.created_at)}${r.source ? ` · ${esc(r.source)}` : ""}</dd>
       ${r.done_at ? `<dt>Завершён</dt><dd>${dateTime(r.done_at)}</dd>` : ""}
       ${r.note ? `<dt>Со слов клиента</dt><dd>${esc(r.note)}</dd>` : ""}
-      ${r.comment && !warehouse ? `<dt>Комментарий</dt><dd>${esc(r.comment)}</dd>` : ""}
     </dl>
     ${warehouse ? "" : `<div class="status-steps sheet-steps">${STATUSES.map((st) =>
       `<button type="button" class="chip sortbtn" data-act="sheetStatus" data-id="${st.id}" aria-pressed="${st.id === r.status}"${st.id === r.status ? " disabled" : ""}>${esc(st.title)}</button>`).join("")}</div>`}`;
@@ -167,9 +172,9 @@ function sheetHist(r) {
 function sheetHtml() {
   const r = sel && db.find("requests", sel);
   if (!r) return "";
-  const tabs = TABS.filter(([id]) => !(id === "pay" && isWarehouse(me)));
+  const tabs = TABS.filter(([id]) => !(["pay", "survey", "estimate"].includes(id) && isWarehouse(me)));
   if (!tabs.some(([id]) => id === tab)) tab = "main";
-  const body = tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
+  const body = tab === "survey" ? surveyHtml(r) : tab === "estimate" ? estimateTab(r, me) : tab === "comments" ? `<div class="sheet-cols"><div>${commentsHtml(r.comments)}</div><div>${commentForm("sheetComment")}</div></div>` : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
   return `<div class="sheet-space" style="height:${sheetH}vh"></div><section class="sheet" style="height:${sheetH}vh" aria-label="Заказ №${r.id}">
     <div class="sheet-grip" role="separator" aria-orientation="horizontal" aria-label="Потяните, чтобы изменить высоту" tabindex="0"></div>
     <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
@@ -216,13 +221,16 @@ function setStatus(r, next, el) {
 }
 
 /* ---------- Карточка заказа ---------- */
-function masterLoad(masterId, visitAt, selfId) {
-  if (!masterId || !visitAt) return "";
+const hhmm = (iso) => new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+function masterLoad(masterId, visitAt, selfId, carId) {
+  const clash = carConflict(carId, visitAt, selfId);
+  const carNote = clash ? `<p class="note warn">${esc(carTitle(carId))} в это время занят: заказ №${clash.id} в ${hhmm(clash.visit_at)}. Выберите другую машину или время.</p>` : "";
+  if (!masterId || !visitAt) return carNote;
   const day = localDay(new Date(visitAt));
   const same = db.list("requests").filter((r) => r.id !== selfId && r.master_id === Number(masterId) && ACTIVE.includes(r.status)
     && r.visit_at && localDay(new Date(r.visit_at)) === day);
   return same.length ? `<p class="note warn">У мастера в этот день ещё ${same.length} ${same.length === 1 ? "выезд" : "выезда"}: ${same.map((r) =>
-    `№${r.id} в ${new Date(r.visit_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`).join(", ")}</p>` : "";
+    `№${r.id} в ${hhmm(r.visit_at)}`).join(", ")}</p>${carNote}` : carNote;
 }
 
 /** «Расходы»: материалы, выписанные со склада под заказ, по себестоимости */
@@ -285,7 +293,8 @@ function detailHtml(id) {
       <form data-form="assign" class="grid2">
         ${field("Мастер", `<select name="master" data-change="previewLoad">${options(masters.map((m) => ({ id: m.id, title: `${m.name} · ${levelTitle(m)}` })), r.master_id, { empty: "Выберите мастера" })}</select>`)}
         ${field("Дата и время выезда", `<input name="visit" type="datetime-local" value="${toLocalInput(r.visit_at)}" data-change="previewLoad">`)}
-        <div class="span2" id="loadNote">${masterLoad(r.master_id, r.visit_at, r.id)}</div>
+        ${field("Автомобиль", `<select name="car" data-change="previewLoad">${options(CARS, r.car_id, { empty: "Без машины" })}</select>`, `Машина занята на выезде около ${VISIT_HOURS} часов`)}
+        <div class="span2" id="loadNote">${masterLoad(r.master_id, r.visit_at, r.id, r.car_id)}</div>
         <div class="form-actions span2"><button class="btn primary" type="submit"${closed ? " disabled" : ""}>Сохранить мастера и дату</button></div>
       </form>
       <p class="muted small">У мастеров нет аккаунтов: сообщите мастеру адрес и время сами. Телефон мастера — в разделе «Мастера».</p>
@@ -309,12 +318,116 @@ function detailHtml(id) {
 
     <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r)}</section>
 
-    <section class="d-sec"><h3>Комментарий менеджера</h3>
-      <form data-form="comment"><textarea name="comment" rows="3" placeholder="Договорились о замере, клиент просит позвонить за час…">${esc(r.comment || "")}</textarea>
-      <div class="form-actions"><button class="btn" type="submit">Сохранить комментарий</button></div></form></section>
+    <section class="d-sec"><h3>Комментарии</h3>${commentsHtml(r.comments)}${commentForm()}</section>
 
     <section class="d-sec"><h3>История</h3>
       <ol class="history">${[...(r.history || [])].reverse().map((h) => `<li><b>${esc(h.text)}</b><small>${dateTime(h.at)}${h.by ? ` · ${esc(h.by)}` : ""}</small></li>`).join("")}</ol></section>`;
+}
+
+/** Менеджер не может поставить сумму ниже порога маржи (закупка / (1 − порог)); руководитель может */
+function amountAllowed(r, amount) {
+  if (isDirector(me) || !(amount > 0)) return true;
+  const min = minAmount(r);
+  if (amount >= min) return true;
+  toast(`Ниже порога маржи ${minMargin()}%: сумма не меньше ${money(min)}`, "bad");
+  return false;
+}
+
+function saveMargin(fd) {
+  if (!isDirector(me)) return;
+  const v = setMinMargin(fd.get("m"));
+  toast(`Нижний порог маржи: ${v}%`, "ok");
+  refreshDrawer(true);
+}
+
+/* ---------- Замеры ---------- */
+const surveyActions = {
+  surveyRoom(fd, form) {
+    const r = selected(), area = Number(fd.get("area")), height = Number(fd.get("height"));
+    const name = String(fd.get("name") || "").trim();
+    if (!name || !(area > 0) || !(height > 0)) return formError(form, "Заполните помещение, площадь и высоту");
+    touch(r, me).rooms.push({ name, area, height, ac: fd.get("ac") === "on" });
+    log(r, `Замер: помещение «${name}»`);
+    save("Помещение добавлено");
+  },
+  surveyRoute(fd, form) {
+    const r = selected(), length = Number(fd.get("length"));
+    const name = String(fd.get("name") || "").trim();
+    if (!name || !(length > 0)) return formError(form, "Заполните трассу и длину");
+    touch(r, me).routes.push({ name, diameter: Number(fd.get("diameter")), length, bends: Math.max(0, Math.round(Number(fd.get("bends")) || 0)) });
+    log(r, `Замер: трасса «${name}»`);
+    save("Трасса добавлена");
+  },
+  surveyDel(el) {
+    const r = selected(), list = touch(r, me)[el.dataset.kind];
+    list.splice(Number(el.dataset.id), 1);
+    save("Убрано");
+  },
+  async surveyPhoto(el) {
+    const r = selected(), files = [...el.files].slice(0, MAX_PHOTOS - (r.survey?.photos?.length || 0));
+    try {
+      const shots = [];
+      for (const f of files) shots.push(await shrinkPhoto(f));
+      touch(r, me).photos.push(...shots);
+      log(r, `Замер: фото (${shots.length})`);
+      save("Фото добавлено");
+    } catch (error) { toast(error.message, "bad"); }
+  },
+  surveyDelPhoto(el) { touch(selected(), me).photos.splice(Number(el.dataset.id), 1); save("Фото убрано"); },
+  surveyNote(fd) { touch(selected(), me).note = String(fd.get("note") || "").trim(); save("Заметка сохранена"); },
+};
+
+/* ---------- Автосмета (мастер из нескольких шагов) ---------- */
+let est = null; // { id, step, lines }
+function openEstimate(id) {
+  me = currentUser();
+  const r = db.find("requests", id);
+  est = { id, step: 0, lines: structuredClone(r.estimate?.lines || []) };
+  const rerender = () => refreshDrawer(true);
+  const line = (el) => est.lines.find((l) => l.id === el.dataset.id);
+  openDrawer(() => estimateWizard(db.find("requests", id), est.step, est.lines, me), {
+    estStep(el) { est.step = Number(el.dataset.id); rerender(); },
+    estNext() {
+      if (est.step === 0 && !est.lines.length) est.lines = buildEstimate(db.find("requests", id));
+      est.step = Math.min(3, est.step + 1);
+      rerender();
+    },
+    estRebuild(el) {
+      if (!armed(el, "Ваши правки пропадут. Пересчитать?")) return;
+      est.lines = buildEstimate(db.find("requests", id));
+      est.step = 1;
+      rerender();
+    },
+    estLine(el) {
+      const l = line(el), v = Math.max(0, Number(el.value) || 0);
+      if (!l) return;
+      l[el.dataset.field] = v;
+      const min = floorOf(l.cost);
+      if (el.dataset.field === "price" && l.cost > 0 && v < min && !isDirector(me)) {
+        l.price = min;
+        toast(`Ниже порога маржи ${minMargin()}%: цена не меньше ${money(min)}`, "bad");
+      }
+      rerender();
+    },
+    estDel(el) { est.lines = est.lines.filter((l) => l.id !== el.dataset.id); rerender(); },
+    estAdd(fd) {
+      const qty = Math.max(0.1, Number(fd.get("qty")) || 1);
+      if (est.step === 1) { const p = db.find("products", Number(fd.get("item"))); if (p) est.lines.push(materialLine(p, qty)); }
+      else { const w = WORKS.find((x) => x.id === fd.get("item")); if (w) est.lines.push(workLine(w, qty)); }
+      rerender();
+    },
+    estMargin: (fd) => saveMargin(fd),
+    estSave() {
+      const r = db.find("requests", id), lines = est.lines.filter((l) => l.qty > 0);
+      if (!isDirector(me) && lines.some((l) => l.cost > 0 && l.price < floorOf(l.cost))) return toast("Есть цены ниже порога маржи", "bad");
+      const t = totals(lines);
+      r.estimate = { lines, at: new Date().toISOString(), by: me.name };
+      r.amount = Math.round(t.total);
+      log(r, `Смета: ${money(t.total)}, прибыль ${money(t.profit)} (${Math.round(t.margin)}%)`);
+      save("Смета сохранена, сумма договора обновлена");
+      closeDrawer();
+    },
+  }, { full: true });
 }
 
 let openId = null;
@@ -344,7 +457,7 @@ const detailActions = {
   },
   previewLoad(el) {
     const form = el.closest("form");
-    document.getElementById("loadNote").innerHTML = masterLoad(form.master.value, form.visit.value, openId);
+    document.getElementById("loadNote").innerHTML = masterLoad(form.master.value, form.visit.value ? new Date(form.visit.value).toISOString() : "", openId, form.car.value);
   },
   assign(fd, form) {
     const r = current();
@@ -352,6 +465,11 @@ const detailActions = {
     if (!masterId) return formError(form, "Выберите мастера");
     if (!visit) return formError(form, "Укажите дату и время выезда");
     const visitIso = new Date(visit).toISOString();
+    const carId = Number(fd.get("car")) || null;
+    const clash = carConflict(carId, visitIso, r.id);
+    if (clash) return formError(form, `${carTitle(carId)} в это время занят: заказ №${clash.id} в ${hhmm(clash.visit_at)}`);
+    if (carId !== (r.car_id || null)) log(r, carId ? `Автомобиль: ${carTitle(carId)}` : "Автомобиль снят");
+    r.car_id = carId;
     if (masterId !== r.master_id) log(r, `Назначен мастер: ${db.find("masters", masterId).name}`);
     if (visitIso !== r.visit_at) log(r, `Выезд: ${dateTime(visitIso)}`);
     r.master_id = masterId;
@@ -374,15 +492,13 @@ const detailActions = {
   },
   amount(fd) {
     const r = current(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
-    if (amount === (r.amount || 0)) return;
+    if (amount === (r.amount || 0) || !amountAllowed(r, amount)) return;
     r.amount = amount;
     log(r, `Сумма договора: ${money(amount)}`);
     save("Сумма сохранена");
   },
   comment(fd) {
-    const r = current();
-    r.comment = String(fd.get("comment") || "").trim();
-    save("Комментарий сохранён");
+    if (pushComment(current(), fd.get("text"), me)) save("Комментарий добавлен");
   },
 };
 
@@ -393,11 +509,11 @@ export function openRequest(id) {
 }
 
 /* ---------- Новый заказ и правка данных клиента ---------- */
-function formHtml(r) {
+function formHtml(r, pre = {}) {
   return `<header class="d-head"><p class="eyebrow">${r ? `Заказ №${r.id}` : "Звонок или обращение"}</p><h2>${r ? "Данные клиента" : "Новый заказ"}</h2></header>
     <form data-form="saveForm" class="grid2">
-      ${field("Клиент", `<input name="client" required maxlength="120" value="${esc(r?.client || "")}" placeholder="ФИО или название организации" autofocus>`)}
-      ${field("Телефон", `<input name="phone" required type="tel" maxlength="30" value="${esc(r?.phone || "")}" placeholder="+7 928 000-00-00">`)}
+      ${field("Клиент", `<input name="client" required maxlength="120" value="${esc(r?.client || pre.name || "")}" placeholder="ФИО или название организации" autofocus>`)}
+      ${field("Телефон", `<input name="phone" required type="tel" maxlength="30" value="${esc(r?.phone || pre.phone || "")}" placeholder="+7 928 000-00-00" data-input="phoneInput">`, r ? "" : `<span id="clientHint">${pre.phone ? "Клиент из базы" : ""}</span>`)}
       <div class="span2">${field("Адрес объекта", `<input name="address" required maxlength="200" value="${esc(r?.address || "")}" placeholder="Город, улица, дом, квартира">`)}</div>
       ${field("Объект", `<select name="object">${options(OBJECTS, r?.object)}</select>`)}
       ${field("Услуга", `<select name="service">${options(SERVICES, r?.service)}</select>`)}
@@ -408,20 +524,27 @@ function formHtml(r) {
     </form>`;
 }
 
-function openForm(r) {
+function openForm(r, pre) {
   me = currentUser();
-  openDrawer(() => formHtml(r), {
+  openDrawer(() => formHtml(r, pre), {
+    phoneInput(el) {
+      const c = findByPhone(el.value), f = el.closest("form"), hint = document.getElementById("clientHint");
+      if (c && !r && !f.client.value.trim()) f.client.value = c.name;
+      if (hint) hint.textContent = c ? `Клиент из базы: ${c.name}, заказов ${db.list("requests").filter((x) => x.client_id === c.id).length}` : "";
+    },
     cancelForm: () => (r ? openRequest(r.id) : document.getElementById("drawerClose").click()),
     saveForm(fd, form) {
       const values = Object.fromEntries(["client", "phone", "address", "object", "service", "source", "note"].map((k) => [k, String(fd.get(k) || "").trim()]));
       if (!values.client || !values.phone || !values.address) return formError(form, "Заполните клиента, телефон и адрес");
       if (r) {
         Object.assign(r, values);
+        r.client_id = ensureClient({ name: values.client, phone: values.phone }).id;
         log(r, "Изменены данные клиента");
         save("Сохранено");
         openRequest(r.id);
       } else {
-        const created = db.insert("requests", { ...values, status: "new", manager_id: me.id, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
+        const client = ensureClient({ name: values.client, phone: values.phone });
+        const created = db.insert("requests", { ...values, client_id: client.id, car_id: null, comments: [], status: "new", manager_id: me.id, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
           history: [{ at: new Date().toISOString(), by: me.name, text: "Заказ завёл менеджер" }] });
         toast(`Заказ №${created.id} создан`, "ok");
         openRequest(created.id);
@@ -429,6 +552,9 @@ function openForm(r) {
     },
   }, { wide: true });
 }
+
+/** Новый заказ для клиента из базы (кнопка в карточке клиента) */
+export function openNewOrder(client) { openForm(null, { name: client.name, phone: client.phone }); }
 
 export default {
   title: () => "Заказы",
@@ -441,9 +567,13 @@ export default {
     sheetStatus(el) { const next = el.dataset.id; if (setStatus(selected(), next, el)) save(next === "done" ? "Заказ завершён" : "Статус изменён"); },
     sheetAmount(fd) {
       const r = selected(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
-      if (amount === (r.amount || 0)) return;
+      if (amount === (r.amount || 0) || !amountAllowed(r, amount)) return;
       r.amount = amount; log(r, `Сумма договора: ${money(amount)}`); save("Сумма сохранена");
     },
+    sheetComment(fd) { if (pushComment(selected(), fd.get("text"), me)) save("Комментарий добавлен"); },
+    ...surveyActions,
+    estOpen: () => openEstimate(sel),
+    estMargin: (fd) => saveMargin(fd),
     sheetPay(fd, form) {
       const r = selected(), sum = Math.round(Number(fd.get("sum")) || 0);
       if (!(sum > 0)) return formError(form, "Впишите сумму");

@@ -4,8 +4,8 @@
 import { STORAGE_PREFIX, emit } from "./core.js";
 import { seed } from "./seed.js";
 
-const DB_KEY = STORAGE_PREFIX + "db_v9";
-const TABLES = ["staff", "masters", "requests", "products", "stock", "moves", "tasks"];
+const DB_KEY = STORAGE_PREFIX + "db_v11";
+const TABLES = ["staff", "masters", "requests", "products", "stock", "moves", "tasks", "clients", "settings"];
 
 let data = null;
 let broken = false; // localStorage недоступен или переполнен — работаем в памяти вкладки

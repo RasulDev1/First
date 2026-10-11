@@ -5,6 +5,7 @@ import { isDirector } from "../auth.js";
 import { openDrawer, closeDrawer, field, options, empty, chips, formError } from "../ui.js";
 import { ACTIVE_STATUSES } from "../config.js";
 import { openRequest } from "./requests.js";
+import { commentsHtml, commentForm, pushComment } from "../comments.js";
 
 let me = null;
 let who = "all"; // руководитель: all или id менеджера
@@ -71,6 +72,7 @@ function detailHtml(id) {
       ${t.done_at ? `<dt>Выполнена</dt><dd>${dateTime(t.done_at)}</dd>` : ""}
       ${t.request_id ? `<dt>Заказ</dt><dd><button class="link" data-act="request">№${t.request_id} · ${esc(db.find("requests", t.request_id)?.client || "")}</button></dd>` : ""}
     </dl>${t.note ? `<p class="prose">${esc(t.note)}</p>` : ""}</section>
+    <section class="d-sec"><h3>Комментарии</h3>${commentsHtml(t.comments)}${commentForm()}</section>
     <section class="d-sec btn-row"><button class="btn primary" data-act="toggleOne">${t.done_at ? "Вернуть в работу" : "Выполнено"}</button>
       ${isDirector(me) ? `<button class="btn" data-act="edit">Изменить</button><button class="btn ghost danger" data-act="remove">Удалить</button>` : ""}</section>`;
 }
@@ -78,6 +80,7 @@ function detailHtml(id) {
 function openTask(id) {
   openDrawer(() => detailHtml(id), {
     toggleOne: () => toggle(id),
+    comment(fd) { const t = db.find("tasks", id); if (pushComment(t, fd.get("text"), me)) { db.patch("tasks", id, { comments: t.comments }); toast("Комментарий добавлен", "ok"); } },
     request: () => openRequest(db.find("tasks", id).request_id),
     edit: () => openForm(db.find("tasks", id)),
     remove(el) { if (!armed(el, "Точно удалить?")) return; db.remove("tasks", id); closeDrawer(); toast("Задача удалена"); },

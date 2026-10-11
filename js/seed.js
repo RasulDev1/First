@@ -1,7 +1,7 @@
 // Демо-данные: сотрудники, мастера, оборудование с местами на складе, заказы за три месяца и задачи.
 // Даты считаются от сегодняшнего дня, поэтому демо всегда выглядит «живым». Кнопка «Сбросить демо» возвращает эти данные.
 import { LOCATIONS } from "./stock.js";
-import { SERVICES, OBJECTS, SOURCES } from "./config.js";
+import { SERVICES, OBJECTS, SOURCES, CARS, VISIT_HOURS } from "./config.js";
 import { hashPassword } from "./db.js";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
@@ -65,6 +65,12 @@ const PRODUCTS = [
   ["materials", "SH-M8", "Шпилька резьбовая М8, 1 м", "Оцинкованная", "шт.", 45, 90, 100],
   ["materials", "LA-50", "Лента алюминиевая самоклеящаяся", "50 мм × 50 м", "шт.", 290, 520, 15],
   ["materials", "KF-13", "Изоляция K-Flex Air 13 мм", "Рулон с самоклеящимся слоем", "м²", 420, 720, 20],
+  ["ac", "SPL-09", "Сплит-система 9 (до 25 м²)", "2,6 кВт, инвертор, настенная", "шт.", 21000, 0, 2],
+  ["ac", "SPL-12", "Сплит-система 12 (до 35 м²)", "3,5 кВт, инвертор, настенная", "шт.", 26500, 0, 2],
+  ["ac", "SPL-18", "Сплит-система 18 (до 50 м²)", "5,3 кВт, инвертор, настенная", "шт.", 38000, 0, 1],
+  ["ac", "CU-14", "Трасса медная с изоляцией", "Пара труб 1/4 и 3/8, в изоляции", "м", 780, 0, 20],
+  ["ac", "DR-16", "Дренажная трубка Ø16", "Гибкая, для отвода конденсата", "м", 90, 0, 30],
+  ["ac", "BR-50", "Кронштейн наружного блока", "Усиленный, до 80 кг", "шт.", 650, 0, 6],
 ];
 
 const CLIENTS = ["Зарема Мусаева", "ООО «Северный двор»", "Хасан Умаров", "Петимат Эльмурзаева", "Кафе «Тандыр»", "ИП Байсаров", "Милана Гадаева",
@@ -81,6 +87,8 @@ const NOTE_BY_SERVICE = {
   "Обслуживание и чистка": "Система шумит и плохо тянет, просят почистить воздуховоды и заменить фильтры.",
   "Ремонт оборудования": "Не работает приточная установка, на пульте ошибка.",
   "Проектирование и замер": "Нужен замер и смета до конца месяца.",
+  "Монтаж кондиционера": "Нужен кондиционер в спальню и гостиную, квартира после ремонта.",
+  "Обслуживание кондиционера": "Кондиционер плохо охлаждает и капает, нужна чистка и проверка фреона.",
 };
 const NOTES = ["Нужна вентиляция в квартире после ремонта, душно в спальне.", "Кухня 40 м², сильный запах, нужна вытяжка над плитами.",
   "Офис на 12 человек, хотят приток с подогревом.", "Старая система шумит, просят посмотреть и почистить.",
@@ -124,9 +132,9 @@ export function seed() {
   // Раскладываем товары по местам: категория — своя зона склада, крупное оборудование на нижних полках
   const stock = [], moves = [];
   const allPlaces = LOCATIONS;
-  const ZONE = { equipment: 0, ducts: 12, fittings: 24, grilles: 30, valves: 33, filters: 36, materials: 39 }; // индекс первого места зоны
+  const ZONE = { equipment: 0, ducts: 12, fittings: 24, grilles: 30, valves: 33, filters: 36, materials: 39, ac: 48 }; // индекс первого места зоны
   const used = new Map();
-  const SHARED = ["fittings", "grilles", "filters", "materials"]; // мелочь лежит по 2–3 позиции на полке
+  const SHARED = ["fittings", "grilles", "filters", "materials", "ac"]; // мелочь лежит по 2–3 позиции на полке
   products.forEach((p) => {
     const start = ZONE[p.category];
     const count = used.get(p.category) || 0;
@@ -145,6 +153,9 @@ export function seed() {
     }
   });
 
+  // База клиентов: часть клиентов обращалась несколько раз
+  const clients = CLIENTS.map((name, i) => ({ id: i + 1, created_at: iso(now - (30 + rand() * 150) * DAY), name,
+    phone: `+7 900 ${100 + Math.floor(rand() * 899)}-${10 + Math.floor(rand() * 89)}-${10 + Math.floor(rand() * 89)}`, note: "" }));
   const bySku = (sku) => products.find((p) => p.sku === sku).id;
   // Заказы за 90 дней: свежие — новые и в работе, старые — в основном выполнены
   const requests = [];
@@ -159,7 +170,7 @@ export function seed() {
     const big = /рекуперац|ресторан|приточной/i.test(service);
     const amount = ["cancelled", "new", "assigned", "measure"].includes(status) ? 0
       : Math.round(((big ? 90000 : 18000) + rand() * (big ? 260000 : 60000)) / 500) * 500;
-    const used = master && /Монтаж|рекуперац|кухни/i.test(service) ? [
+    const used = master && /Монтаж (при|вы)|рекуперац|кухни/i.test(service) ? [
       { product_id: bySku(pick(["VK-160", "VK-200", "BV-100", "VK-100"])), qty: 1 },
       { product_id: bySku(pick(["D-160", "D-125", "D-200"])), qty: 6 + Math.floor(rand() * 12) },
       { product_id: bySku(pick(["O90-160", "O90-125"])), qty: 2 + Math.floor(rand() * 4) },
@@ -175,12 +186,16 @@ export function seed() {
     if (status === "done") history.push({ at: past(created + 4 * DAY), by: manager.name, text: "Статус: Завершён" });
     if (status === "cancelled") history.push({ at: past(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
+    const visitIso = visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null;
+    // Машина на выезд: первая, у которой нет накладки по времени
+    const car = visitIso ? CARS.find((c) => !requests.some((o) => o.car_id === c.id && o.visit_at && Math.abs(new Date(o.visit_at) - new Date(visitIso)) < VISIT_HOURS * 3600e3)) : null;
+    const client = pick(clients);
     requests.push({
-      id: 1000 + 46 - i, created_at: iso(created), client: pick(CLIENTS), phone: `+7 900 ${100 + Math.floor(rand() * 899)}-${10 + Math.floor(rand() * 89)}-${10 + Math.floor(rand() * 89)}`,
+      id: 1000 + 46 - i, created_at: iso(created), client_id: client.id, client: client.name, phone: client.phone, car_id: car?.id || null,
       address: `${pick(CITIES)}, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
       note: NOTE_BY_SERVICE[service] || pick(NOTES), status, manager_id: manager?.id || null, master_id: master?.id || null,
-      visit_at: visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null,
-      amount, items: [], comment: "", history,
+      visit_at: visitIso,
+      amount, items: [], comment: "", comments: [], history,
       expenses: (status === "done" ? used : status === "in_work" ? used.slice(0, 2) : []).map((it) => ({ product_id: it.product_id, qty: it.qty,
         loc: stock.find((x) => x.product_id === it.product_id)?.loc || null, cost: products[it.product_id - 1].cost, at: past(created + 2 * DAY), by: DEMO_ACCOUNTS[4].name })),
       done_at: status === "done" ? past(created + 4 * DAY) : null,
@@ -204,5 +219,12 @@ export function seed() {
   });
   tasks[1].request_id = requests.find((r) => /ресторан/i.test(r.service) && r.status !== "done")?.id || null;
 
-  return { version: 1, staff, masters, products, stock, moves, requests, tasks, seq: {} };
+  // Пара живых комментариев, чтобы переписка по заказу и задаче не была пустой
+  const some = requests.filter((r) => r.manager_id && r.status !== "cancelled").slice(-3);
+  if (some[0]) some[0].comments.push({ at: past(now - 2 * DAY), by: managers[0].name, text: "Клиент просит приехать после 15:00, по утрам никого нет." });
+  if (some[1]) some[1].comments.push({ at: past(now - DAY), by: managers[1].name, text: "Договорились о замере, клиент попросил позвонить за час." },
+    { at: past(now - 20 * 3600e3), by: staff[0].name, text: "Проверь, чтобы выезд не пересёкся со вторым автомобилем." });
+  tasks[0].comments = [{ at: past(now - DAY), by: staff[0].name, text: "Начни с тех, кто оставил заявку в выходные." }];
+
+  return { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], seq: {} };
 }
