@@ -553,8 +553,8 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 .calc-out h4 { margin: 4px 0 0; font-size: 14px; color: var(--heading); }
 @media (max-width: 900px) { .calc { grid-template-columns: minmax(0, 1fr); } .calc-form { position: static; } }
 
-/* Кнопки в панели справа: при наведении — лёгкое затемнение поверх фона, после нажатия оно остаётся (пока кнопка в фокусе) */
-.drawer .btn, .drawer .chip { background-image: linear-gradient(rgba(15, 23, 42, 0), rgba(15, 23, 42, 0)); transition: background-color .15s, background-image .15s; }
+/* Кнопки в панели справа: при наведении — слегка затемнённый синий фон поверх, после нажатия оно остаётся (пока кнопка в фокусе) */
+.drawer .btn, .drawer .chip { background-image: linear-gradient(rgba(3, 105, 161, 0), rgba(3, 105, 161, 0)); transition: background-color .15s, background-image .15s; }
 .drawer .btn:not(:disabled):hover, .drawer .btn:not(:disabled):focus, .drawer .chip:not(:disabled):hover, .drawer .chip:not(:disabled):focus {
-  background-image: linear-gradient(rgba(15, 23, 42, .09), rgba(15, 23, 42, .09)); }
+  background-image: linear-gradient(rgba(3, 105, 161, .16), rgba(3, 105, 161, .16)); }
 .drawer .btn:focus:not(:focus-visible) { outline: none; }
