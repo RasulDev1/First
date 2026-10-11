@@ -219,7 +219,7 @@ function itemsHtml(r) {
         ${editable ? `<td class="r"><button class="icon-btn" data-act="removeItem" data-id="${i}" aria-label="Убрать">✕</button></td>` : ""}</tr>`;
     }).join("")}</tbody>
     <tfoot><tr><td colspan="3">Материалы по прайсу</td><td class="r num"><b>${money(itemsTotal(r))}</b></td>${editable ? "<td></td>" : ""}</tr></tfoot></table></div>` : `<p class="muted">Материалы не добавлены.</p>`}
-    ${items.length && !r.expenses?.length ? `<p class="note">Складовщик выписывает материалы в «Склад → Расход», они появятся в «Расходах» ниже.</p>` : ""}
+    ${items.length && !r.expenses?.length ? `<p class="note">Складовщик добавляет материалы во вкладке «Расходы» заказа, они появятся ниже.</p>` : ""}
     ${editable ? `<form class="inline-form" data-form="addItem">
       <select name="product" aria-label="Материал" required><option value="">Добавить материал со склада…</option>${productOptions()}</select>
       <input name="qty" type="number" min="0.1" step="any" inputmode="decimal" placeholder="Кол-во" aria-label="Количество" required>
@@ -235,7 +235,7 @@ function expensesHtml(r, { button = false } = {}) {
     <tbody>${list.map((e) => { const p = product(e.product_id); return `<tr><td>${esc(p?.name || "Удалённый товар")}${e.note ? `<small class="note-line">${esc(e.note)}</small>` : ""}${e.by ? `<small>${esc(e.by)}</small>` : ""}</td><td>${e.loc ? locChip(e.loc) : ""}</td>
       <td class="r num">${num(e.qty)} ${esc(p?.unit || "")}</td><td class="r num">${money(e.cost)}</td><td class="r num">${money(e.qty * e.cost)}</td><td class="num nowrap">${dateTime(e.at)}</td></tr>`; }).join("")}</tbody>
     <tfoot><tr><td colspan="4">Итого расходы</td><td class="r num"><b>${money(expenseTotal(r))}</b></td><td></td></tr></tfoot></table></div>` : `<p class="muted">Со склада пока ничего не выписано.</p>`}
-    ${button && open ? `<button class="btn primary" data-act="expense">Выписать материал</button>` : ""}`;
+    ${button && open ? `<button class="btn primary" data-act="expense">Добавить расход</button>` : ""}`;
 }
 
 /** Складовщик видит заказ без цен и контактов: адрес, мастера, материалы по плану и расходы */

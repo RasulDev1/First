@@ -461,3 +461,4 @@ form { display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 900px) { .sheet { left: 0; } }
 .history .pill { align-self: flex-start; width: max-content; }
 .sheet-body > .btn { align-self: flex-start; }
+.field-row { display: flex; gap: 8px; } .field-row select { flex: 1; min-width: 0; } .field-row .btn { flex: none; }

@@ -84,7 +84,7 @@ export function writeOff({ productId, from, qty, note }, user) {
   qty = round(qty);
   if (!(qty > 0)) fail("Впишите количество больше нуля");
   if (qty > qtyAt(productId, from)) fail(`На месте ${from} только ${qtyAt(productId, from)}`);
-  if (!note?.trim()) fail("Напишите причину списания");
+  if (!note?.trim()) fail("Напишите комментарий: куда и зачем убрали товар");
   db.batch(() => {
     changeQty(productId, from, -qty);
     logMove({ kind: "out", product_id: Number(productId), from, qty, note }, user);

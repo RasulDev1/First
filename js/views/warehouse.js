@@ -48,7 +48,6 @@ function stockTab() {
   return `<div class="toolbar">
       <input class="search" type="search" id="whSearch" placeholder="Поиск: название, артикул, место (2.Б.А)" value="${esc(query)}" data-input="search" aria-label="Поиск по складу">
       <label class="toggle"><input type="checkbox" id="whLow" data-change="low"${lowOnly ? " checked" : ""}><span>Только заканчивается</span></label>
-      <button class="btn" data-act="newProduct">Новый товар</button>
       <button class="btn primary" data-act="receive">Приём</button>
       <button class="btn primary" data-act="expense">Расход</button>
     </div>
@@ -182,20 +181,21 @@ const suggestLoc = (productId) => placesOf(productId)[0]?.loc || LOCATIONS.find(
 
 function operationHtml(kind, o) {
   const p = product(o.productId);
-  const title = { in: "Приём", move: "Перемещение", out: "Списание", fix: "Пересчёт" }[kind];
-  return `<header class="d-head"><p class="eyebrow">${title}</p><h2>${p ? esc(p.name) : "Принять товар"}</h2></header>
+  const title = { in: "Приём", move: "Перемещение", out: "Расход", fix: "Пересчёт" }[kind];
+  return `<header class="d-head"><p class="eyebrow">${title}</p><h2>${p ? esc(p.name) : kind === "out" ? "Убрать товар со склада" : "Принять товар"}</h2></header>
     <form data-form="op">
-      ${kind === "in" && !o.fixedProduct ? field("Товар", `<select name="product" required data-change="pickProduct">${productOptions(o.productId)}</select>`) : ""}
+      ${(kind === "in" || kind === "out") && !o.fixedProduct ? field("Товар", `<div class="field-row"><select name="product" required data-change="pickProduct">${productOptions(o.productId)}</select>
+        ${kind === "in" ? `<button class="btn" type="button" data-act="newProduct">Новый товар</button>` : ""}</div>`, kind === "in" ? "Нет в списке — нажмите «Новый товар»" : "") : ""}
       ${kind === "in" ? field("Положить на место", `<select name="to" required>${locationOptions(o.to || (o.productId ? suggestLoc(o.productId) : LOCATIONS[0]))}</select>`,
         p && placesOf(p.id).length ? `Уже лежит: ${placesOf(p.id).map((s) => `${s.loc} (${num(s.qty)})`).join(", ")}` : "") : ""}
       ${kind === "move" ? `${field("Откуда", `<select name="from">${locationOptions(o.from, { onlyWith: o.productId })}</select>`)}
         ${field("Куда", `<select name="to" required>${locationOptions(o.to || LOCATIONS.find((l) => l !== o.from && !contentsOf(l).length))}</select>`)}` : ""}
-      ${kind === "out" ? field("С места", `<select name="from">${locationOptions(o.from, { onlyWith: o.productId })}</select>`) : ""}
+      ${kind === "out" && o.productId ? (placesOf(o.productId).length ? field("С места", `<select name="from">${locationOptions(o.from, { onlyWith: o.productId })}</select>`) : `<p class="note warn">Этого товара нет на складе.</p>`) : ""}
       ${kind === "fix" ? `<p class="note">Место <b>${esc(o.loc)}</b>: по учёту ${amount(p, qtyAt(o.productId, o.loc))}. Впишите, сколько лежит на самом деле — разница попадёт в журнал.</p>` : ""}
       ${field(kind === "fix" ? "Фактически на месте" : "Количество", `<input name="qty" type="number" min="0" step="any" inputmode="decimal" required value="${o.qty ?? ""}" autofocus>`, p ? `в ${esc(p.unit)}` : "")}
       ${kind === "in" ? field("Закупочная цена за единицу, ₽", `<input name="cost" type="number" min="0" step="0.01" inputmode="decimal" value="${p?.cost ?? ""}">`, "Обновит закупочную цену в карточке товара") : ""}
-      ${kind === "in" || kind === "out" ? field(kind === "out" ? "Причина" : "Комментарий", `<input name="note" maxlength="200" placeholder="${kind === "out" ? "Брак, повреждён при разгрузке…" : "Поставщик, номер накладной"}"${kind === "out" ? " required" : ""}>`) : ""}
-      <div class="form-actions"><button class="btn primary" type="submit">${{ in: "Принять", move: "Переместить", out: "Списать", fix: "Сохранить пересчёт" }[kind]}</button></div>
+      ${kind === "in" || kind === "out" ? field("Комментарий", `<input name="note" maxlength="200" placeholder="${kind === "out" ? "Куда и зачем: брак, возврат поставщику, на нужды офиса…" : "Поставщик, номер накладной"}"${kind === "out" ? " required" : ""}>`) : ""}
+      <div class="form-actions"><button class="btn primary" type="submit">${{ in: "Принять", move: "Переместить", out: "Убрать со склада", fix: "Сохранить пересчёт" }[kind]}</button></div>
     </form>`;
 }
 
@@ -206,11 +206,13 @@ function openOperation(kind, o = {}) {
       state.productId = Number(el.value) || null;
       const form = el.closest("form");
       const qty = form.qty.value, note = form.note?.value;
+      state.from = null;
       document.getElementById("drawerBody").innerHTML = operationHtml(kind, state);
       const fresh = document.querySelector("#drawerBody form");
       fresh.qty.value = qty;
       if (fresh.note) fresh.note.value = note || "";
     },
+    newProduct: () => openProductForm(null),
     op(fd, form) {
       const productId = Number(fd.get("product") || state.productId);
       if (!productId) return formError(form, "Выберите товар");
@@ -218,11 +220,12 @@ function openOperation(kind, o = {}) {
       try {
         if (kind === "in") receive({ productId, loc: fd.get("to"), qty, cost: Number(fd.get("cost")) || 0, note: String(fd.get("note") || "").trim() }, me);
         if (kind === "move") move({ productId, from: fd.get("from"), to: fd.get("to"), qty }, me);
+        if (kind === "out" && !fd.get("from")) return formError(form, "Этого товара нет на складе");
         if (kind === "out") writeOff({ productId, from: fd.get("from"), qty, note: String(fd.get("note") || "") }, me);
         let delta = 0;
         if (kind === "fix") delta = recount({ productId, loc: state.loc, qty }, me);
         const p = product(productId);
-        toast({ in: `Принято: ${amount(p, qty)} → ${fd.get("to")}`, move: `Перемещено ${fd.get("from")} → ${fd.get("to")}`, out: `Списано ${amount(p, qty)}`,
+        toast({ in: `Принято: ${amount(p, qty)} → ${fd.get("to")}`, move: `Перемещено ${fd.get("from")} → ${fd.get("to")}`, out: `Убрано со склада: ${amount(p, qty)}`,
           fix: delta ? `Исправлено на ${delta > 0 ? "+" : ""}${num(delta)}` : "Расхождений нет" }[kind], "ok");
         openProduct(productId);
       } catch (error) { formError(form, error.message); }
@@ -239,7 +242,7 @@ function expenseHtml(o) {
   const pending = request ? pendingItems(request) : [];
   const places = o.productId ? placesOf(o.productId) : [];
   const p = product(o.productId);
-  return `<header class="d-head"><p class="eyebrow">Расход</p><h2>${request ? `Заказ №${request.id}` : "Выписать материал"}</h2>
+  return `<header class="d-head"><p class="eyebrow">Добавить расход</p><h2>${request ? `Заказ №${request.id}` : "Материал в заказ"}</h2>
       ${request ? `<p class="muted">${esc(request.client)} · ${esc(request.address)}</p>` : ""}</header>
     <form data-form="expense">
       ${o.lockRequest ? "" : field("Заказ", `<select name="request" required data-change="pickExpense">${options(requests.map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` })), o.requestId, { empty: "Выберите заказ" })}</select>`)}
@@ -329,8 +332,7 @@ export default {
     search(el) { query = el.value.trim(); document.getElementById("stockRows").innerHTML = stockRows(); },
     product: (el) => openProduct(el.dataset.id),
     receive: () => openOperation("in"),
-    expense: () => openExpense(),
-    newProduct: () => openProductForm(null),
+    expense: () => openOperation("out"),
     receiveBuy: (el) => openOperation("in", { productId: Number(el.dataset.id), qty: el.dataset.qty }),
     cell(el) {
       const loc = el.dataset.id;
