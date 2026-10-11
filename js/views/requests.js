@@ -1,7 +1,7 @@
 // «Заказы» (менеджер и руководитель): единый список по порядку с сортировками, создание и удаление заказов, мастер, выезд, статусы,
 // сумма договора, материалы по плану, расходы со склада и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
-import { esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
+import { storage, esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
 import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
 import { db } from "../db.js";
 import { isDirector, isWarehouse, currentUser } from "../auth.js";
@@ -171,7 +171,8 @@ function sheetHtml() {
   const tabs = TABS.filter(([id]) => !(id === "pay" && isWarehouse(me)));
   if (!tabs.some(([id]) => id === tab)) tab = "main";
   const body = tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
-  return `<div class="sheet-space"></div><section class="sheet" aria-label="Заказ №${r.id}">
+  return `<div class="sheet-space" style="height:${sheetH}vh"></div><section class="sheet" style="height:${sheetH}vh" aria-label="Заказ №${r.id}">
+    <div class="sheet-grip" role="separator" aria-orientation="horizontal" aria-label="Потяните, чтобы изменить высоту" tabindex="0"></div>
     <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
       <nav class="sheet-tabs">${tabs.map(([id, title]) => `<button type="button" data-act="tab" data-id="${id}" aria-pressed="${id === tab}">${esc(title)}</button>`).join("")}</nav>
       <span class="sheet-tools">${isWarehouse(me) ? "" : `<button type="button" class="btn sm" data-act="open" data-id="${r.id}">Открыть карточку</button>`}
@@ -180,6 +181,30 @@ function sheetHtml() {
 }
 
 const selected = () => db.find("requests", sel);
+
+// Высоту панели тянут за ручку сверху (мышь или палец); запоминаем в этом браузере
+let sheetH = Math.min(90, Math.max(15, Number(storage.get("sheetH", 40)) || 40));
+function setSheetH(vh) {
+  sheetH = Math.round(Math.min(90, Math.max(15, vh)));
+  document.querySelectorAll(".sheet, .sheet-space").forEach((el) => { el.style.height = `${sheetH}vh`; });
+}
+document.addEventListener("pointerdown", (e) => {
+  const grip = e.target.closest?.(".sheet-grip");
+  if (!grip) return;
+  e.preventDefault();
+  grip.setPointerCapture(e.pointerId);
+  const moveTo = (ev) => setSheetH(((innerHeight - ev.clientY) / innerHeight) * 100);
+  const stop = () => { grip.removeEventListener("pointermove", moveTo); storage.set("sheetH", sheetH); };
+  grip.addEventListener("pointermove", moveTo);
+  grip.addEventListener("pointerup", stop, { once: true });
+  grip.addEventListener("pointercancel", stop, { once: true });
+});
+document.addEventListener("keydown", (e) => {
+  if (!e.target.closest?.(".sheet-grip") || !["ArrowUp", "ArrowDown"].includes(e.key)) return;
+  e.preventDefault();
+  setSheetH(sheetH + (e.key === "ArrowUp" ? 5 : -5));
+  storage.set("sheetH", sheetH);
+});
 
 function setStatus(r, next, el) {
   if (next === "cancelled" && !armed(el, "Точно отменить?")) return false;
