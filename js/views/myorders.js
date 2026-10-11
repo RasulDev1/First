@@ -1,11 +1,11 @@
 // «Мои заказы» (мастер и стажёр): только свои заказы, статус и сколько мастер заработает в этом месяце.
-// Мастер ничего не меняет: статусы ведёт менеджер.
-import { esc, money, dateTime } from "../core.js";
+// Мастер отмечает два шага: «Выехал на замеры» и «Завершён»; остальные статусы ставятся сами по действиям менеджера.
+import { esc, money, dateTime, armed, toast } from "../core.js";
 import { STATUSES, ACTIVE_STATUSES } from "../config.js";
 import { db } from "../db.js";
 import { openDrawer, statusPill, empty } from "../ui.js";
 import { payOf, rateOf } from "../pay.js";
-import { statusAt } from "./requests.js";
+import { statusAt, setStatus } from "./requests.js";
 
 let me = null;
 
@@ -46,11 +46,26 @@ function detailHtml(id) {
     <section class="d-sec"><dl class="kv"><dt>Услуга</dt><dd>${esc(r.service)}${r.object ? ` · ${esc(r.object)}` : ""}</dd>
       <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}</dd>
       <dt>Вы заработаете</dt><dd class="num"><b>${earn(r)}</b></dd></dl></section>
+    ${r.status === "assigned" ? `<section class="d-sec"><button class="btn primary big" data-act="depart" data-id="${r.id}">Выехал на замеры</button></section>` : ""}
+    ${r.status === "in_work" ? `<section class="d-sec"><button class="btn primary big" data-act="finish" data-id="${r.id}">Завершён</button></section>` : ""}
     <section class="d-sec"><h3>Статусы</h3><ol class="history">${hist.map((h) => `<li><b>${esc(h.text.replace("Статус: ", ""))}</b><small>${dateTime(h.at)}</small></li>`).join("")}</ol></section>`;
+}
+
+function step(id, from, to, btn, text) {
+  const r = mine().find((x) => x.id === id);
+  if (!r || r.status !== from) return;
+  setStatus(r, to, me.name);
+  db.batch(() => {});
+  toast(text, "ok");
 }
 
 export default {
   title: () => "Мои заказы",
   render,
-  actions: { open: (el) => openDrawer(() => detailHtml(Number(el.dataset.id)), {}, { live: true }) },
+  actions: {
+    open: (el) => openDrawer(() => detailHtml(Number(el.dataset.id)), {
+      depart(btn) { step(Number(btn.dataset.id), "assigned", "measure", btn, "Статус изменён: выезд на замеры"); },
+      finish(btn) { if (armed(btn, "Точно завершён?")) step(Number(btn.dataset.id), "in_work", "done", btn, "Заказ завершён"); },
+    }, { live: true }),
+  },
 };

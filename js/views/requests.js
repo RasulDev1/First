@@ -156,8 +156,8 @@ function sheetPay(r) {
       <dt>Материалы со склада</dt><dd class="num">${money(cost)}</dd>
       <dt>Прибыль</dt><dd class="num">${money((r.amount || 0) - cost)}</dd></dl>
       <form class="inline-form" data-form="sheetAmount"><input name="amount" type="number" min="0" step="100" inputmode="numeric" value="${r.amount || ""}" placeholder="Сумма договора" aria-label="Сумма договора, ₽"><button class="btn" type="submit">Сохранить сумму</button></form></div>
-    <div>${(r.payments || []).length ? `<ol class="history">${[...r.payments].reverse().map((p) => `<li><b class="num">${money(p.sum)}</b>${p.note ? ` · ${esc(p.note)}` : ""}<small>${dateTime(p.at)}${p.by ? ` · ${esc(p.by)}` : ""}</small></li>`).join("")}</ol>` : `<p class="muted">Оплат пока не было.</p>`}
-      <form class="inline-form" data-form="sheetPay"><input name="sum" type="number" min="1" step="1" inputmode="numeric" placeholder="Сумма оплаты" aria-label="Сумма оплаты, ₽" required><input name="note" maxlength="80" placeholder="Наличные, перевод…" aria-label="Способ оплаты"><button class="btn primary" type="submit">Внести оплату</button></form></div>
+    <div>${(r.payments || []).length ? `<ol class="history">${[...r.payments].reverse().map((p) => `<li><b class="num">${money(p.sum)}</b>${p.method ? ` · ${esc(p.method)}` : ""}${p.note ? ` · ${esc(p.note)}` : ""}<small>${dateTime(p.at)}${p.by ? ` · ${esc(p.by)}` : ""}</small></li>`).join("")}</ol>` : `<p class="muted">Оплат пока не было.</p>`}
+      ${r.status === "cancelled" ? "" : `<button class="btn primary" type="button" data-act="payOpen">Внести оплату</button>`}</div>
   </div>`;
 }
 
@@ -210,15 +210,15 @@ document.addEventListener("keydown", (e) => {
   storage.set("sheetH", sheetH);
 });
 
-function setStatus(r, next, el) {
-  if (next === "cancelled" && !armed(el, "Точно отменить?")) return false;
-  if (!["new", "cancelled"].includes(next) && !r.master_id) { toast("Сначала выберите мастера", "bad"); return false; }
+/** Статус заказа меняется сам по действиям: назначили мастера → «Назначен Мастер», мастер выехал → «Выезд на замеры»,
+ * менеджер сохранил замеры → «Согласование стоимости», внесена оплата → «В работе», мастер завершил → «Завершён». */
+export function setStatus(r, next, by = me?.name || "") {
   r.status = next;
   r.done_at = next === "done" ? new Date().toISOString() : null;
-  if (!r.manager_id) r.manager_id = me.id;
-  log(r, `Статус: ${STATUSES.find((s) => s.id === next).title}`);
-  return true;
+  (r.history ||= []).push({ at: new Date().toISOString(), by, text: `Статус: ${STATUSES.find((x) => x.id === next).title}` });
 }
+/** Какой статус у заказа по его данным (для возврата отменённого заказа) */
+const stageOf = (r) => (r.done_at ? "done" : (r.payments || []).length ? "in_work" : r.survey?.saved ? "pricing" : r.master_id ? "assigned" : "new");
 
 /* ---------- Карточка заказа ---------- */
 const hhmm = (iso) => new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
@@ -297,13 +297,9 @@ function detailHtml(id) {
       <p class="muted small">У мастеров нет аккаунтов: сообщите мастеру адрес и время сами. Телефон мастера — в разделе «Мастера».</p>
     </section>
 
-    <section class="d-sec"><h3>Статус</h3>
-      <div class="status-steps">${STATUSES.filter((s) => s.id !== "cancelled").map((s) =>
-        `<button class="chip sortbtn" data-act="status" data-id="${s.id}" aria-pressed="${s.id === r.status}"${s.id === r.status ? " disabled" : ""}>${esc(s.title)}</button>`).join("")}</div>
-      <div class="btn-row">
-        ${r.status === "cancelled" ? `<button class="btn" data-act="status" data-id="${r.master_id ? "in_work" : "new"}">Вернуть в работу</button>` : `<button class="btn ghost danger" data-act="status" data-id="cancelled">Отменить заказ</button>`}
-        <button class="btn ghost danger" data-act="remove">Удалить заказ</button>
-      </div>
+    <section class="d-sec btn-row">
+      ${r.status === "cancelled" ? `<button class="btn" data-act="restore">Вернуть заказ в работу</button>` : r.status === "done" ? "" : `<button class="btn ghost danger" data-act="cancelOrder">Отменить заказ</button>`}
+      ${isDirector(me) ? `<button class="btn ghost danger" data-act="remove">Удалить заказ</button>` : ""}
     </section>
 
     <section class="d-sec"><h3>Сумма договора</h3>
@@ -377,6 +373,32 @@ const makeSurveyActions = (get) => ({
   surveyDelPhoto(el) { touch(get(), me).photos.splice(Number(el.dataset.id), 1); redraw(); },
   surveyNote(el) { touch(get(), me).note = String(el.value || "").trim(); redraw(); },
 });
+
+/* ---------- Оплата ---------- */
+export const PAY_METHODS = ["Наличные", "Перевод на карту", "Банковская карта", "По счёту (безнал)"];
+function openPayment(id) {
+  const r = db.find("requests", id);
+  if (!r) return;
+  const left = Math.max(0, (r.amount || 0) - (r.payments || []).reduce((n, p) => n + p.sum, 0));
+  openDrawer(() => `<header class="d-head"><p class="eyebrow">Заказ №${r.id}</p><h2>Внести оплату</h2></header>
+    <form data-form="pay">
+      ${field("Как оплатили", `<select name="method">${options(PAY_METHODS, PAY_METHODS[0])}</select>`)}
+      ${field("Сколько, ₽", `<input name="sum" type="number" min="1" step="1" inputmode="numeric" required value="${left || ""}" autofocus>`, left ? `Остаток по договору: ${money(left)}` : "")}
+      <div class="form-actions"><button class="btn primary big" type="submit">Оплатить</button></div>
+    </form>`, {
+    pay(fd, form) {
+      const sum = Math.round(Number(fd.get("sum")) || 0), r = db.find("requests", id);
+      if (!(sum > 0)) return formError(form, "Впишите сумму");
+      if (!allow(r, form.querySelector("[type=submit]"), false)) return;
+      const method = String(fd.get("method"));
+      (r.payments ||= []).push({ sum, method, note: "", at: new Date().toISOString(), by: me.name });
+      log(r, `Оплата: ${money(sum)} (${method})`);
+      if (r.status === "pricing") setStatus(r, "in_work");
+      save("Оплата внесена");
+      closeDrawer();
+    },
+  });
+}
 
 /* ---------- Автосмета (мастер из нескольких шагов) ---------- */
 let est = null; // { id, step, lines }
@@ -465,6 +487,7 @@ const detailActions = {
     r.survey = { ...structuredClone(draftOf(r.id).survey), saved: true };
     drafts.delete(r.id);
     log(r, "Замеры сохранены");
+    if (["assigned", "measure"].includes(r.status)) setStatus(r, "pricing");
     save("Замеры сохранены");
   }),
   expense: () => openExpense({ requestId: openId }),
@@ -499,14 +522,11 @@ const detailActions = {
     r.master_id = masterId;
     r.visit_at = visitIso;
     if (!r.manager_id) r.manager_id = me.id;
-    if (r.status === "new") { r.status = "assigned"; log(r, "Статус: Назначен Мастер"); }
+    if (r.status === "new") setStatus(r, "assigned");
     save("Мастер и дата сохранены");
   }),
-  status: guard(() => current(), (el) => {
-    const next = el.dataset.id;
-    if (!setStatus(current(), next, el)) return;
-    save(next === "done" ? "Заказ завершён" : "Статус изменён");
-  }),
+  cancelOrder: guard(() => current(), () => { setStatus(current(), "cancelled"); save("Заказ отменён"); }),
+  restore: guard(() => current(), () => { const r = current(); setStatus(r, stageOf(r)); save("Заказ возвращён в работу"); }),
   remove(el) {
     if (!isDirector(me)) return toast("Удалять заказы может руководитель", "bad");
     if (!armed(el, "Точно удалить?")) return;
@@ -598,14 +618,7 @@ export default {
     sheetComment(fd) { if (pushComment(selected(), fd.get("text"), me)) save("Комментарий добавлен"); },
     estOpen: guard(() => selected(), () => openEstimate(sel), false),
     estMargin: (fd) => saveMargin(fd),
-    sheetPay: guard(() => selected(), (fd, form) => {
-      const r = selected(), sum = Math.round(Number(fd.get("sum")) || 0);
-      if (!(sum > 0)) return formError(form, "Впишите сумму");
-      const note = String(fd.get("note") || "").trim();
-      (r.payments ||= []).push({ sum, note, at: new Date().toISOString(), by: me.name });
-      log(r, `Оплата: ${money(sum)}${note ? ` (${note})` : ""}`);
-      save("Оплата внесена");
-    }),
+    payOpen: guard(() => selected(), () => openPayment(sel), false),
     expense: () => openExpense({ requestId: sel }),
     create: () => openForm(null),
     sort(el) {

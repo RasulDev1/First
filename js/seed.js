@@ -210,7 +210,7 @@ export function seed() {
   const SURVEY_NOTES = ["Перекрытия бетонные, выход на улицу через стену.", "Потолок подвесной, место под воздуховод есть.", "Подъезд со двора, парковка рядом.", "Клиент просит закончить до выходных."];
   const round05 = (n) => Math.round(n * 2) / 2;
   for (const r of requests) {
-    if (!["pricing", "in_work", "done"].includes(r.status) || !r.master_id || !/Монтаж|вентиляци|рекуперац|кухни/i.test(r.service)) continue;
+    if (!["pricing", "in_work", "done"].includes(r.status) || !r.master_id) continue;
     const ac = /кондиционер/i.test(r.service), at = Date.parse(r.created_at) + DAY;
     const rooms = Array.from({ length: ac ? 1 + Math.floor(rand() * 2) : 1 + Math.floor(rand() * 3) }, (_, i) => ({
       name: ac ? AC_ROOMS[(i + r.id) % AC_ROOMS.length] : ROOMS[(i + r.id) % ROOMS.length], area: Math.round(12 + rand() * 28), height: 2.7, ac }));
@@ -231,9 +231,9 @@ export function seed() {
   for (const r of requests) {
     if (!r.amount) continue;
     const by = staff.find((x) => x.id === r.manager_id)?.name || "";
-    if (r.status === "done") r.payments = [{ sum: Math.round(r.amount / 2), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by },
-      { sum: r.amount - Math.round(r.amount / 2), note: "Остаток после монтажа", at: r.done_at, by }];
-    else if (r.status === "in_work") r.payments = [{ sum: Math.round(r.amount / 2), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by }];
+    if (r.status === "done") r.payments = [{ sum: Math.round(r.amount / 2), method: pick(["Наличные", "Перевод на карту", "Банковская карта"]), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by },
+      { sum: r.amount - Math.round(r.amount / 2), method: pick(["Наличные", "Перевод на карту", "Банковская карта"]), note: "Остаток после монтажа", at: r.done_at, by }];
+    else if (r.status === "in_work") r.payments = [{ sum: Math.round(r.amount / 2), method: pick(["Наличные", "Перевод на карту", "Банковская карта"]), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by }];
   }
   // Чтобы у демо-мастера и демо-стажёра (аккаунты master и trainee) были заказы в работе
   [1, 5].forEach((masterId, i) => {
