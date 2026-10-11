@@ -1,7 +1,7 @@
 // Демо-данные: сотрудники, мастера, оборудование с местами на складе, заказы за три месяца и задачи.
 // Даты считаются от сегодняшнего дня, поэтому демо всегда выглядит «живым». Кнопка «Сбросить демо» возвращает эти данные.
 import { LOCATIONS } from "./stock.js";
-import { SERVICES, OBJECTS, SOURCES, CARS, VISIT_HOURS } from "./config.js";
+import { SERVICES, OBJECTS, SOURCES } from "./config.js";
 import { hashPassword } from "./db.js";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
@@ -188,10 +188,9 @@ export function seed() {
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
     const visitIso = visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null;
     // Машина на выезд: первая, у которой нет накладки по времени
-    const car = visitIso ? CARS.find((c) => !requests.some((o) => o.car_id === c.id && o.visit_at && Math.abs(new Date(o.visit_at) - new Date(visitIso)) < VISIT_HOURS * 3600e3)) : null;
     const client = pick(clients);
     requests.push({
-      id: 1000 + 46 - i, created_at: iso(created), client_id: client.id, client: client.name, phone: client.phone, car_id: car?.id || null,
+      id: 1000 + 46 - i, created_at: iso(created), client_id: client.id, client: client.name, phone: client.phone,
       address: `${pick(CITIES)}, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
       note: NOTE_BY_SERVICE[service] || pick(NOTES), status, manager_id: manager?.id || null, master_id: master?.id || null,
       visit_at: visitIso,

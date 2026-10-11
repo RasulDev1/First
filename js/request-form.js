@@ -14,7 +14,7 @@ $("requestForm").addEventListener("submit", (e) => {
   if (value("phone").replace(/\D/g, "").length < 10) { $("rfError").textContent = "Проверьте номер телефона: в нём должно быть не меньше 10 цифр"; return; }
   const client = ensureClient({ name: value("client"), phone: value("phone") });
   const created = db.insert("requests", {
-    client_id: client.id, car_id: null, comments: [], client: value("client"), phone: value("phone"), address: value("address"), service: value("service"), object: value("object"), note: value("note"),
+    client_id: client.id, comments: [], client: value("client"), phone: value("phone"), address: value("address"), service: value("service"), object: value("object"), note: value("note"),
     source: "Сайт", status: "new", manager_id: null, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
     history: [{ at: new Date().toISOString(), by: "", text: "Заказ с сайта" }],
   });

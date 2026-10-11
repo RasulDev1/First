@@ -7,6 +7,7 @@ import { rateOf } from "../pay.js";
 import { MASTER_LEVELS } from "../config.js";
 import { openDrawer, field, empty, formError, statusPill } from "../ui.js";
 import { openRequest } from "./requests.js";
+import { commentsHtml, commentForm, pushComment } from "../comments.js";
 
 const ACTIVE = ["assigned", "measure", "pricing", "in_work"];
 export const levelTitle = (m) => MASTER_LEVELS.find((l) => l.id === m.level)?.title || "Мастер";
@@ -56,6 +57,10 @@ function detailHtml(id) {
       `<button class="mini-row" data-act="request" data-id="${r.id}"><span><b>№${r.id} · ${esc(r.client)}</b><small>${esc(r.address)}</small></span>
         <span class="r">${statusPill(r.status)}<small>${dateTime(r.visit_at)}</small></span></button>`).join("")}</div>`
       : `<p class="muted">Активных заказов нет.</p>`}</section>
+    <section class="d-sec"><h3>Выполненные заказы (${s.done.length})</h3>${s.done.length ? `<div class="mini-list">${[...s.done].sort((a, b) => new Date(b.done_at || 0) - new Date(a.done_at || 0)).map((r) =>
+      `<button class="mini-row" data-act="request" data-id="${r.id}"><span><b>№${r.id} · ${esc(r.client)}</b><small>${esc(r.address)}</small></span>
+        <span class="r"><b class="num">${money(r.amount || 0)}</b><small>${r.done_at ? dateTime(r.done_at) : ""}</small></span></button>`).join("")}</div>` : `<p class="muted">Выполненных заказов пока нет.</p>`}</section>
+    <section class="d-sec"><h3>Комментарии о мастере</h3>${commentsHtml(m.comments)}${commentForm()}</section>
     ${isDirector(me) ? `<section class="d-sec btn-row"><button class="btn" data-act="edit">Изменить</button>
       <button class="btn ghost${m.active ? " danger" : ""}" data-act="toggle">${m.active ? "Больше не работает" : "Снова работает"}</button></section>` : ""}
     ${!m.active ? `<p class="muted small">Неработающего мастера нельзя выбрать в новом заказе; история его заказов сохраняется.</p>` : ""}`;
@@ -65,6 +70,7 @@ function openMaster(id) {
   openDrawer(() => detailHtml(id), {
     copy: (el) => copyText(db.find("masters", id).phone, el),
     request: (el) => openRequest(el.dataset.id),
+    comment(fd) { const m = db.find("masters", id); if (pushComment(m, fd.get("text"), me)) { db.patch("masters", id, { comments: m.comments }); toast("Комментарий добавлен", "ok"); } },
     edit: () => { if (isDirector(me)) openForm(db.find("masters", id)); },
     toggle(el) {
       const m = db.find("masters", id);
