@@ -20,13 +20,14 @@ const amount = (p, n) => `${num(n)} ${esc(p?.unit || "")}`;
 function matches(p) {
   if (WF.name && !`${p.name} ${p.sku} ${p.specs}`.toLowerCase().includes(WF.name.toLowerCase())) return false;
   if (WF.type && p.category !== WF.type) return false;
-  if (WF.price && (p.cost || 0) > Number(WF.price)) return false;
   if (WF.place && !placesOf(p.id).some((s) => s.loc.toLowerCase().includes(WF.place.toLowerCase()))) return false;
   return true;
 }
 
 function stockRows() {
   const list = db.list("products").filter(matches);
+  // Цена в фильтре не отсекает товары, а сортирует: сначала самые близкие к указанной
+  if (WF.price) list.sort((a, b) => Math.abs((a.cost || 0) - Number(WF.price)) - Math.abs((b.cost || 0) - Number(WF.price)));
   if (!list.length) return empty("Ничего не нашлось", "Измените фильтры.");
   return `<div class="table-wrap"><table class="tbl stock-tbl">
     <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Цена</th></tr></thead>
@@ -48,7 +49,7 @@ function stockTab() {
   return `<form data-form="whFind" class="filterbar wh">
       ${flt("Название", `<input type="search" name="name" value="${esc(WF.name)}" placeholder="Название, артикул">`)}
       ${flt("Тип", `<select name="type">${options(CATEGORIES, WF.type, { empty: "Все типы" })}</select>`)}
-      ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}" placeholder="до, ₽">`)}
+      ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}" placeholder="Ближе к, ₽">`)}
       ${flt("Место на складе", `<input type="search" name="place" value="${esc(WF.place)}" placeholder="Б-2-1">`)}
       <button class="btn" type="submit">Найти</button>
       <button class="btn" type="button" data-act="whReset"${active ? "" : " disabled"}>Сброс</button>
