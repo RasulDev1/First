@@ -105,6 +105,7 @@ export function seed() {
   const pick = (list) => list[Math.floor(rand() * list.length)];
   const now = Date.now(), DAY = 864e5;
   const iso = (ms) => new Date(ms).toISOString();
+  const past = (ms) => iso(Math.min(ms, now - 15 * 60e3)); // события заказа не могут быть в будущем
 
   const staff = DEMO_ACCOUNTS.map((a, i) => {
     const salt = `s${i + 1}demo`;
@@ -162,14 +163,15 @@ export function seed() {
       { product_id: bySku(pick(["O90-160", "O90-125"])), qty: 2 + Math.floor(rand() * 4) },
       { product_id: bySku("H-160"), qty: 6 },
     ].map((it) => ({ ...it, price: products[it.product_id - 1].price })) : [];
-    const history = [{ at: iso(created), by: "", text: "Заказ создан" }];
-    if (manager) history.push({ at: iso(created + 2 * 3600e3), by: manager.name, text: "Менеджер взял заказ" });
-    if (master) history.push({ at: iso(created + 3 * 3600e3), by: manager.name, text: `Назначен мастер: ${master.name}` });
-    if (status === "measure") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: Выезд на замеры" });
-    if (status === "pricing") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: Согласование стоимости" });
-    if (status === "in_work") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: В работе" });
-    if (status === "done") history.push({ at: iso(created + 4 * DAY), by: manager.name, text: "Статус: Завершён" });
-    if (status === "cancelled") history.push({ at: iso(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
+    const history = [{ at: past(created), by: "", text: "Заказ создан" }];
+    if (manager) history.push({ at: past(created + 2 * 3600e3), by: manager.name, text: "Менеджер взял заказ" });
+    if (master) history.push({ at: past(created + 3 * 3600e3), by: manager.name, text: `Назначен мастер: ${master.name}` });
+    if (master) history.push({ at: past(created + 3 * 3600e3), by: manager.name, text: "Статус: Назначен Мастер" });
+    if (status === "measure") history.push({ at: past(created + DAY), by: manager.name, text: "Статус: Выезд на замеры" });
+    if (status === "pricing") history.push({ at: past(created + DAY), by: manager.name, text: "Статус: Согласование стоимости" });
+    if (status === "in_work") history.push({ at: past(created + DAY), by: manager.name, text: "Статус: В работе" });
+    if (status === "done") history.push({ at: past(created + 4 * DAY), by: manager.name, text: "Статус: Завершён" });
+    if (status === "cancelled") history.push({ at: past(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
     requests.push({
       id: 1000 + 46 - i, created_at: iso(created), client: pick(CLIENTS), phone: `+7 900 ${100 + Math.floor(rand() * 899)}-${10 + Math.floor(rand() * 89)}-${10 + Math.floor(rand() * 89)}`,
@@ -178,8 +180,8 @@ export function seed() {
       visit_at: visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null,
       amount, items, comment: "", history,
       expenses: (status === "done" ? items : status === "in_work" ? items.slice(0, 2) : []).map((it) => ({ product_id: it.product_id, qty: it.qty,
-        loc: stock.find((x) => x.product_id === it.product_id)?.loc || null, cost: products[it.product_id - 1].cost, at: iso(created + 2 * DAY), by: DEMO_ACCOUNTS[4].name })),
-      done_at: status === "done" ? iso(created + 4 * DAY) : null,
+        loc: stock.find((x) => x.product_id === it.product_id)?.loc || null, cost: products[it.product_id - 1].cost, at: past(created + 2 * DAY), by: DEMO_ACCOUNTS[4].name })),
+      done_at: status === "done" ? past(created + 4 * DAY) : null,
     });
   }
   requests.sort((a, b) => a.id - b.id);

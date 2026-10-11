@@ -431,7 +431,7 @@ form { display: flex; flex-direction: column; gap: 14px; }
 
 
 
-.req-tbl td:nth-child(5) { min-width: 200px; }
+
 
 .filterbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 8px; margin-bottom: 14px; }
 @media (min-width: 1500px) { .filterbar { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
@@ -440,3 +440,24 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .flt span { font-size: 11.5px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .filterbar input, .filterbar select, .filterbar .btn { width: 100%; height: 42px; min-height: 42px; padding: 0 10px; font-size: 14px; border-radius: 0; }
 .filterbar .btn { padding: 0 6px; white-space: nowrap; }
+
+/* Нижняя панель выбранного заказа: 30% высоты экрана */
+.req-tbl tr.selected td { background: var(--teal-soft); }
+.sheet-space { height: 30vh; flex: none; }
+.sheet { position: fixed; left: 252px; right: 0; bottom: 0; z-index: 25; height: 30vh; min-height: 230px; display: flex; flex-direction: column;
+  background: var(--surface); border-top: 2px solid var(--teal); box-shadow: 0 -8px 24px rgba(20, 50, 52, .12); }
+.sheet-head { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 8px clamp(16px, 3vw, 36px); border-bottom: 1px solid var(--line); }
+.sheet-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.sheet-tabs button { font: inherit; font-size: 14px; font-weight: 700; padding: 6px 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); cursor: pointer; }
+.sheet-tabs button[aria-pressed="true"] { color: var(--teal-deep); border-bottom-color: var(--teal); }
+.sheet-tools { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.sheet-body { flex: 1; overflow: auto; padding: 12px clamp(16px, 3vw, 36px) 16px; display: flex; flex-direction: column; gap: 12px; }
+.sheet-kv { grid-template-columns: max-content 1fr; column-gap: 18px; }
+@media (min-width: 1100px) { .sheet-kv { grid-template-columns: max-content 1fr max-content 1fr; } }
+.sheet-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.sheet-cols .inline-form { margin-top: 10px; }
+.sheet-steps { gap: 6px; }
+.kv dd.bad { color: var(--bad); }
+@media (max-width: 900px) { .sheet { left: 0; } }
+.history .pill { align-self: flex-start; width: max-content; }
+.sheet-body > .btn { align-self: flex-start; }

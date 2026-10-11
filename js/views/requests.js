@@ -10,7 +10,9 @@ import { levelTitle } from "./masters.js";
 import { openDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
 import { qtyOf, product, shortages, expensedQty, expenseTotal, locChip } from "../stock.js";
 
-let sort = { key: "id", dir: -1 }; // по умолчанию — по порядку, новые сверху
+let sort = { key: "updated", dir: -1 }; // по умолчанию — по последней смене статуса, свежие сверху
+let sel = null;      // выбранный заказ: открыт в нижней панели
+let tab = "main";    // вкладка нижней панели
 let query = "";
 let me = null;
 
@@ -44,7 +46,14 @@ function matches(r) {
   return query.toLowerCase().split(/\s+/).every((w) => hay.includes(w));
 }
 
+/** Когда последний раз менялся статус: последняя запись «Статус: …» в истории, иначе дата оформления */
+export function statusAt(r) {
+  const h = [...(r.history || [])].reverse().find((x) => x.text.startsWith("Статус:"));
+  return h?.at || r.created_at;
+}
+
 const sortValue = {
+  updated: (r) => new Date(statusAt(r)).getTime(),
   id: (r) => r.id,
   created: (r) => new Date(r.created_at).getTime(),
   done: (r) => (r.done_at ? new Date(r.done_at).getTime() : null),
@@ -64,14 +73,14 @@ function sorted(list) {
 }
 
 function rowHtml(r) {
-  return `<tr class="clickable" data-act="open" data-id="${r.id}">
+  return `<tr class="clickable${r.id === sel ? " selected" : ""}" data-act="select" data-id="${r.id}">
     <td class="num"><b>№${r.id}</b></td>
     <td class="num nowrap">${dateShort(r.created_at)}</td>
     <td class="num nowrap">${r.done_at ? dateShort(r.done_at) : `<span class="muted">—</span>`}</td>
     <td><b class="num nowrap">${esc(r.phone)}</b><small>${esc(r.client)}</small></td>
     <td class="nowrap">${esc(cityOf(r))}</td>
     <td>${esc(streetOf(r))}</td>
-    <td>${statusPill(r.status)}</td></tr>`;
+    <td class="nowrap">${statusPill(r.status)}</td></tr>`;
 }
 
 function rowsHtml() {
@@ -86,6 +95,7 @@ const flt = (label, control, cls = "") => `<label class="flt${cls}"><span>${esc(
 
 function render(user) {
   me = user;
+  if (sel && !db.find("requests", sel)) sel = null;
   const warehouse = isWarehouse(user);
   const th = ([key, title]) => `<th><button type="button" class="th-sort" data-act="sort" data-id="${key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   const active = query || Object.values(F).some(Boolean);
@@ -104,7 +114,81 @@ function render(user) {
     </div>
     <div class="table-wrap"><table class="tbl req-tbl"><thead>
       <tr>${COLS.map(th).join("")}</tr>
-    </thead><tbody id="reqList">${rowsHtml()}</tbody></table></div></form>`;
+    </thead><tbody id="reqList">${rowsHtml()}</tbody></table></div></form>
+    ${sheetHtml()}`;
+}
+
+/* ---------- Нижняя панель выбранного заказа ---------- */
+const TABS = [["main", "Основное"], ["pay", "Оплата"], ["exp", "Расходы"], ["hist", "История"]];
+
+function sheetMain(r) {
+  const master = db.find("masters", r.master_id);
+  const warehouse = isWarehouse(me);
+  return `<dl class="kv sheet-kv">
+      <dt>Город</dt><dd>${esc(cityOf(r) || "—")}</dd>
+      <dt>Улица</dt><dd>${esc(streetOf(r))}</dd>
+      ${warehouse ? "" : `<dt>Клиент</dt><dd>${esc(r.client)}</dd><dt>Телефон</dt><dd class="num">${esc(r.phone)}</dd>`}
+      <dt>Услуга</dt><dd>${esc(r.service)}${r.object ? ` · ${esc(r.object)}` : ""}</dd>
+      <dt>Мастер</dt><dd>${master ? `${esc(master.name)} · ${esc(levelTitle(master))}` : `<span class="muted">не назначен</span>`}</dd>
+      <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}</dd>
+      ${warehouse ? "" : `<dt>Менеджер</dt><dd>${r.manager_id ? esc(staffName(r.manager_id)) : "—"}</dd>`}
+      <dt>Оформлен</dt><dd>${dateTime(r.created_at)}${r.source ? ` · ${esc(r.source)}` : ""}</dd>
+      ${r.done_at ? `<dt>Завершён</dt><dd>${dateTime(r.done_at)}</dd>` : ""}
+      ${r.note ? `<dt>Со слов клиента</dt><dd>${esc(r.note)}</dd>` : ""}
+      ${r.comment && !warehouse ? `<dt>Комментарий</dt><dd>${esc(r.comment)}</dd>` : ""}
+    </dl>
+    ${warehouse ? "" : `<div class="status-steps sheet-steps">${STATUSES.map((st) =>
+      `<button type="button" class="chip sortbtn" data-act="sheetStatus" data-id="${st.id}" aria-pressed="${st.id === r.status}"${st.id === r.status ? " disabled" : ""}>${esc(st.title)}</button>`).join("")}</div>`}`;
+}
+
+function sheetPay(r) {
+  const paid = (r.payments || []).reduce((n, p) => n + p.sum, 0);
+  const cost = expenseTotal(r);
+  return `<div class="sheet-cols">
+    <div><dl class="kv sheet-kv">
+      <dt>Сумма договора</dt><dd class="num"><b>${money(r.amount || 0)}</b></dd>
+      <dt>Оплачено</dt><dd class="num">${money(paid)}</dd>
+      <dt>Остаток</dt><dd class="num ${(r.amount || 0) - paid > 0 ? "bad" : ""}"><b>${money(Math.max(0, (r.amount || 0) - paid))}</b></dd>
+      <dt>Материалы со склада</dt><dd class="num">${money(cost)}</dd>
+      <dt>Прибыль</dt><dd class="num">${money((r.amount || 0) - cost)}</dd></dl>
+      <form class="inline-form" data-form="sheetAmount"><input name="amount" type="number" min="0" step="100" inputmode="numeric" value="${r.amount || ""}" placeholder="Сумма договора" aria-label="Сумма договора, ₽"><button class="btn" type="submit">Сохранить сумму</button></form></div>
+    <div>${(r.payments || []).length ? `<ol class="history">${[...r.payments].reverse().map((p) => `<li><b class="num">${money(p.sum)}</b>${p.note ? ` · ${esc(p.note)}` : ""}<small>${dateTime(p.at)}${p.by ? ` · ${esc(p.by)}` : ""}</small></li>`).join("")}</ol>` : `<p class="muted">Оплат пока не было.</p>`}
+      <form class="inline-form" data-form="sheetPay"><input name="sum" type="number" min="1" step="1" inputmode="numeric" placeholder="Сумма оплаты" aria-label="Сумма оплаты, ₽" required><input name="note" maxlength="80" placeholder="Наличные, перевод…" aria-label="Способ оплаты"><button class="btn primary" type="submit">Внести оплату</button></form></div>
+  </div>`;
+}
+
+function sheetHist(r) {
+  const list = [...(r.history || [])].reverse();
+  return list.length ? `<ol class="history">${list.map((h) => {
+    const st = h.text.startsWith("Статус:") && STATUSES.find((x) => x.title === h.text.slice(7).trim());
+    return `<li>${st ? statusPill(st.id) : `<b>${esc(h.text)}</b>`}<small>${dateTime(h.at)}${h.by ? ` · ${esc(h.by)}` : ""}</small></li>`;
+  }).join("")}</ol>` : `<p class="muted">Изменений нет.</p>`;
+}
+
+function sheetHtml() {
+  const r = sel && db.find("requests", sel);
+  if (!r) return "";
+  const tabs = TABS.filter(([id]) => !(id === "pay" && isWarehouse(me)));
+  if (!tabs.some(([id]) => id === tab)) tab = "main";
+  const body = tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: isWarehouse(me) }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
+  return `<div class="sheet-space"></div><section class="sheet" aria-label="Заказ №${r.id}">
+    <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
+      <nav class="sheet-tabs">${tabs.map(([id, title]) => `<button type="button" data-act="tab" data-id="${id}" aria-pressed="${id === tab}">${esc(title)}</button>`).join("")}</nav>
+      <span class="sheet-tools">${isWarehouse(me) ? "" : `<button type="button" class="btn sm" data-act="open" data-id="${r.id}">Открыть карточку</button>`}
+        <button type="button" class="icon-btn" data-act="closeSheet" aria-label="Закрыть">✕</button></span></header>
+    <div class="sheet-body">${body}</div></section>`;
+}
+
+const selected = () => db.find("requests", sel);
+
+function setStatus(r, next, el) {
+  if (next === "cancelled" && !armed(el, "Точно отменить?")) return false;
+  if (!["new", "cancelled"].includes(next) && !r.master_id) { toast("Сначала выберите мастера", "bad"); return false; }
+  r.status = next;
+  r.done_at = next === "done" ? new Date().toISOString() : null;
+  if (!r.manager_id) r.manager_id = me.id;
+  log(r, `Статус: ${STATUSES.find((s) => s.id === next).title}`);
+  return true;
 }
 
 /* ---------- Карточка заказа ---------- */
@@ -284,13 +368,8 @@ const detailActions = {
     save("Мастер и дата сохранены");
   },
   status(el) {
-    const r = current(), next = el.dataset.id;
-    if (next === "cancelled" && !armed(el, "Точно отменить?")) return;
-    if (!["new", "cancelled"].includes(next) && !r.master_id) return toast("Сначала выберите мастера", "bad");
-    r.status = next;
-    r.done_at = next === "done" ? new Date().toISOString() : null;
-    if (!r.manager_id) r.manager_id = me.id;
-    log(r, `Статус: ${STATUSES.find((s) => s.id === next).title}`);
+    const next = el.dataset.id;
+    if (!setStatus(current(), next, el)) return;
     save(next === "done" ? "Заказ завершён" : "Статус изменён");
   },
   remove(el) {
@@ -377,6 +456,24 @@ export default {
   render,
   actions: {
     open: (el) => openRequest(el.dataset.id),
+    select(el) { const id = Number(el.dataset.id); sel = sel === id ? null : id; refresh(); },
+    closeSheet() { sel = null; refresh(); },
+    tab(el) { tab = el.dataset.id; refresh(); },
+    sheetStatus(el) { const next = el.dataset.id; if (setStatus(selected(), next, el)) save(next === "done" ? "Заказ завершён" : "Статус изменён"); },
+    sheetAmount(fd) {
+      const r = selected(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
+      if (amount === (r.amount || 0)) return;
+      r.amount = amount; log(r, `Сумма договора: ${money(amount)}`); save("Сумма сохранена");
+    },
+    sheetPay(fd, form) {
+      const r = selected(), sum = Math.round(Number(fd.get("sum")) || 0);
+      if (!(sum > 0)) return formError(form, "Впишите сумму");
+      const note = String(fd.get("note") || "").trim();
+      (r.payments ||= []).push({ sum, note, at: new Date().toISOString(), by: me.name });
+      log(r, `Оплата: ${money(sum)}${note ? ` (${note})` : ""}`);
+      save("Оплата внесена");
+    },
+    expense: () => openExpense({ requestId: sel }),
     create: () => openForm(null),
     sort(el) {
       const key = el.dataset.id;
