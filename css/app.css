@@ -553,8 +553,8 @@ h1, h2, h3, .d-head h2, .panel h3, .brand { color: var(--heading); }
 .calc-out h4 { margin: 4px 0 0; font-size: 14px; color: var(--heading); }
 @media (max-width: 900px) { .calc { grid-template-columns: minmax(0, 1fr); } .calc-form { position: static; } }
 
-/* Кнопки в панели справа: при наведении — слегка затемнённый синий фон поверх, после нажатия оно остаётся (пока кнопка в фокусе) */
-.drawer .btn, .drawer .chip { background-image: linear-gradient(rgba(3, 105, 161, 0), rgba(3, 105, 161, 0)); transition: background-color .15s, background-image .15s; }
-.drawer .btn:not(:disabled):hover, .drawer .btn:not(:disabled):focus, .drawer .chip:not(:disabled):hover, .drawer .chip:not(:disabled):focus {
-  background-image: linear-gradient(rgba(3, 105, 161, .16), rgba(3, 105, 161, .16)); }
-.drawer .btn:focus:not(:focus-visible) { outline: none; }
+/* Пункты меню: при наведении — слегка затемнённый синий фон поверх, на выбранном пункте он остаётся */
+.nav-item { transition: background-color .15s, color .15s; }
+.nav-item:hover { background: rgba(3, 105, 161, .09); color: #0369a1; }
+.nav-item[aria-current] { background: rgba(3, 105, 161, .14); color: #0284c7; }
+.nav-item:active { background: rgba(3, 105, 161, .18); }
