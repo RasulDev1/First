@@ -271,7 +271,7 @@ function detailHtml(id) {
 
     ${r.status === "measure" && r.measured_at ? `<section class="d-sec callout"><p><b>Мастер сделал замеры</b> (${dateTime(r.measured_at)}). Впишите данные замеров ниже и нажмите «Сохранить».</p></section>` : ""}
 
-    ${r.status === "new" ? `<section class="d-sec callout">
+    ${r.status === "new" && !r.manager_id ? `<section class="d-sec callout">
       <p><b>Заказ создан.</b> Возьмите его, позвоните клиенту и назначьте мастера.</p>
       <button class="btn primary" data-act="take">Взять заказ</button></section>` : ""}
 
