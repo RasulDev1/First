@@ -454,7 +454,6 @@ form { display: flex; flex-direction: column; gap: 14px; }
 @media (min-width: 1100px) { .sheet-kv { grid-template-columns: max-content 1fr max-content 1fr; } }
 .sheet-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
 .sheet-cols .inline-form { margin-top: 10px; }
-.sheet-steps { gap: 6px; }
 .kv dd.bad { color: var(--bad); }
 @media (max-width: 900px) { .sheet { left: 0; } }
 .history .pill { align-self: flex-start; width: max-content; }

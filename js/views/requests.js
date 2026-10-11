@@ -139,9 +139,7 @@ function sheetMain(r) {
       <dt>Оформлен</dt><dd>${dateTime(r.created_at)}${r.source ? ` · ${esc(r.source)}` : ""}</dd>
       ${r.done_at ? `<dt>Завершён</dt><dd>${dateTime(r.done_at)}</dd>` : ""}
       ${r.note ? `<dt>Со слов клиента</dt><dd>${esc(r.note)}</dd>` : ""}
-    </dl>
-    ${warehouse ? "" : `<div class="status-steps sheet-steps">${STATUSES.map((st) =>
-      `<button type="button" class="chip sortbtn" data-act="sheetStatus" data-id="${st.id}" aria-pressed="${st.id === r.status}"${st.id === r.status ? " disabled" : ""}>${esc(st.title)}</button>`).join("")}</div>`}`;
+    </dl>`;
 }
 
 function sheetPay(r) {
@@ -576,7 +574,6 @@ export default {
     closeSheet() { sel = null; refresh(); },
     tab(el) { tab = el.dataset.id; refresh(); },
     editMode: () => toggleEdit(sel),
-    sheetStatus: guard(() => selected(), (el) => { const next = el.dataset.id; if (setStatus(selected(), next, el)) save(next === "done" ? "Заказ завершён" : "Статус изменён"); }),
     sheetAmount: guard(() => selected(), (fd) => {
       const r = selected(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
       if (amount === (r.amount || 0) || !amountAllowed(r, amount)) return;
