@@ -148,12 +148,12 @@ export function seed() {
     const age = Math.floor((i / 46) * 90 + rand() * 2);
     const created = now - age * DAY - Math.floor(rand() * 9) * 3600e3;
     const service = pick(SERVICES);
-    const status = age < 2 ? (rand() < 0.7 ? "new" : "assigned") : age < 7 ? pick(["assigned", "in_work", "in_work", "new", "done"])
+    const status = age < 2 ? (rand() < 0.7 ? "new" : "assigned") : age < 7 ? pick(["assigned", "measure", "pricing", "in_work", "in_work", "new", "done"])
       : rand() < 0.78 ? "done" : rand() < 0.5 ? "cancelled" : "in_work";
     const manager = status === "new" ? null : pick(managers);
-    const master = ["assigned", "in_work", "done"].includes(status) ? pick(masters) : null;
+    const master = ["assigned", "measure", "pricing", "in_work", "done"].includes(status) ? pick(masters) : null;
     const big = /рекуперац|ресторан|приточной/i.test(service);
-    const amount = status === "cancelled" || status === "new" ? 0
+    const amount = ["cancelled", "new", "assigned", "measure"].includes(status) ? 0
       : Math.round(((big ? 90000 : 18000) + rand() * (big ? 260000 : 60000)) / 500) * 500;
     const items = master && /Монтаж|рекуперац|кухни/i.test(service) ? [
       { product_id: bySku(pick(["VK-160", "VK-200", "BV-100", "VK-100"])), qty: 1 },
@@ -164,8 +164,10 @@ export function seed() {
     const history = [{ at: iso(created), by: "", text: "Заказ создан" }];
     if (manager) history.push({ at: iso(created + 2 * 3600e3), by: manager.name, text: "Менеджер взял заказ" });
     if (master) history.push({ at: iso(created + 3 * 3600e3), by: manager.name, text: `Назначен мастер: ${master.name}` });
+    if (status === "measure") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: Выезд на замеры" });
+    if (status === "pricing") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: Согласование стоимости" });
     if (status === "in_work") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: В работе" });
-    if (status === "done") history.push({ at: iso(created + 4 * DAY), by: manager.name, text: "Статус: Выполнен" });
+    if (status === "done") history.push({ at: iso(created + 4 * DAY), by: manager.name, text: "Статус: Завершён" });
     if (status === "cancelled") history.push({ at: iso(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
     requests.push({

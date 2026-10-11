@@ -1,8 +1,8 @@
-// «Заказы» (менеджер и руководитель): заказы с сайта и звонков, назначение мастера и даты выезда, статусы,
+// «Заказы» (менеджер и руководитель): единый список по порядку с сортировками, создание и удаление заказов, мастер, выезд, статусы,
 // сумма договора, материалы по плану, расходы со склада и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
 import { esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
-import { STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
+import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
 import { db } from "../db.js";
 import { isDirector, isWarehouse, currentUser } from "../auth.js";
 import { openExpense } from "./warehouse.js";
@@ -10,12 +10,12 @@ import { levelTitle } from "./masters.js";
 import { openDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
 import { qtyOf, product, shortages, expensedQty, expenseTotal, locChip } from "../stock.js";
 
-let filter = "active";  // active · new · assigned · in_work · done · cancelled · all
-let mine = false;
+const SORTS = [["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
+let sort = { key: "id", dir: -1 }; // по умолчанию — по порядку, новые сверху
 let query = "";
 let me = null;
 
-const ACTIVE = ["new", "assigned", "in_work"];
+const ACTIVE = ACTIVE_STATUSES;
 const staffName = (id) => db.find("staff", id)?.name || "";
 const masterName = (id) => db.find("masters", id)?.name || "";
 export const requestTotal = (r) => r.amount || 0;
@@ -26,43 +26,53 @@ function log(r, text) {
 }
 
 function matches(r) {
-  if (filter === "active" && !ACTIVE.includes(r.status)) return false;
-  if (!["active", "all"].includes(filter) && r.status !== filter) return false;
-  if (mine && r.manager_id !== me.id) return false;
   if (!query) return true;
   const hay = `${r.id} ${r.client} ${r.phone} ${r.address} ${r.service} ${masterName(r.master_id)}`.toLowerCase();
   return query.toLowerCase().split(/\s+/).every((w) => hay.includes(w));
+}
+
+const sortValue = {
+  id: (r) => r.id,
+  created: (r) => new Date(r.created_at).getTime(),
+  done: (r) => (r.done_at ? new Date(r.done_at).getTime() : null),
+  phone: (r) => r.phone.replace(/\D/g, ""),
+  address: (r) => r.address.toLowerCase(),
+  status: (r) => STATUSES.findIndex((s) => s.id === r.status),
+};
+
+function sorted(list) {
+  const val = sortValue[sort.key];
+  return list.sort((a, b) => {
+    const x = val(a), y = val(b);
+    if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1; // без значения — в конец
+    return (x < y ? -1 : x > y ? 1 : 0) * sort.dir || b.id - a.id;
+  });
 }
 
 function rowHtml(r) {
   const visit = r.visit_at && ACTIVE.includes(r.status) ? `<small class="muted">Выезд ${dateTime(r.visit_at)}</small>` : "";
   return `<button class="req-row" data-act="open" data-id="${r.id}">
     <span class="req-no">№${r.id}<small>${dateShort(r.created_at)}</small></span>
-    <span class="req-main"><b>${esc(r.client)}</b><small>${esc(r.service)} · ${esc(r.address)}</small></span>
+    <span class="req-main"><b>${esc(r.client)}</b><small>${esc(r.phone)} · ${esc(r.address)}</small></span>
     <span class="req-who"><span>${r.master_id ? esc(masterName(r.master_id)) : `<em class="muted">мастер не выбран</em>`}</span>${visit}</span>
     <span class="req-side">${statusPill(r.status)}${isWarehouse(me) ? "" : `<b class="num">${r.amount ? money(r.amount) : ""}</b>`}</span>
   </button>`;
 }
 
 function listHtml() {
-  const list = db.list("requests").filter(matches).sort((a, b) =>
-    (a.status === "new" ? 0 : 1) - (b.status === "new" ? 0 : 1) || new Date(b.created_at) - new Date(a.created_at));
+  const list = sorted(db.list("requests").filter(matches));
   if (!list.length) return empty("Заказов нет", query ? "Попробуйте другой запрос." : "Здесь появятся заказы с сайта и те, что вы добавите сами.");
   return list.map(rowHtml).join("");
 }
 
 function render(user) {
   me = user;
-  const all = db.list("requests");
-  const count = (st) => all.filter((r) => (st === "active" ? ACTIVE.includes(r.status) : st === "all" || r.status === st)).length;
   const warehouse = isWarehouse(user);
-  return `<div class="toolbar">
+  return `<div class="toolbar filters">
       <input class="search" type="search" id="reqSearch" placeholder="Поиск: клиент, адрес, №" value="${esc(query)}" data-input="search" aria-label="Поиск заказов">
-      ${warehouse ? `<button class="btn primary" data-act="expenseAny">Расход</button>` : `<label class="toggle"><input type="checkbox" id="reqMine" data-change="mine"${mine ? " checked" : ""}><span>Только мои</span></label>
-      <button class="btn primary" data-act="create">Новый заказ</button>`}
+      ${SORTS.map(([key, title]) => `<button class="chip sortbtn" data-act="sort" data-id="${key}" aria-pressed="${sort.key === key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`).join("")}
+      ${warehouse ? "" : `<button class="btn primary" data-act="create">Создать заказ</button>`}
     </div>
-    ${warehouse ? `<p class="lead">Здесь видно, какие материалы нужны под заказы. Откройте заказ и выпишите материал: он попадёт в «Расходы» этого заказа.</p>` : ""}
-    ${chips("filter", [["active", "В работе", count("active")], ...STATUSES.map((s) => [s.id, s.title, count(s.id)]), ["all", "Все", count("all")]], filter)}
     <div class="req-list" id="reqList">${listHtml()}</div>`;
 }
 
@@ -154,7 +164,7 @@ function detailHtml(id) {
     </section>
 
     ${r.status === "new" ? `<section class="d-sec callout">
-      <p><b>Новый заказ.</b> Возьмите его, позвоните клиенту и назначьте мастера.</p>
+      <p><b>Заказ создан.</b> Возьмите его, позвоните клиенту и назначьте мастера.</p>
       <button class="btn primary" data-act="take">Взять заказ</button></section>` : ""}
 
     ${isDirector(me) ? `<section class="d-sec"><h3>Ответственный менеджер</h3>
@@ -172,14 +182,11 @@ function detailHtml(id) {
     </section>
 
     <section class="d-sec"><h3>Статус</h3>
-      <div class="status-steps">${STATUSES.filter((s) => s.id !== "cancelled").map((s, i, arr) => {
-        const at = arr.findIndex((x) => x.id === r.status);
-        return `<span class="step${s.id === r.status ? " now" : at > i ? " past" : ""}">${esc(s.title)}</span>`;
-      }).join("")}</div>
+      <div class="status-steps">${STATUSES.filter((s) => s.id !== "cancelled").map((s) =>
+        `<button class="chip sortbtn" data-act="status" data-id="${s.id}" aria-pressed="${s.id === r.status}"${s.id === r.status ? " disabled" : ""}>${esc(s.title)}</button>`).join("")}</div>
       <div class="btn-row">
-        ${r.status === "assigned" ? `<button class="btn" data-act="status" data-id="in_work">Мастер выехал — в работе</button>` : ""}
-        ${["assigned", "in_work"].includes(r.status) ? `<button class="btn primary" data-act="status" data-id="done">Работы выполнены</button>` : ""}
-        ${closed ? `<button class="btn" data-act="status" data-id="${r.master_id ? "in_work" : "new"}">Вернуть в работу</button>` : `<button class="btn ghost danger" data-act="status" data-id="cancelled">Отменить заказ</button>`}
+        ${r.status === "cancelled" ? `<button class="btn" data-act="status" data-id="${r.master_id ? "in_work" : "new"}">Вернуть в работу</button>` : `<button class="btn ghost danger" data-act="status" data-id="cancelled">Отменить заказ</button>`}
+        <button class="btn ghost danger" data-act="remove">Удалить заказ</button>
       </div>
     </section>
 
@@ -242,18 +249,25 @@ const detailActions = {
     r.master_id = masterId;
     r.visit_at = visitIso;
     if (!r.manager_id) r.manager_id = me.id;
-    if (r.status === "new") { r.status = "assigned"; log(r, "Статус: Мастер назначен"); }
+    if (r.status === "new") { r.status = "assigned"; log(r, "Статус: Назначен Мастер"); }
     save("Мастер и дата сохранены");
   },
   status(el) {
     const r = current(), next = el.dataset.id;
     if (next === "cancelled" && !armed(el, "Точно отменить?")) return;
-    if (["assigned", "in_work", "done"].includes(next) && !r.master_id) return toast("Сначала выберите мастера", "bad");
+    if (!["new", "cancelled"].includes(next) && !r.master_id) return toast("Сначала выберите мастера", "bad");
     r.status = next;
     r.done_at = next === "done" ? new Date().toISOString() : null;
     if (!r.manager_id) r.manager_id = me.id;
     log(r, `Статус: ${STATUSES.find((s) => s.id === next).title}`);
-    save(next === "done" ? "Заказ выполнен" : "Статус изменён");
+    save(next === "done" ? "Заказ завершён" : "Статус изменён");
+  },
+  remove(el) {
+    if (!armed(el, "Точно удалить?")) return;
+    const r = current();
+    db.remove("requests", r.id);
+    document.getElementById("drawerClose").click();
+    toast(`Заказ №${r.id} удалён`);
   },
   amount(fd) {
     const r = current(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
@@ -320,7 +334,7 @@ function openForm(r) {
       } else {
         const created = db.insert("requests", { ...values, status: "new", manager_id: me.id, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
           history: [{ at: new Date().toISOString(), by: me.name, text: "Заказ завёл менеджер" }] });
-        toast(`Заказ №${created.id} создана`, "ok");
+        toast(`Заказ №${created.id} создан`, "ok");
         openRequest(created.id);
       }
     },
@@ -333,9 +347,11 @@ export default {
   actions: {
     open: (el) => openRequest(el.dataset.id),
     create: () => openForm(null),
-    expenseAny: () => openExpense(),
-    filter(el) { filter = el.dataset.id; refresh(); },
-    mine(el) { mine = el.checked; refresh(); },
+    sort(el) {
+      const key = el.dataset.id;
+      sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: key === "created" || key === "done" ? -1 : 1 };
+      refresh();
+    },
     search(el) { query = el.value.trim(); document.getElementById("reqList").innerHTML = listHtml(); },
   },
 };

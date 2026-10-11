@@ -5,7 +5,7 @@ import { MASTER_LEVELS } from "../config.js";
 import { openDrawer, field, empty, formError, statusPill } from "../ui.js";
 import { openRequest } from "./requests.js";
 
-const ACTIVE = ["assigned", "in_work"];
+const ACTIVE = ["assigned", "measure", "pricing", "in_work"];
 export const levelTitle = (m) => MASTER_LEVELS.find((l) => l.id === m.level)?.title || "Мастер";
 let me = null;
 

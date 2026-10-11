@@ -114,7 +114,7 @@ export const expensedQty = (request, productId) => (request.expenses || []).filt
 export const pendingItems = (request) => (request.items || [])
   .map((it) => ({ product_id: it.product_id, plan: it.qty, qty: Math.round((it.qty - expensedQty(request, it.product_id)) * 1000) / 1000 })).filter((it) => it.qty > 0);
 export const expenseTotal = (request) => (request.expenses || []).reduce((n, e) => n + e.qty * (e.cost || 0), 0);
-export const ACTIVE_REQUESTS = ["new", "assigned", "in_work"];
+export const ACTIVE_REQUESTS = ["new", "assigned", "measure", "pricing", "in_work"];
 
 /** Расход: складовщик выписывает материал с места в «Расходы» заказа */
 export function expense({ requestId, productId, from, qty, note }, user) {

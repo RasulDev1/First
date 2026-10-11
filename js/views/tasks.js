@@ -3,6 +3,7 @@ import { esc, dateTime, toLocalInput, localDay, toast, armed } from "../core.js"
 import { db } from "../db.js";
 import { isDirector } from "../auth.js";
 import { openDrawer, closeDrawer, field, options, empty, chips, formError } from "../ui.js";
+import { ACTIVE_STATUSES } from "../config.js";
 import { openRequest } from "./requests.js";
 
 let me = null;
@@ -85,7 +86,7 @@ function openTask(id) {
 
 function openForm(t) {
   const due = t?.due || new Date(new Date().setHours(18, 0, 0, 0) + (new Date().getHours() >= 17 ? 864e5 : 0)).toISOString();
-  const reqs = db.list("requests").filter((r) => ["new", "assigned", "in_work"].includes(r.status) || r.id === t?.request_id)
+  const reqs = db.list("requests").filter((r) => ACTIVE_STATUSES.includes(r.status) || r.id === t?.request_id)
     .sort((a, b) => b.id - a.id).map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` }));
   openDrawer(() => `<header class="d-head"><h2>${t ? "Изменить задачу" : "Задача менеджеру"}</h2></header>
     <form data-form="save">

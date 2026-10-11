@@ -23,6 +23,8 @@
   --st-work: #9a5b00; --st-work-soft: #fbecd0;
   --st-done: #24804b; --st-done-soft: #dcf1e4;
   --st-off: #5f6b6d; --st-off-soft: #e7ecec;
+  --st-measure: #0b7a8a; --st-measure-soft: #d8f0f3;
+  --st-price: #a8386b; --st-price-soft: #f9e1ec;
   --shadow: 0 1px 2px rgba(20, 50, 52, .06), 0 8px 24px rgba(20, 50, 52, .06);
   --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
   --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -35,7 +37,7 @@
     --teal: #3db7b4; --teal-deep: #5fcac7; --teal-soft: #173b3c; --mint: #63c9c5; --on-teal: #0b1d1e;
     --ok: #6ccf93; --ok-soft: #173826; --warn: #f0b45a; --warn-soft: #3b2c12; --bad: #f2867e; --bad-soft: #3d1c1a;
     --st-new: #8bb3f5; --st-new-soft: #1c2c48; --st-assigned: #c0a2f0; --st-assigned-soft: #2d2347;
-    --st-work: #f0b45a; --st-work-soft: #3b2c12; --st-done: #6ccf93; --st-done-soft: #173826; --st-off: #a3b0b2; --st-off-soft: #263133;
+    --st-work: #f0b45a; --st-work-soft: #3b2c12; --st-done: #6ccf93; --st-done-soft: #173826; --st-off: #a3b0b2; --st-off-soft: #263133; --st-measure: #6fd0de; --st-measure-soft: #12343a; --st-price: #f0a0c4; --st-price-soft: #3d1c2c;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
     color-scheme: dark;
   }
@@ -45,7 +47,7 @@
   --teal: #3db7b4; --teal-deep: #5fcac7; --teal-soft: #173b3c; --mint: #63c9c5; --on-teal: #0b1d1e;
   --ok: #6ccf93; --ok-soft: #173826; --warn: #f0b45a; --warn-soft: #3b2c12; --bad: #f2867e; --bad-soft: #3d1c1a;
   --st-new: #8bb3f5; --st-new-soft: #1c2c48; --st-assigned: #c0a2f0; --st-assigned-soft: #2d2347;
-  --st-work: #f0b45a; --st-work-soft: #3b2c12; --st-done: #6ccf93; --st-done-soft: #173826; --st-off: #a3b0b2; --st-off-soft: #263133;
+  --st-work: #f0b45a; --st-work-soft: #3b2c12; --st-done: #6ccf93; --st-done-soft: #173826; --st-off: #a3b0b2; --st-off-soft: #263133; --st-measure: #6fd0de; --st-measure-soft: #12343a; --st-price: #f0a0c4; --st-price-soft: #3d1c2c;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
   color-scheme: dark;
 }
@@ -153,6 +155,10 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
 .toolbar .lead { flex: 1 1 320px; }
 .toolbar .search { flex: 1 1 240px; }
+.toolbar.filters { gap: 8px; }
+.toolbar.filters .search { flex: 1 1 200px; max-width: none; }
+.sortbtn { white-space: nowrap; }
+.sortbtn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 
 /* ---------- Фильтры-чипы ---------- */
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
@@ -172,6 +178,8 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; }
 .st-new { color: var(--st-new); background: var(--st-new-soft); }
 .st-assigned { color: var(--st-assigned); background: var(--st-assigned-soft); }
+.st-measure { color: var(--st-measure); background: var(--st-measure-soft); }
+.st-pricing { color: var(--st-price); background: var(--st-price-soft); }
 .st-in_work { color: var(--st-work); background: var(--st-work-soft); }
 .st-done { color: var(--st-done); background: var(--st-done-soft); }
 .st-cancelled { color: var(--st-off); background: var(--st-off-soft); }
@@ -387,6 +395,7 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .hbar-track { height: 12px; border-radius: 0 4px 4px 0; background: var(--surface-2); overflow: hidden; }
 .hbar-fill { display: block; height: 100%; min-width: 2px; background: var(--teal); border-radius: 0 4px 4px 0; }
 .hbar-fill.st-new { background: var(--st-new); } .hbar-fill.st-assigned { background: var(--st-assigned); } .hbar-fill.st-in_work { background: var(--st-work); }
+.hbar-fill.st-measure { background: var(--st-measure); } .hbar-fill.st-pricing { background: var(--st-price); }
 .hbar-fill.st-done { background: var(--st-done); } .hbar-fill.st-cancelled { background: var(--st-off); }
 .hbar-value { font-weight: 800; text-align: right; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .hbar-value small { font-weight: 500; font-size: 11.5px; color: var(--muted); }

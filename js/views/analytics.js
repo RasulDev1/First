@@ -64,7 +64,7 @@ function render(user) {
       const g = map.get(k) || map.set(k, { label: names ? names(k) : k, all: 0, done: 0, revenue: 0, active: 0 }).get(k);
       g.all++;
       if (r.status === "done") { g.done++; g.revenue += r.amount || 0; }
-      if (["assigned", "in_work"].includes(r.status)) g.active++;
+      if (["assigned", "measure", "pricing", "in_work"].includes(r.status)) g.active++;
     }
     return [...map.values()].sort((a, b) => b.all - a.all);
   };
