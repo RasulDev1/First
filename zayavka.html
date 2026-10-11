@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Заявка на вентиляцию</title>
+<link rel="icon" href="img/mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/app.css?v=1">
+<script type="module" src="js/request-form.js?v=1"></script>
+</head>
+<body>
+<!-- FORM-BODY-START -->
+<div class="demo-bar" role="note"><span><b>Демо-версия.</b> Заявка попадёт в CRM в этом же браузере.</span></div>
+<main class="login public">
+  <div class="login-card">
+    <div class="login-logo"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#mark"/></svg></div>
+    <h1>Заявка на вентиляцию</h1>
+    <p class="muted">Оставьте телефон — менеджер перезвонит, уточнит задачу и согласует выезд мастера.</p>
+    <form id="requestForm" data-public>
+      <label class="field"><span class="field-label">Как к вам обращаться</span><input id="rfName" name="client" required maxlength="120" autocomplete="name"></label>
+      <label class="field"><span class="field-label">Телефон</span><input id="rfPhone" name="phone" type="tel" required maxlength="30" autocomplete="tel" placeholder="+7 928 000-00-00"></label>
+      <label class="field"><span class="field-label">Адрес объекта</span><input id="rfAddress" name="address" required maxlength="200" autocomplete="street-address" placeholder="Город, улица, дом"></label>
+      <label class="field"><span class="field-label">Что нужно</span><select id="rfService" name="service"></select></label>
+      <label class="field"><span class="field-label">Объект</span><select id="rfObject" name="object"></select></label>
+      <label class="field"><span class="field-label">Комментарий</span><textarea id="rfNote" name="note" rows="3" maxlength="1000" placeholder="Площадь помещения, что не устраивает сейчас"></textarea></label>
+      <p class="form-error" id="rfError" role="alert"></p>
+      <button class="btn primary block" type="submit">Отправить заявку</button>
+    </form>
+    <div class="sent" id="sent" hidden>
+      <p class="note ok"><b id="sentText"></b></p>
+      <button class="btn block" type="button" id="again">Оставить ещё одну заявку</button>
+    </div>
+    <p class="small"><a href="index.html#requests">Открыть CRM для сотрудников →</a></p>
+  </div>
+</main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="markGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#63c9c5"/><stop offset=".55" stop-color="#1a9798"/><stop offset="1" stop-color="#0c6566"/>
+    </linearGradient>
+    <symbol id="mark" viewBox="0 0 48 48">
+      <g fill="none" stroke="url(#markGrad)" stroke-width="3.4" stroke-linecap="round">
+        <path d="M6 16h22a5.5 5.5 0 1 0-5.5-5.5"/><path d="M6 25h31a5.5 5.5 0 1 1-5.5 5.5"/><path d="M6 34h17a4.5 4.5 0 1 1-4.5 4.5"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+<!-- FORM-BODY-END -->
+</body>
+</html>

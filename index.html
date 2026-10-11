@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>CRM Вентиляция</title>
+<link rel="icon" href="img/mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/app.css?v=1">
+<script type="module" src="js/app.js?v=1"></script>
+</head>
+<body>
+<!-- CRM-BODY-START -->
+<div class="demo-bar" role="note"><span><b>Демо-версия.</b> Данные хранятся только в этом браузере.</span>
+  <span id="storageNote" hidden>Браузер не даёт сохранять данные: после перезагрузки всё вернётся к началу.</span>
+  <button type="button" id="demoReset">Сбросить демо</button></div>
+
+<main class="login" id="login" hidden>
+  <div class="login-card">
+    <div class="login-logo"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#mark"/></svg></div>
+    <h1>Вход в CRM</h1>
+    <p class="muted">Логин и пароль выдаёт руководитель.</p>
+    <form id="loginForm" autocomplete="on">
+      <label class="field"><span class="field-label">Логин</span>
+        <input id="loginName" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
+      <label class="field"><span class="field-label">Пароль</span>
+        <input id="loginPass" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" id="loginError" role="alert"></p>
+      <button class="btn primary block" type="submit">Войти</button>
+    </form>
+    <div class="demo-login">
+      <p class="eyebrow">Войти в демо как</p>
+      <div class="demo-accounts" id="demoAccounts"></div>
+      <p class="muted small">Пароль у всех демо-аккаунтов: <b class="num" id="demoPassword"></b></p>
+    </div>
+    <p class="small"><a href="zayavka.html">Форма заявки для сайта →</a></p>
+  </div>
+</main>
+
+<div class="shell" id="shell" hidden>
+  <aside class="sidebar">
+    <a class="brand" href="#home" aria-label="CRM Вентиляция — главная">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#mark"/></svg>
+      <span class="brand-name">CRM<b>Вентиляция</b></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Разделы"></nav>
+    <div class="me-box">
+      <div class="me" id="me"></div>
+      <button class="btn ghost sm" id="logout" type="button">Выйти</button>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1 id="pageTitle"></h1></header>
+    <div class="view" id="view"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Карточка">
+  <button class="drawer-close" id="drawerClose" type="button" aria-label="Закрыть">✕</button>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="markGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#63c9c5"/><stop offset=".55" stop-color="#1a9798"/><stop offset="1" stop-color="#0c6566"/>
+    </linearGradient>
+    <symbol id="mark" viewBox="0 0 48 48">
+      <g fill="none" stroke="url(#markGrad)" stroke-width="3.4" stroke-linecap="round">
+        <path d="M6 16h22a5.5 5.5 0 1 0-5.5-5.5"/><path d="M6 25h31a5.5 5.5 0 1 1-5.5 5.5"/><path d="M6 34h17a4.5 4.5 0 1 1-4.5 4.5"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+<!-- CRM-BODY-END -->
+</body>
+</html>
