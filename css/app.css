@@ -465,3 +465,5 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .sheet-grip { position: relative; flex: none; height: 16px; margin-top: -2px; cursor: ns-resize; touch-action: none; }
 .sheet-grip::after { content: ""; position: absolute; left: 50%; top: 5px; width: 48px; height: 5px; margin-left: -24px; border-radius: 3px; background: var(--line); }
 .sheet-grip:hover::after, .sheet-grip:focus-visible::after { background: var(--teal); }
+/* Все кнопки — с прямыми углами */
+button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .demo-bar button { border-radius: 0 !important; }

@@ -120,7 +120,7 @@ export const ACTIVE_REQUESTS = ["new", "assigned", "measure", "pricing", "in_wor
 export function expense({ requestId, productId, from, qty, note }, user) {
   const request = db.find("requests", requestId);
   if (!request) fail("Выберите заказ");
-  if (!ACTIVE_REQUESTS.includes(request.status)) fail("Заказ закрыт: выписать материал нельзя");
+  if (request.status === "cancelled") fail("Заказ отменён: добавить расход нельзя");
   const p = product(productId);
   if (!p) fail("Выберите товар");
   qty = round(qty);

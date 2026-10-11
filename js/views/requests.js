@@ -254,7 +254,7 @@ function itemsHtml(r) {
 /** «Расходы»: материалы, выписанные со склада под заказ, по себестоимости */
 function expensesHtml(r, { button = false } = {}) {
   const list = r.expenses || [];
-  const open = ACTIVE.includes(r.status);
+  const open = r.status !== "cancelled"; // добавить расход можно и в завершённый заказ: вдруг забыли
   return `${list.length ? `<div class="table-wrap"><table class="tbl">
     <thead><tr><th>Материал</th><th>Место</th><th class="r">Кол-во</th><th class="r">Цена</th><th class="r">Сумма</th><th>Когда</th></tr></thead>
     <tbody>${list.map((e) => { const p = product(e.product_id); return `<tr><td>${esc(p?.name || "Удалённый товар")}${e.note ? `<small class="note-line">${esc(e.note)}</small>` : ""}${e.by ? `<small>${esc(e.by)}</small>` : ""}</td><td>${e.loc ? locChip(e.loc) : ""}</td>
