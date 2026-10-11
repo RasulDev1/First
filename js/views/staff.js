@@ -8,10 +8,10 @@ import { openDrawer, closeDrawer, field, options, formError } from "../ui.js";
 let me = null;
 const ACCESS = {
   director: "Все разделы. Распределяет роли и ставит задачи менеджерам.",
-  manager: "Заявки, мастера, свои задачи и аналитика.",
-  warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заявках только выписывает материал в «Расходы».",
+  manager: "Заказы, мастера, свои задачи и аналитика.",
+  warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заказах только выписывает материал в «Расходы».",
 };
-const SECTION_NAMES = { home: "Главная", requests: "Заявки", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники" };
+const SECTION_NAMES = { home: "Главная", requests: "Заказы", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники" };
 const loginLink = () => location.href.split(/[?#]/)[0];
 const activeDirectors = () => db.list("staff").filter((s) => s.active && s.role === "director");
 

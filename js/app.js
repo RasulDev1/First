@@ -17,7 +17,7 @@ import staff from "./views/staff.js";
 const VIEWS = { home, requests, masters, tasks, warehouse, analytics, staff };
 const NAV = [
   ["home", "Главная", "M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],
-  ["requests", "Заявки", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
+  ["requests", "Заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
   ["masters", "Мастера", "M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"],
   ["tasks", "Задачи", "M4 6l2 2 3-3M4 13l2 2 3-3M12 7h8M12 14h8M12 20h8"],
   ["warehouse", "Склад", "M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10"],

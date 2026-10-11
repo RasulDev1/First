@@ -37,7 +37,7 @@ function taskRow(t) {
   return `<div class="task${t.done_at ? " done" : ""}${isLate(t) ? " late" : ""}">
     <button class="check" data-act="toggle" data-id="${t.id}" aria-pressed="${Boolean(t.done_at)}" aria-label="${t.done_at ? "Вернуть в работу" : "Отметить выполненной"}"></button>
     <button class="task-main" data-act="open" data-id="${t.id}"><b>${esc(t.title)}</b>
-      <small>${t.done_at ? `Выполнено ${dateTime(t.done_at)}` : `Срок: ${dateTime(t.due)}`}${isDirector(me) ? ` · ${esc(staffName(t.assignee_id))}` : ""}${t.request_id ? ` · заявка №${t.request_id}` : ""}</small></button>
+      <small>${t.done_at ? `Выполнено ${dateTime(t.done_at)}` : `Срок: ${dateTime(t.due)}`}${isDirector(me) ? ` · ${esc(staffName(t.assignee_id))}` : ""}${t.request_id ? ` · заказ №${t.request_id}` : ""}</small></button>
   </div>`;
 }
 
@@ -68,7 +68,7 @@ function detailHtml(id) {
       <dt>Срок</dt><dd>${dateTime(t.due)}</dd>
       <dt>Поставил</dt><dd>${esc(staffName(t.created_by))}, ${dateTime(t.created_at)}</dd>
       ${t.done_at ? `<dt>Выполнена</dt><dd>${dateTime(t.done_at)}</dd>` : ""}
-      ${t.request_id ? `<dt>Заявка</dt><dd><button class="link" data-act="request">№${t.request_id} · ${esc(db.find("requests", t.request_id)?.client || "")}</button></dd>` : ""}
+      ${t.request_id ? `<dt>Заказ</dt><dd><button class="link" data-act="request">№${t.request_id} · ${esc(db.find("requests", t.request_id)?.client || "")}</button></dd>` : ""}
     </dl>${t.note ? `<p class="prose">${esc(t.note)}</p>` : ""}</section>
     <section class="d-sec btn-row"><button class="btn primary" data-act="toggleOne">${t.done_at ? "Вернуть в работу" : "Выполнено"}</button>
       ${isDirector(me) ? `<button class="btn" data-act="edit">Изменить</button><button class="btn ghost danger" data-act="remove">Удалить</button>` : ""}</section>`;
@@ -89,10 +89,10 @@ function openForm(t) {
     .sort((a, b) => b.id - a.id).map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` }));
   openDrawer(() => `<header class="d-head"><h2>${t ? "Изменить задачу" : "Задача менеджеру"}</h2></header>
     <form data-form="save">
-      ${field("Что сделать", `<input name="title" required maxlength="200" value="${esc(t?.title || "")}" placeholder="Перезвонить клиенту по заявке №1040" autofocus>`)}
+      ${field("Что сделать", `<input name="title" required maxlength="200" value="${esc(t?.title || "")}" placeholder="Перезвонить клиенту по заказу №1040" autofocus>`)}
       ${field("Менеджер", `<select name="assignee" required>${options(managers().map((m) => ({ id: m.id, title: m.name })), t?.assignee_id ?? (who !== "all" ? who : ""), { empty: "Выберите менеджера" })}</select>`)}
       ${field("Срок", `<input name="due" type="datetime-local" required value="${toLocalInput(due)}">`)}
-      ${field("По заявке", `<select name="request">${options(reqs, t?.request_id, { empty: "Без заявки" })}</select>`)}
+      ${field("По заказу", `<select name="request">${options(reqs, t?.request_id, { empty: "Без заказа" })}</select>`)}
       ${field("Подробности", `<textarea name="note" rows="3" maxlength="1000">${esc(t?.note || "")}</textarea>`)}
       <div class="form-actions"><button class="btn primary" type="submit">${t ? "Сохранить" : "Поставить задачу"}</button></div>
     </form>`, {

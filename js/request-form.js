@@ -1,4 +1,4 @@
-// Форма заявки для сайта компании: клиент оставляет контакты, заявка появляется в CRM со статусом «Новая».
+// Форма заявки для сайта компании: клиент оставляет контакты, заявка появляется в CRM.
 import { $ } from "./core.js";
 import { SERVICES, OBJECTS } from "./config.js";
 import { db } from "./db.js";
@@ -14,7 +14,7 @@ $("requestForm").addEventListener("submit", (e) => {
   const created = db.insert("requests", {
     client: value("client"), phone: value("phone"), address: value("address"), service: value("service"), object: value("object"), note: value("note"),
     source: "Сайт", status: "new", manager_id: null, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
-    history: [{ at: new Date().toISOString(), by: "", text: "Заявка с сайта" }],
+    history: [{ at: new Date().toISOString(), by: "", text: "Заказ с сайта" }],
   });
   $("rfError").textContent = "";
   e.currentTarget.reset();

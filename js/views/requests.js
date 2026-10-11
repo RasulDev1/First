@@ -1,6 +1,6 @@
-// «Заявки» (менеджер и руководитель): заявки с сайта и звонков, назначение мастера и даты выезда, статусы,
+// «Заказы» (менеджер и руководитель): заказы с сайта и звонков, назначение мастера и даты выезда, статусы,
 // сумма договора, материалы по плану, расходы со склада и история изменений.
-// Складовщик видит заявки в урезанном виде и только выписывает материал в «Расходы».
+// Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
 import { esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
 import { STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
 import { db } from "../db.js";
@@ -47,7 +47,7 @@ function rowHtml(r) {
 function listHtml() {
   const list = db.list("requests").filter(matches).sort((a, b) =>
     (a.status === "new" ? 0 : 1) - (b.status === "new" ? 0 : 1) || new Date(b.created_at) - new Date(a.created_at));
-  if (!list.length) return empty("Заявок нет", query ? "Попробуйте другой запрос." : "Здесь появятся заявки с сайта и те, что вы добавите сами.");
+  if (!list.length) return empty("Заказов нет", query ? "Попробуйте другой запрос." : "Здесь появятся заказы с сайта и те, что вы добавите сами.");
   return list.map(rowHtml).join("");
 }
 
@@ -57,16 +57,16 @@ function render(user) {
   const count = (st) => all.filter((r) => (st === "active" ? ACTIVE.includes(r.status) : st === "all" || r.status === st)).length;
   const warehouse = isWarehouse(user);
   return `<div class="toolbar">
-      <input class="search" type="search" id="reqSearch" placeholder="Поиск: клиент, адрес, №" value="${esc(query)}" data-input="search" aria-label="Поиск заявок">
+      <input class="search" type="search" id="reqSearch" placeholder="Поиск: клиент, адрес, №" value="${esc(query)}" data-input="search" aria-label="Поиск заказов">
       ${warehouse ? `<button class="btn primary" data-act="expenseAny">Расход</button>` : `<label class="toggle"><input type="checkbox" id="reqMine" data-change="mine"${mine ? " checked" : ""}><span>Только мои</span></label>
-      <button class="btn primary" data-act="create">Новая заявка</button>`}
+      <button class="btn primary" data-act="create">Новый заказ</button>`}
     </div>
-    ${warehouse ? `<p class="lead">Здесь видно, какие материалы нужны под заявки. Откройте заявку и выпишите материал: он попадёт в её «Расходы».</p>` : ""}
+    ${warehouse ? `<p class="lead">Здесь видно, какие материалы нужны под заказы. Откройте заказ и выпишите материал: он попадёт в «Расходы» этого заказа.</p>` : ""}
     ${chips("filter", [["active", "В работе", count("active")], ...STATUSES.map((s) => [s.id, s.title, count(s.id)]), ["all", "Все", count("all")]], filter)}
     <div class="req-list" id="reqList">${listHtml()}</div>`;
 }
 
-/* ---------- Карточка заявки ---------- */
+/* ---------- Карточка заказа ---------- */
 function productOptions() {
   return CATEGORIES.map((c) => `<optgroup label="${esc(c.title)}">${db.list("products").filter((p) => p.category === c.id)
     .map((p) => `<option value="${p.id}">${esc(p.name)} — ${num(qtyOf(p.id))} ${esc(p.unit)}</option>`).join("")}</optgroup>`).join("");
@@ -101,23 +101,23 @@ function itemsHtml(r) {
       <button class="btn" type="submit">Добавить</button></form>` : ""}</div>`;
 }
 
-/** «Расходы»: материалы, выписанные со склада под заявку, по себестоимости */
+/** «Расходы»: материалы, выписанные со склада под заказ, по себестоимости */
 function expensesHtml(r, { button = false } = {}) {
   const list = r.expenses || [];
   const open = ACTIVE.includes(r.status);
   return `${list.length ? `<div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Материал</th><th>Место</th><th class="r">Кол-во</th>${button && isWarehouse(me) ? "" : `<th class="r">Себестоимость</th>`}<th>Когда</th></tr></thead>
-    <tbody>${list.map((e) => { const p = product(e.product_id); return `<tr><td>${esc(p?.name || "Удалённый товар")}${e.by ? `<small>${esc(e.by)}</small>` : ""}</td><td>${e.loc ? locChip(e.loc) : ""}</td>
-      <td class="r num">${num(e.qty)} ${esc(p?.unit || "")}</td>${button && isWarehouse(me) ? "" : `<td class="r num">${money(e.qty * e.cost)}</td>`}<td class="num nowrap">${dateTime(e.at)}</td></tr>`; }).join("")}</tbody>
-    ${button && isWarehouse(me) ? "" : `<tfoot><tr><td colspan="3">Итого расходы</td><td class="r num"><b>${money(expenseTotal(r))}</b></td><td></td></tr></tfoot>`}</table></div>` : `<p class="muted">Со склада пока ничего не выписано.</p>`}
+    <thead><tr><th>Материал</th><th>Место</th><th class="r">Кол-во</th><th class="r">Цена</th><th class="r">Сумма</th><th>Когда</th></tr></thead>
+    <tbody>${list.map((e) => { const p = product(e.product_id); return `<tr><td>${esc(p?.name || "Удалённый товар")}${e.note ? `<small class="note-line">${esc(e.note)}</small>` : ""}${e.by ? `<small>${esc(e.by)}</small>` : ""}</td><td>${e.loc ? locChip(e.loc) : ""}</td>
+      <td class="r num">${num(e.qty)} ${esc(p?.unit || "")}</td><td class="r num">${money(e.cost)}</td><td class="r num">${money(e.qty * e.cost)}</td><td class="num nowrap">${dateTime(e.at)}</td></tr>`; }).join("")}</tbody>
+    <tfoot><tr><td colspan="4">Итого расходы</td><td class="r num"><b>${money(expenseTotal(r))}</b></td><td></td></tr></tfoot></table></div>` : `<p class="muted">Со склада пока ничего не выписано.</p>`}
     ${button && open ? `<button class="btn primary" data-act="expense">Выписать материал</button>` : ""}`;
 }
 
-/** Складовщик видит заявку без цен и контактов: адрес, мастера, материалы по плану и расходы */
+/** Складовщик видит заказ без цен и контактов: адрес, мастера, материалы по плану и расходы */
 function warehouseDetailHtml(r) {
   const plan = r.items || [];
   const master = db.find("masters", r.master_id);
-  return `<header class="d-head"><p class="eyebrow">Заявка №${r.id} · ${dateTime(r.created_at)}</p><h2>${esc(r.client)}</h2>
+  return `<header class="d-head"><p class="eyebrow">Заказ №${r.id} · ${dateTime(r.created_at)}</p><h2>${esc(r.client)}</h2>
       <div class="d-meta">${statusPill(r.status)}</div></header>
     <section class="d-sec"><dl class="kv">
       <dt>Адрес</dt><dd>${esc(r.address)}</dd><dt>Услуга</dt><dd>${esc(r.service)}</dd>
@@ -131,13 +131,13 @@ function warehouseDetailHtml(r) {
 
 function detailHtml(id) {
   const r = db.find("requests", id);
-  if (!r) return empty("Заявка удалена");
+  if (!r) return empty("Заказ удалён");
   if (isWarehouse(me)) return warehouseDetailHtml(r);
   const masters = db.list("masters").filter((m) => m.active || m.id === r.master_id);
   const managers = db.list("staff").filter((s) => s.active && (s.role === "manager" || s.role === "director"));
   const closed = ["done", "cancelled"].includes(r.status);
   return `<header class="d-head">
-      <p class="eyebrow">Заявка №${r.id} · ${esc(r.source || "")} · ${dateTime(r.created_at)}</p>
+      <p class="eyebrow">Заказ №${r.id} · ${esc(r.source || "")} · ${dateTime(r.created_at)}</p>
       <h2>${esc(r.client)}</h2>
       <div class="d-meta">${statusPill(r.status)}<span class="muted">${r.manager_id ? `Менеджер: ${esc(staffName(r.manager_id))}` : "Менеджер не назначен"}</span></div>
     </header>
@@ -154,8 +154,8 @@ function detailHtml(id) {
     </section>
 
     ${r.status === "new" ? `<section class="d-sec callout">
-      <p><b>Новая заявка.</b> Возьмите её, позвоните клиенту и назначьте мастера.</p>
-      <button class="btn primary" data-act="take">Взять заявку</button></section>` : ""}
+      <p><b>Новый заказ.</b> Возьмите его, позвоните клиенту и назначьте мастера.</p>
+      <button class="btn primary" data-act="take">Взять заказ</button></section>` : ""}
 
     ${isDirector(me) ? `<section class="d-sec"><h3>Ответственный менеджер</h3>
       <form class="inline-form" data-form="setManager"><select name="manager" aria-label="Менеджер">${options(managers.map((s) => ({ id: s.id, title: s.name })), r.manager_id, { empty: "Не назначен" })}</select>
@@ -179,7 +179,7 @@ function detailHtml(id) {
       <div class="btn-row">
         ${r.status === "assigned" ? `<button class="btn" data-act="status" data-id="in_work">Мастер выехал — в работе</button>` : ""}
         ${["assigned", "in_work"].includes(r.status) ? `<button class="btn primary" data-act="status" data-id="done">Работы выполнены</button>` : ""}
-        ${closed ? `<button class="btn" data-act="status" data-id="${r.master_id ? "in_work" : "new"}">Вернуть в работу</button>` : `<button class="btn ghost danger" data-act="status" data-id="cancelled">Отменить заявку</button>`}
+        ${closed ? `<button class="btn" data-act="status" data-id="${r.master_id ? "in_work" : "new"}">Вернуть в работу</button>` : `<button class="btn ghost danger" data-act="status" data-id="cancelled">Отменить заказ</button>`}
       </div>
     </section>
 
@@ -187,7 +187,7 @@ function detailHtml(id) {
       <form class="inline-form" data-form="amount">
         <input name="amount" type="number" min="0" step="100" inputmode="numeric" value="${r.amount || ""}" placeholder="0" aria-label="Сумма договора, ₽">
         <span class="muted">₽</span><button class="btn" type="submit">Сохранить</button></form>
-      <p class="muted small">Работы и оборудование для клиента. По выполненным заявкам сумма идёт в выручку в «Аналитике».</p>
+      <p class="muted small">Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
     </section>
 
     <section class="d-sec"><h3>Материалы по плану</h3>${itemsHtml(r)}</section>
@@ -217,8 +217,8 @@ const detailActions = {
   take() {
     const r = current();
     r.manager_id = me.id;
-    log(r, "Менеджер взял заявку");
-    save("Заявка ваша — назначьте мастера");
+    log(r, "Менеджер взял заказ");
+    save("Заказ ваш — назначьте мастера");
   },
   setManager(fd) {
     const r = current(), id = Number(fd.get("manager")) || null;
@@ -253,7 +253,7 @@ const detailActions = {
     r.done_at = next === "done" ? new Date().toISOString() : null;
     if (!r.manager_id) r.manager_id = me.id;
     log(r, `Статус: ${STATUSES.find((s) => s.id === next).title}`);
-    save(next === "done" ? "Заявка выполнена" : "Статус изменён");
+    save(next === "done" ? "Заказ выполнен" : "Статус изменён");
   },
   amount(fd) {
     const r = current(), amount = Math.max(0, Math.round(Number(fd.get("amount")) || 0));
@@ -286,12 +286,12 @@ const detailActions = {
 export function openRequest(id) {
   me = currentUser();
   openId = Number(id);
-  openDrawer(() => detailHtml(openId), detailActions, { live: true, wide: true });
+  openDrawer(() => detailHtml(openId), detailActions, { live: true, full: true });
 }
 
-/* ---------- Новая заявка и правка данных клиента ---------- */
+/* ---------- Новый заказ и правка данных клиента ---------- */
 function formHtml(r) {
-  return `<header class="d-head"><p class="eyebrow">${r ? `Заявка №${r.id}` : "Звонок или обращение"}</p><h2>${r ? "Данные клиента" : "Новая заявка"}</h2></header>
+  return `<header class="d-head"><p class="eyebrow">${r ? `Заказ №${r.id}` : "Звонок или обращение"}</p><h2>${r ? "Данные клиента" : "Новый заказ"}</h2></header>
     <form data-form="saveForm" class="grid2">
       ${field("Клиент", `<input name="client" required maxlength="120" value="${esc(r?.client || "")}" placeholder="ФИО или название организации" autofocus>`)}
       ${field("Телефон", `<input name="phone" required type="tel" maxlength="30" value="${esc(r?.phone || "")}" placeholder="+7 928 000-00-00">`)}
@@ -300,7 +300,7 @@ function formHtml(r) {
       ${field("Услуга", `<select name="service">${options(SERVICES, r?.service)}</select>`)}
       ${field("Откуда узнали", `<select name="source">${options(SOURCES, r?.source || "Звонок")}</select>`)}
       <div class="span2">${field("Что нужно клиенту", `<textarea name="note" rows="3" maxlength="1000" placeholder="Площадь, что не устраивает, удобное время">${esc(r?.note || "")}</textarea>`)}</div>
-      <div class="form-actions span2"><button class="btn primary" type="submit">${r ? "Сохранить" : "Создать заявку"}</button>
+      <div class="form-actions span2"><button class="btn primary" type="submit">${r ? "Сохранить" : "Создать заказ"}</button>
         <button class="btn ghost" type="button" data-act="cancelForm">Отмена</button></div>
     </form>`;
 }
@@ -319,8 +319,8 @@ function openForm(r) {
         openRequest(r.id);
       } else {
         const created = db.insert("requests", { ...values, status: "new", manager_id: me.id, master_id: null, visit_at: null, amount: 0, items: [], comment: "",
-          history: [{ at: new Date().toISOString(), by: me.name, text: "Заявку завёл менеджер" }] });
-        toast(`Заявка №${created.id} создана`, "ok");
+          history: [{ at: new Date().toISOString(), by: me.name, text: "Заказ завёл менеджер" }] });
+        toast(`Заказ №${created.id} создана`, "ok");
         openRequest(created.id);
       }
     },
@@ -328,7 +328,7 @@ function openForm(r) {
 }
 
 export default {
-  title: () => "Заявки",
+  title: () => "Заказы",
   render,
   actions: {
     open: (el) => openRequest(el.dataset.id),

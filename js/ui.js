@@ -1,4 +1,4 @@
-// Каркас интерфейса: боковая панель (карточка заявки, формы), делегирование нажатий и общие кусочки разметки.
+// Каркас интерфейса: боковая панель (карточка заказа, формы), делегирование нажатий и общие кусочки разметки.
 // Разметка кнопок: data-act="имя" (+ data-id) → actions.имя(элемент, событие); формы: <form data-form="имя"> → actions.имя(FormData, form).
 import { $, esc } from "./core.js";
 import { STATUSES } from "./config.js";
@@ -8,10 +8,11 @@ let viewActions = {};
 
 export function setViewActions(actions) { viewActions = actions || {}; }
 
-export function openDrawer(render, actions = {}, { live = false, wide = false } = {}) {
+export function openDrawer(render, actions = {}, { live = false, wide = false, full = false } = {}) {
   drawerState = { render, actions, live };
   const panel = $("drawer");
   panel.classList.toggle("wide", wide);
+  panel.classList.toggle("full", full);
   $("drawerBody").innerHTML = render();
   panel.hidden = false;
   $("scrim").hidden = false;

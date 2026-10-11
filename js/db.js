@@ -1,10 +1,10 @@
-// «База» CRM прямо в браузере: таблицы как в supabase-crm.sql (сотрудники, мастера, заявки, товары, остатки по местам,
+// «База» CRM прямо в браузере: таблицы как в supabase-crm.sql (сотрудники, мастера, заказы, товары, остатки по местам,
 // движения склада, задачи). Данные лежат в localStorage — общие для всех вкладок этого браузера (crm и форма заявки);
 // изменения из другой вкладки приходят через событие storage и перерисовывают экран.
 import { STORAGE_PREFIX, emit } from "./core.js";
 import { seed } from "./seed.js";
 
-const DB_KEY = STORAGE_PREFIX + "db_v1";
+const DB_KEY = STORAGE_PREFIX + "db_v2";
 const TABLES = ["staff", "masters", "requests", "products", "stock", "moves", "tasks"];
 
 let data = null;

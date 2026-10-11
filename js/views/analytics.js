@@ -1,4 +1,4 @@
-// «Аналитика» (менеджер и руководитель): заявки, конверсия и выручка за период, источники, услуги,
+// «Аналитика» (менеджер и руководитель): заказы, конверсия и выручка за период, источники, услуги,
 // загрузка мастеров и результаты менеджеров. Руководитель дополнительно видит стоимость склада.
 import { esc, money, num, pluralize } from "../core.js";
 import { STATUSES } from "../config.js";
@@ -73,29 +73,29 @@ function render(user) {
   const managers = group("manager_id", (id) => db.find("staff", id)?.name || "Не взята").filter((g) => g.label !== "Не взята");
 
   const periodChips = chips("period", [[30, "30 дней"], [90, "90 дней"], [365, "Год"], [0, "Всё время"]], period);
-  if (!list.length) return periodChips + empty("За этот период заявок нет", "Выберите период побольше.");
+  if (!list.length) return periodChips + empty("За этот период заказов нет", "Выберите период побольше.");
 
   const sv = isDirector(user) ? stockValue() : null;
   return `${periodChips}
     <section class="kpis">
-      <div class="kpi"><small>Заявок</small><b class="num">${num(list.length)}</b><span>${num(list.filter((r) => r.status === "new").length)} ждут менеджера</span></div>
+      <div class="kpi"><small>Заказов</small><b class="num">${num(list.length)}</b><span>${num(list.filter((r) => r.status === "new").length)} ждут менеджера</span></div>
       <div class="kpi"><small>Выполнено</small><b class="num">${num(done.length)}</b><span>${pct(done.length, closed)}% закрытых — успешно</span></div>
-      <div class="kpi accent"><small>Выручка</small><b class="num">${money(revenue)}</b><span>по выполненным заявкам</span></div>
+      <div class="kpi accent"><small>Выручка</small><b class="num">${money(revenue)}</b><span>по выполненным заказам</span></div>
       <div class="kpi"><small>Средний чек</small><b class="num">${money(done.length ? revenue / done.length : 0)}</b><span>${num(cancelled.length)} ${pluralize(cancelled.length, "отказ", "отказа", "отказов")}</span></div>
     </section>
 
     <div class="an-grid">
-      <section class="panel"><h3>Новые заявки по неделям</h3>${columns(list, () => 1, (v) => num(v), "Заявки по неделям")}</section>
-      <section class="panel"><h3>Выручка по неделям создания заявки</h3>${columns(done, (r) => r.amount || 0, money, "Выручка по неделям")}</section>
+      <section class="panel"><h3>Новые заказы по неделям</h3>${columns(list, () => 1, (v) => num(v), "Заказы по неделям")}</section>
+      <section class="panel"><h3>Выручка по неделям создания заказа</h3>${columns(done, (r) => r.amount || 0, money, "Выручка по неделям")}</section>
 
-      <section class="panel"><h3>Где сейчас заявки</h3>
+      <section class="panel"><h3>Где сейчас заказы</h3>
         ${bars(STATUSES.map((s) => ({ label: s.title, v: list.filter((r) => r.status === s.id).length, cls: `st-${s.id}` })))}</section>
 
       <section class="panel"><h3>Откуда приходят клиенты</h3>
         ${bars(sources.map((g) => ({ label: g.label, v: g.all, extra: `${pct(g.done, g.all)}% выполнено` })))}</section>
 
       <section class="panel wide"><h3>Услуги</h3>
-        <div class="table-wrap"><table class="tbl"><thead><tr><th>Услуга</th><th class="r">Заявок</th><th class="r">Выполнено</th><th class="r">Выручка</th><th class="r">Средний чек</th></tr></thead>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Услуга</th><th class="r">Заказов</th><th class="r">Выполнено</th><th class="r">Выручка</th><th class="r">Средний чек</th></tr></thead>
         <tbody>${services.map((g) => `<tr><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td>
           <td class="r num">${money(g.revenue)}</td><td class="r num">${money(g.done ? g.revenue / g.done : 0)}</td></tr>`).join("")}</tbody></table></div></section>
 

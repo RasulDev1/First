@@ -1,5 +1,5 @@
 // «Склад» (закупщик, складовщик и руководитель): остатки по местам «линия.стеллаж.полка», карта склада,
-// «Приём» и «Расход» (материал в расходы заявки), перемещение, списание, пересчёт, список закупки и журнал движений.
+// «Приём» и «Расход» (материал в расходы заказа), перемещение, списание, пересчёт, список закупки и журнал движений.
 import { esc, money, num, dateTime, toast, armed } from "../core.js";
 import { LINES, RACKS, SHELVES, CATEGORIES, UNITS } from "../config.js";
 import { db } from "../db.js";
@@ -85,7 +85,7 @@ function cellHtml(loc) {
 
 /* ---------- Закупка ---------- */
 function buyTab() {
-  const needed = new Map(); // product_id → сколько нужно под заявки сверх остатка
+  const needed = new Map(); // product_id → сколько нужно под заказы сверх остатка
   for (const r of waitingIssue()) for (const it of pendingItems(r)) needed.set(it.product_id, (needed.get(it.product_id) || 0) + it.qty);
   const rows = db.list("products").map((p) => {
     const forRequests = Math.max(0, (needed.get(p.id) || 0) - qtyOf(p.id));
@@ -94,10 +94,10 @@ function buyTab() {
   }).filter((x) => x.qty > 0 && (isLow(x.p) || x.forRequests)).sort((a, b) => b.forRequests - a.forRequests || a.p.category.localeCompare(b.p.category));
   if (!rows.length) return empty("Закупать нечего", "Всех позиций больше минимального остатка.");
   const total = rows.reduce((n, x) => n + x.qty * (x.p.cost || 0), 0);
-  return `<p class="lead">Позиции ниже минимального остатка и то, чего не хватает под заявки. Предлагаем докупить до двойного минимума.</p>
+  return `<p class="lead">Позиции ниже минимального остатка и то, чего не хватает под заказы. Предлагаем докупить до двойного минимума.</p>
     <div class="table-wrap"><table class="tbl">
     <thead><tr><th>Наименование</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Купить</th><th class="r">Закупка</th><th></th></tr></thead>
-    <tbody>${rows.map(({ p, qty, forRequests }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}${forRequests ? ` · под заявки не хватает ${amount(p, forRequests)}` : ""}</small></td>
+    <tbody>${rows.map(({ p, qty, forRequests }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}${forRequests ? ` · под заказы не хватает ${amount(p, forRequests)}` : ""}</small></td>
       <td class="r num${qtyOf(p.id) ? "" : " bad"}">${amount(p, qtyOf(p.id))}</td><td class="r num muted">${num(p.min_qty)}</td>
       <td class="r num"><b>${amount(p, qty)}</b></td><td class="r num">${money(qty * (p.cost || 0))}</td>
       <td class="r"><button class="btn sm" data-act="receiveBuy" data-id="${p.id}" data-qty="${qty}">Принять</button></td></tr>`).join("")}</tbody>
@@ -105,13 +105,13 @@ function buyTab() {
 }
 
 /* ---------- Журнал ---------- */
-const KIND = { in: "Приём", move: "Перемещение", out: "Списание", fix: "Пересчёт", issue: "Расход на заявку" };
+const KIND = { in: "Приём", move: "Перемещение", out: "Списание", fix: "Пересчёт", issue: "Расход на заказ" };
 function moveRow(m) {
   const p = product(m.product_id);
   const sign = m.kind === "in" || (m.kind === "fix" && m.delta > 0) ? "+" : m.kind === "move" ? "" : "−";
   const where = m.kind === "move" ? `${m.from} → ${m.to}` : m.to || m.from || "";
   return `<tr><td class="num nowrap">${dateTime(m.at)}</td><td><span class="kind k-${m.kind}">${KIND[m.kind]}</span></td>
-    <td><b>${esc(p?.name || "Удалённый товар")}</b><small>${m.request_id ? `заявка №${m.request_id}` : esc(m.note || "")}</small></td>
+    <td><b>${esc(p?.name || "Удалённый товар")}</b><small>${m.request_id ? `заказ №${m.request_id}` : esc(m.note || "")}</small></td>
     <td>${where.includes("→") ? where.split(" → ").map((l) => locChip(l)).join(" → ") : where ? locChip(where) : ""}</td><td class="r num"><b>${sign}${amount(p, m.qty)}</b></td><td class="muted">${esc(m.by || "")}</td></tr>`;
 }
 function logTab(filterProduct) {
@@ -230,7 +230,7 @@ function openOperation(kind, o = {}) {
   });
 }
 
-/* ---------- Расход: материал со склада в «Расходы» заявки ---------- */
+/* ---------- Расход: материал со склада в «Расходы» заказа ---------- */
 const expenseRequests = () => db.list("requests").filter((r) => ACTIVE_REQUESTS.includes(r.status)).sort((a, b) => b.id - a.id);
 
 function expenseHtml(o) {
@@ -239,22 +239,23 @@ function expenseHtml(o) {
   const pending = request ? pendingItems(request) : [];
   const places = o.productId ? placesOf(o.productId) : [];
   const p = product(o.productId);
-  return `<header class="d-head"><p class="eyebrow">Расход</p><h2>${request ? `Заявка №${request.id}` : "Выписать материал"}</h2>
+  return `<header class="d-head"><p class="eyebrow">Расход</p><h2>${request ? `Заказ №${request.id}` : "Выписать материал"}</h2>
       ${request ? `<p class="muted">${esc(request.client)} · ${esc(request.address)}</p>` : ""}</header>
     <form data-form="expense">
-      ${o.lockRequest ? "" : field("Заявка", `<select name="request" required data-change="pickExpense">${options(requests.map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` })), o.requestId, { empty: "Выберите заявку" })}</select>`)}
+      ${o.lockRequest ? "" : field("Заказ", `<select name="request" required data-change="pickExpense">${options(requests.map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` })), o.requestId, { empty: "Выберите заказ" })}</select>`)}
       ${pending.length ? `<div class="note">По плану менеджера осталось выписать:<br>${pending.map((it) => `<button type="button" class="link" data-act="planItem" data-id="${it.product_id}">${esc(product(it.product_id)?.name || "")} — ${num(it.qty)} ${esc(product(it.product_id)?.unit || "")}</button>`).join("<br>")}</div>` : ""}
       ${field("Товар", `<select name="product" required data-change="pickExpense">${productOptions(o.productId)}</select>`)}
       ${o.productId ? field("Откуда берём", places.length ? `<select name="from" required>${options(places.map((s) => ({ id: s.loc, title: `${s.loc} · ${(shelfOf(s.loc)?.title || "").toLowerCase()} — ${num(s.qty)} ${p.unit}` })), o.from || places[0].loc)}</select>`
         : `<p class="note warn">Этого товара нет на складе.</p>`) : ""}
-      ${field("Количество", `<input name="qty" type="number" min="0" step="any" inputmode="decimal" required value="${o.qty ?? ""}" autofocus>`, p ? `в ${esc(p.unit)}` : "")}
+      ${field("Количество", `<input name="qty" type="number" min="0" step="any" inputmode="decimal" required value="${o.qty ?? ""}" autofocus>`, p ? `в ${esc(p.unit)}${p.cost ? ` · цена ${money(p.cost)} за ${esc(p.unit)}` : ""}` : "")}
+      ${field("Комментарий", `<input name="note" maxlength="200" value="${esc(o.note || "")}" placeholder="Для чего, кому передали, что с остатком">`)}
       <div class="form-actions"><button class="btn primary" type="submit"${o.productId && !places.length ? " disabled" : ""}>Выписать в расходы</button></div>
     </form>`;
 }
 
 export function openExpense(o = {}) {
   me = currentUser();
-  const state = { requestId: o.requestId ? Number(o.requestId) : null, productId: null, from: null, qty: null, lockRequest: Boolean(o.requestId) };
+  const state = { requestId: o.requestId ? Number(o.requestId) : null, productId: null, from: null, qty: null, note: "", lockRequest: Boolean(o.requestId) };
   openDrawer(() => expenseHtml(state), {
     pickExpense(el) {
       const form = el.closest("form");
@@ -263,12 +264,14 @@ export function openExpense(o = {}) {
       if (next !== state.productId) state.from = null;
       state.productId = next;
       state.qty = form.qty.value;
+      state.note = form.note.value;
       document.getElementById("drawerBody").innerHTML = expenseHtml(state);
     },
     planItem(el) {
       const it = pendingItems(db.find("requests", state.requestId)).find((x) => x.product_id === Number(el.dataset.id));
       state.productId = it.product_id;
       state.qty = it.qty;
+      state.note = document.querySelector("#drawerBody form")?.note.value || "";
       state.from = null;
       document.getElementById("drawerBody").innerHTML = expenseHtml(state);
     },
@@ -277,8 +280,8 @@ export function openExpense(o = {}) {
         const requestId = Number(fd.get("request") || state.requestId);
         const productId = Number(fd.get("product"));
         const qty = Number(String(fd.get("qty") || "").replace(",", "."));
-        expense({ requestId, productId, from: fd.get("from"), qty }, me);
-        toast(`Выписано в расходы заявки №${requestId}: ${product(productId).name}, ${num(qty)} ${product(productId).unit}`, "ok");
+        expense({ requestId, productId, from: fd.get("from"), qty, note: fd.get("note") }, me);
+        toast(`Выписано в расходы заказа №${requestId}: ${product(productId).name}, ${num(qty)} ${product(productId).unit}`, "ok");
         closeDrawer();
       } catch (error) { formError(form, error.message); }
     },

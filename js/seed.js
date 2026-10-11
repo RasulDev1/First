@@ -1,4 +1,4 @@
-// Демо-данные: сотрудники, мастера, оборудование с местами на складе, заявки за три месяца и задачи.
+// Демо-данные: сотрудники, мастера, оборудование с местами на складе, заказы за три месяца и задачи.
 // Даты считаются от сегодняшнего дня, поэтому демо всегда выглядит «живым». Кнопка «Сбросить демо» возвращает эти данные.
 import { LINES, RACKS, SHELVES, SERVICES, OBJECTS, SOURCES } from "./config.js";
 import { hashPassword } from "./db.js";
@@ -91,12 +91,12 @@ const MASTERS = [
   ["Умар Дадаев", "+7 900 000-67-45", "trainee"],
 ];
 const TASKS = [
-  ["Перезвонить клиентам с новыми заявками за выходные", 0, 0],
+  ["Перезвонить клиентам с новыми заказами за выходные", 0, 0],
   ["Подготовить коммерческое предложение для ресторана", 1, 1],
   ["Согласовать дату монтажа рекуператора с клиентом", 0, 2],
-  ["Собрать отзывы по выполненным заявкам за месяц", 1, 4],
+  ["Собрать отзывы по выполненным заказам за месяц", 1, 4],
   ["Уточнить у склада наличие воздуховодов Ø250 под объект", 0, -1],
-  ["Отчёт по заявкам с Авито за неделю", 1, -3, true],
+  ["Отчёт по заказам с Авито за неделю", 1, -3, true],
 ];
 
 export function seed() {
@@ -142,7 +142,7 @@ export function seed() {
   });
 
   const bySku = (sku) => products.find((p) => p.sku === sku).id;
-  // Заявки за 90 дней: свежие — новые и в работе, старые — в основном выполнены
+  // Заказы за 90 дней: свежие — новые и в работе, старые — в основном выполнены
   const requests = [];
   for (let i = 0; i < 46; i++) {
     const age = Math.floor((i / 46) * 90 + rand() * 2);
@@ -161,12 +161,12 @@ export function seed() {
       { product_id: bySku(pick(["O90-160", "O90-125"])), qty: 2 + Math.floor(rand() * 4) },
       { product_id: bySku("H-160"), qty: 6 },
     ].map((it) => ({ ...it, price: products[it.product_id - 1].price })) : [];
-    const history = [{ at: iso(created), by: "", text: "Заявка создана" }];
-    if (manager) history.push({ at: iso(created + 2 * 3600e3), by: manager.name, text: "Менеджер взял заявку" });
+    const history = [{ at: iso(created), by: "", text: "Заказ создан" }];
+    if (manager) history.push({ at: iso(created + 2 * 3600e3), by: manager.name, text: "Менеджер взял заказ" });
     if (master) history.push({ at: iso(created + 3 * 3600e3), by: manager.name, text: `Назначен мастер: ${master.name}` });
     if (status === "in_work") history.push({ at: iso(created + DAY), by: manager.name, text: "Статус: В работе" });
-    if (status === "done") history.push({ at: iso(created + 4 * DAY), by: manager.name, text: "Статус: Выполнена" });
-    if (status === "cancelled") history.push({ at: iso(created + DAY), by: manager?.name || "", text: "Статус: Отменена" });
+    if (status === "done") history.push({ at: iso(created + 4 * DAY), by: manager.name, text: "Статус: Выполнен" });
+    if (status === "cancelled") history.push({ at: iso(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
     requests.push({
       id: 1000 + 46 - i, created_at: iso(created), client: pick(CLIENTS), phone: `+7 900 ${100 + Math.floor(rand() * 899)}-${10 + Math.floor(rand() * 89)}-${10 + Math.floor(rand() * 89)}`,

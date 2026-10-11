@@ -37,9 +37,9 @@ function tasksPanel(list, title) {
 
 function newPanel(requests) {
   const fresh = requests.filter((r) => r.status === "new").sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  return panel(`Новые заявки${fresh.length ? ` <i class="count">${fresh.length}</i>` : ""}`, fresh.length ? `<div class="mini-list">${fresh.slice(0, 6).map((r) =>
+  return panel(`Новые заказы${fresh.length ? ` <i class="count">${fresh.length}</i>` : ""}`, fresh.length ? `<div class="mini-list">${fresh.slice(0, 6).map((r) =>
     reqRow(r, `<small>${dateTime(r.created_at)}</small><small>${esc(r.source)}</small>`)).join("")}</div>`
-    : `<p class="muted">Все заявки разобраны.</p>`, "requests");
+    : `<p class="muted">Все заказы разобраны.</p>`, "requests");
 }
 
 function stockPanel() {
@@ -61,7 +61,7 @@ function render(user) {
     return `${hello}<div class="home-grid">
       ${stockPanel()}
       ${panel(`Выписать в расходы${toIssue.length ? ` <i class="count">${toIssue.length}</i>` : ""}`, toIssue.length ? `<div class="mini-list">${toIssue.map((r) => `<button class="mini-row" data-act="request" data-id="${r.id}">
-        <span><b>Заявка №${r.id}</b><small>${pendingItems(r).length} ${pluralize(pendingItems(r).length, "позиция", "позиции", "позиций")} · ${esc(db.find("masters", r.master_id)?.name || "мастер не назначен")}</small></span>
+        <span><b>Заказ №${r.id}</b><small>${pendingItems(r).length} ${pluralize(pendingItems(r).length, "позиция", "позиции", "позиций")} · ${esc(db.find("masters", r.master_id)?.name || "мастер не назначен")}</small></span>
         <span class="r"><small>${r.visit_at ? `выезд ${dateTime(r.visit_at)}` : ""}</small></span></button>`).join("")}</div>` : `<p class="muted">Выписывать нечего.</p>`, "requests")}
       ${panel("Последние движения", `<div class="mini-list">${moves.map((m) => `<div class="mini-row static"><span><b>${esc(product(m.product_id)?.name || "")}</b><small>${esc(m.by)} · ${dateTime(m.at)}</small></span>
         <span class="r">${m.kind === "move" ? `${locChip(m.from)} → ${locChip(m.to)}` : locChip(m.to || m.from)}</span></div>`).join("")}</div>`, "warehouse")}
@@ -73,7 +73,7 @@ function render(user) {
   const kpis = `<section class="kpis">
     <div class="kpi"><small>Новых ждут</small><b class="num">${requests.filter((r) => r.status === "new").length}</b><span>менеджера</span></div>
     <div class="kpi"><small>В работе</small><b class="num">${requests.filter((r) => ACTIVE.includes(r.status)).length}</b><span>мастер назначен или на объекте</span></div>
-    <div class="kpi"><small>Заявок за 30 дней</small><b class="num">${month.length}</b><span>${done.length} выполнено</span></div>
+    <div class="kpi"><small>Заказов за 30 дней</small><b class="num">${month.length}</b><span>${done.length} выполнено</span></div>
     <div class="kpi accent"><small>Выручка за 30 дней</small><b class="num">${money(done.reduce((n, r) => n + (r.amount || 0), 0))}</b><span>по выполненным</span></div>
   </section>`;
 
@@ -83,9 +83,9 @@ function render(user) {
       ${newPanel(requests)}
       ${visitsPanel(mine, "Мои выезды на сегодня и завтра")}
       ${tasksPanel(db.list("tasks").filter((t) => t.assignee_id === user.id), "Мои задачи")}
-      ${panel("Мои заявки в работе", (() => {
+      ${panel("Мои заказы в работе", (() => {
         const list = mine.filter((r) => ACTIVE.includes(r.status)).slice(0, 6);
-        return list.length ? `<div class="mini-list">${list.map((r) => reqRow(r, statusPill(r.status))).join("")}</div>` : `<p class="muted">Нет заявок в работе.</p>`;
+        return list.length ? `<div class="mini-list">${list.map((r) => reqRow(r, statusPill(r.status))).join("")}</div>` : `<p class="muted">Нет заказов в работе.</p>`;
       })(), "requests")}
     </div>`;
   }

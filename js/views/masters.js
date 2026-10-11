@@ -1,4 +1,4 @@
-// «Мастера»: мастера и стажёры без аккаунтов. Менеджер выбирает их в заявке; здесь — контакты, загрузка и ближайшие выезды.
+// «Мастера»: мастера и стажёры без аккаунтов. Менеджер выбирает их в заказе; здесь — контакты, загрузка и ближайшие выезды.
 import { esc, money, dateTime, toast, copyText, armed, pluralize } from "../core.js";
 import { db } from "../db.js";
 import { MASTER_LEVELS } from "../config.js";
@@ -31,9 +31,9 @@ function card(m) {
 function render(user) {
   me = user;
   const list = [...db.list("masters")].sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
-  return `<div class="toolbar"><p class="lead">Мастера и стажёры не входят в CRM. Менеджер назначает мастера в заявке и сам сообщает ему адрес и время.</p>
+  return `<div class="toolbar"><p class="lead">Мастера и стажёры не входят в CRM. Менеджер назначает мастера в заказе и сам сообщает ему адрес и время.</p>
       <button class="btn primary" data-act="create">Добавить мастера или стажёра</button></div>
-    <div class="cards">${list.length ? list.map(card).join("") : empty("Мастеров пока нет", "Добавьте первого мастера, чтобы назначать его на заявки.")}</div>`;
+    <div class="cards">${list.length ? list.map(card).join("") : empty("Мастеров пока нет", "Добавьте первого мастера, чтобы назначать его на заказы.")}</div>`;
 }
 
 function detailHtml(id) {
@@ -45,14 +45,14 @@ function detailHtml(id) {
     <section class="d-sec"><div class="kpis small">
       <div class="kpi"><small>В работе</small><b class="num">${s.active.length}</b></div>
       <div class="kpi"><small>Выполнено</small><b class="num">${s.done.length}</b></div>
-      <div class="kpi"><small>Выручка по его заявкам</small><b class="num">${money(s.revenue)}</b></div></div></section>
+      <div class="kpi"><small>Выручка по его заказам</small><b class="num">${money(s.revenue)}</b></div></div></section>
     <section class="d-sec"><h3>Выезды</h3>${s.active.length ? `<div class="mini-list">${s.active.sort((a, b) => new Date(a.visit_at || 0) - new Date(b.visit_at || 0)).map((r) =>
       `<button class="mini-row" data-act="request" data-id="${r.id}"><span><b>№${r.id} · ${esc(r.client)}</b><small>${esc(r.address)}</small></span>
         <span class="r">${statusPill(r.status)}<small>${dateTime(r.visit_at)}</small></span></button>`).join("")}</div>`
-      : `<p class="muted">Активных заявок нет.</p>`}</section>
+      : `<p class="muted">Активных заказов нет.</p>`}</section>
     <section class="d-sec btn-row"><button class="btn" data-act="edit">Изменить</button>
       <button class="btn ghost${m.active ? " danger" : ""}" data-act="toggle">${m.active ? "Больше не работает" : "Снова работает"}</button></section>
-    ${!m.active ? `<p class="muted small">Неработающего мастера нельзя выбрать в новой заявке; история его заявок сохраняется.</p>` : ""}`;
+    ${!m.active ? `<p class="muted small">Неработающего мастера нельзя выбрать в новом заказе; история его заказов сохраняется.</p>` : ""}`;
 }
 
 function openMaster(id) {
@@ -62,7 +62,7 @@ function openMaster(id) {
     edit: () => openForm(db.find("masters", id)),
     toggle(el) {
       const m = db.find("masters", id);
-      if (m.active && statsOf(m).active.length && !armed(el, `У мастера ${statsOf(m).active.length} ${pluralize(statsOf(m).active.length, "заявка", "заявки", "заявок")} в работе. Всё равно?`)) return;
+      if (m.active && statsOf(m).active.length && !armed(el, `У мастера ${statsOf(m).active.length} ${pluralize(statsOf(m).active.length, "заказ", "заказа", "заказов")} в работе. Всё равно?`)) return;
       db.patch("masters", id, { active: !m.active });
       toast(m.active ? "Мастер снова доступен" : "Мастер отключён");
     },

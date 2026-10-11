@@ -1,5 +1,5 @@
 // Склад: места хранения «линия.стеллаж.полка», остатки по местам и операции (приёмка, перемещение, списание, пересчёт,
-// выдача по заявке). Каждая операция пишется в журнал движений (таблица moves).
+// выдача по заказу). Каждая операция пишется в журнал движений (таблица moves).
 import { LINES, RACKS, SHELVES, CATEGORIES } from "./config.js";
 import { db } from "./db.js";
 import { esc } from "./core.js";
@@ -104,11 +104,11 @@ export function recount({ productId, loc, qty }, user) {
   return delta;
 }
 
-/** Хватает ли на складе материалов заявки */
+/** Хватает ли на складе материалов заказа */
 export const shortages = (request) => (request.items || [])
   .map((it) => ({ ...it, have: qtyOf(it.product_id) })).filter((it) => it.have < it.qty);
 
-/** Сколько штук товара уже выписано в расходы заявки */
+/** Сколько штук товара уже выписано в расходы заказа */
 export const expensedQty = (request, productId) => (request.expenses || []).filter((e) => e.product_id === Number(productId)).reduce((n, e) => n + e.qty, 0);
 /** Материалы по плану менеджера, которые ещё не выписаны полностью: [{ product_id, qty (осталось), plan }] */
 export const pendingItems = (request) => (request.items || [])
@@ -116,11 +116,11 @@ export const pendingItems = (request) => (request.items || [])
 export const expenseTotal = (request) => (request.expenses || []).reduce((n, e) => n + e.qty * (e.cost || 0), 0);
 export const ACTIVE_REQUESTS = ["new", "assigned", "in_work"];
 
-/** Расход: складовщик выписывает материал с места в «Расходы» заявки */
-export function expense({ requestId, productId, from, qty }, user) {
+/** Расход: складовщик выписывает материал с места в «Расходы» заказа */
+export function expense({ requestId, productId, from, qty, note }, user) {
   const request = db.find("requests", requestId);
-  if (!request) fail("Выберите заявку");
-  if (!ACTIVE_REQUESTS.includes(request.status)) fail("Заявка закрыта: выписать материал нельзя");
+  if (!request) fail("Выберите заказ");
+  if (!ACTIVE_REQUESTS.includes(request.status)) fail("Заказ закрыт: выписать материал нельзя");
   const p = product(productId);
   if (!p) fail("Выберите товар");
   qty = round(qty);
@@ -130,9 +130,9 @@ export function expense({ requestId, productId, from, qty }, user) {
   db.batch(() => {
     changeQty(productId, from, -qty);
     const at = new Date().toISOString();
-    (request.expenses ||= []).push({ product_id: p.id, qty, loc: from, cost: p.cost || 0, at, by: user?.name || "" });
-    logMove({ kind: "issue", product_id: p.id, from, qty, request_id: request.id }, user);
-    (request.history ||= []).push({ at, by: user?.name || "", text: `Склад выписал: ${p.name}, ${qty} ${p.unit}` });
+    (request.expenses ||= []).push({ product_id: p.id, qty, loc: from, cost: p.cost || 0, note: String(note || "").trim(), at, by: user?.name || "" });
+    logMove({ kind: "issue", product_id: p.id, from, qty, request_id: request.id, note: String(note || "").trim() }, user);
+    (request.history ||= []).push({ at, by: user?.name || "", text: `Склад выписал: ${p.name}, ${qty} ${p.unit}${note?.trim() ? ` · ${note.trim()}` : ""}` });
   });
 }
 
