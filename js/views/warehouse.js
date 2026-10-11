@@ -6,7 +6,7 @@ import { db } from "../db.js";
 import { openDrawer, closeDrawer, field, options, empty, chips, formError } from "../ui.js";
 import { currentUser } from "../auth.js";
 import { LOCATIONS, describeLocation, categoryTitle, product, placesOf, qtyOf, qtyAt, contentsOf, isLow, toBuy,
-  receive, move, writeOff, recount, expense, locChip, shelfOf, ACTIVE_REQUESTS } from "../stock.js";
+  receive, move, writeOff, recount, expense, locChip, ACTIVE_REQUESTS } from "../stock.js";
 
 let me = null;
 let tab = "stock";      // stock · map · buy · log
@@ -45,7 +45,7 @@ function stockRows() {
 function stockTab() {
   const products = db.list("products");
   return `<div class="toolbar">
-      <input class="search" type="search" id="whSearch" placeholder="Поиск: название, артикул, место (2.Б.А)" value="${esc(query)}" data-input="search" aria-label="Поиск по складу">
+      <input class="search" type="search" id="whSearch" placeholder="Поиск: название, артикул, место (Б-2-1)" value="${esc(query)}" data-input="search" aria-label="Поиск по складу">
       <label class="toggle"><input type="checkbox" id="whLow" data-change="low"${lowOnly ? " checked" : ""}><span>Только заканчивается</span></label>
       <button class="btn primary" data-act="receive">Приём</button>
       <button class="btn primary" data-act="expense">Расход</button>
@@ -57,16 +57,15 @@ function stockTab() {
 /* ---------- Карта склада ---------- */
 function mapTab() {
   const used = LOCATIONS.filter((l) => contentsOf(l).length).length;
-  return `<p class="lead">Место пишется как <b>линия.стеллаж.полка</b>: ${locChip("1.А.З")} — первая линия, первый стеллаж, зелёная полка.
+  return `<p class="lead">Место пишется как <b>линия-стеллаж-полка</b>: ${locChip("А-1-2")} — линия А, первый стеллаж, вторая полка.
       Занято ${used} из ${LOCATIONS.length} мест. Нажмите на полку, чтобы увидеть, что на ней лежит.</p>
-    <div class="legend">${SHELVES.map((sh) => `<span class="legend-item"><span class="dot sh-${sh.color}"></span>${sh.title} · ${sh.id}</span>`).join("")}</div>
-    <div class="map">${Array.from({ length: LINES }, (_, li) => `<section class="map-line" aria-label="Линия ${li + 1}">
-      <h3>Линия ${li + 1}</h3>
-      <div class="map-scroll"><div class="racks">${RACKS.map((rack, ri) => `<div class="rack"><span class="rack-name">${rack}<small>${ri + 1}</small></span>
-        ${SHELVES.map((shelf) => {
-          const loc = `${li + 1}.${rack}.${shelf.id}`, n = contentsOf(loc).length;
-          return `<button class="shelf sh-${shelf.color}${n ? " used" : ""}" data-act="cell" data-id="${loc}" title="${describeLocation(loc)}">
-            <span>${shelf.id}</span>${n ? `<i>${n}</i>` : ""}</button>`;
+    <div class="map">${LINES.map((line) => `<section class="map-line" aria-label="Линия ${line}">
+      <h3>Линия ${line}</h3>
+      <div class="map-scroll"><div class="racks">${Array.from({ length: RACKS }, (_, ri) => `<div class="rack"><span class="rack-name">Стеллаж ${ri + 1}</span>
+        ${Array.from({ length: SHELVES }, (_, si) => {
+          const loc = `${line}-${ri + 1}-${si + 1}`, n = contentsOf(loc).length;
+          return `<button class="shelf${n ? " used" : ""}" data-act="cell" data-id="${loc}" title="${describeLocation(loc)}">
+            <span>${loc}</span>${n ? `<i>${n}</i>` : ""}</button>`;
         }).join("")}</div>`).join("")}</div></div></section>`).join("")}</div>
     <p class="muted small">Цифра на полке — сколько разных товаров на ней лежит. Яркая полка занята, бледная свободна.</p>`;
 }
@@ -157,11 +156,10 @@ function openProduct(id) {
 
 /* ---------- Операции ---------- */
 function locationOptions(selected, { onlyWith } = {}) {
-  const list = onlyWith ? placesOf(onlyWith).map((s) => s.loc) : LOCATIONS;
-  if (onlyWith) return options(placesOf(onlyWith).map((s) => ({ id: s.loc, title: `${s.loc} · ${(shelfOf(s.loc)?.title || "").toLowerCase()} — ${num(s.qty)}` })), selected);
-  return Array.from({ length: LINES }, (_, li) => `<optgroup label="Линия ${li + 1}">${list.filter((l) => l.startsWith(`${li + 1}.`)).map((l) => {
+  if (onlyWith) return options(placesOf(onlyWith).map((s) => ({ id: s.loc, title: `${s.loc} — ${num(s.qty)}` })), selected);
+  return LINES.map((line) => `<optgroup label="Линия ${line}">${LOCATIONS.filter((l) => l.startsWith(`${line}-`)).map((l) => {
     const n = contentsOf(l).length;
-    return `<option value="${l}"${l === selected ? " selected" : ""}>${l} · ${(shelfOf(l)?.title || "").toLowerCase()}${n ? ` · занято (${n})` : " · свободно"}</option>`;
+    return `<option value="${l}"${l === selected ? " selected" : ""}>${l}${n ? ` · занято (${n})` : " · свободно"}</option>`;
   }).join("")}</optgroup>`).join("");
 }
 
@@ -240,7 +238,7 @@ function expenseHtml(o) {
     <form data-form="expense">
       ${o.lockRequest ? "" : field("Заказ", `<select name="request" required data-change="pickExpense">${options(requests.map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` })), o.requestId, { empty: "Выберите заказ" })}</select>`)}
       ${field("Товар", `<select name="product" required data-change="pickExpense">${productOptions(o.productId)}</select>`)}
-      ${o.productId ? field("Откуда берём", places.length ? `<select name="from" required>${options(places.map((s) => ({ id: s.loc, title: `${s.loc} · ${(shelfOf(s.loc)?.title || "").toLowerCase()} — ${num(s.qty)} ${p.unit}` })), o.from || places[0].loc)}</select>`
+      ${o.productId ? field("Откуда берём", places.length ? `<select name="from" required>${options(places.map((s) => ({ id: s.loc, title: `${s.loc} — ${num(s.qty)} ${p.unit}` })), o.from || places[0].loc)}</select>`
         : `<p class="note warn">Этого товара нет на складе.</p>`) : ""}
       ${field("Количество", `<input name="qty" type="number" min="0" step="any" inputmode="decimal" required value="${o.qty ?? ""}" autofocus>`, p ? `в ${esc(p.unit)}${p.cost ? ` · цена ${money(p.cost)} за ${esc(p.unit)}` : ""}` : "")}
       ${field("Комментарий", `<input name="note" maxlength="200" value="${esc(o.note || "")}" placeholder="Для чего, кому передали, что с остатком">`)}

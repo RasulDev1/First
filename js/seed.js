@@ -1,6 +1,7 @@
 // Демо-данные: сотрудники, мастера, оборудование с местами на складе, заказы за три месяца и задачи.
 // Даты считаются от сегодняшнего дня, поэтому демо всегда выглядит «живым». Кнопка «Сбросить демо» возвращает эти данные.
-import { LINES, RACKS, SHELVES, SERVICES, OBJECTS, SOURCES } from "./config.js";
+import { LOCATIONS } from "./stock.js";
+import { SERVICES, OBJECTS, SOURCES } from "./config.js";
 import { hashPassword } from "./db.js";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
@@ -120,8 +121,7 @@ export function seed() {
 
   // Раскладываем товары по местам: категория — своя зона склада, крупное оборудование на нижних полках
   const stock = [], moves = [];
-  const allPlaces = [];
-  for (let line = 1; line <= LINES; line++) for (const r of RACKS) for (const s of SHELVES) allPlaces.push(`${line}.${r}.${s.id}`);
+  const allPlaces = LOCATIONS;
   const ZONE = { equipment: 0, ducts: 12, fittings: 24, grilles: 30, valves: 33, filters: 36, materials: 39 }; // индекс первого места зоны
   const used = new Map();
   const SHARED = ["fittings", "grilles", "filters", "materials"]; // мелочь лежит по 2–3 позиции на полке

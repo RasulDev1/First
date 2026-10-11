@@ -1,30 +1,26 @@
-// Склад: места хранения «линия.стеллаж.полка», остатки по местам и операции (приёмка, перемещение, списание, пересчёт,
+// Склад: места хранения «линия-стеллаж-полка», остатки по местам и операции (приёмка, перемещение, списание, пересчёт,
 // выдача по заказу). Каждая операция пишется в журнал движений (таблица moves).
 import { LINES, RACKS, SHELVES, CATEGORIES } from "./config.js";
 import { db } from "./db.js";
 import { esc } from "./core.js";
 
-/** Все 90 мест по порядку: 1.А.А, 1.А.Б, 1.А.В, 1.Б.А … 3.К.В */
+/** Все 54 места по порядку: А-1-1, А-1-2, А-1-3, А-2-1 … В-6-3 */
 export const LOCATIONS = [];
-for (let line = 1; line <= LINES; line++)
-  for (const rack of RACKS) for (const shelf of SHELVES) LOCATIONS.push(`${line}.${rack}.${shelf.id}`);
+for (const line of LINES)
+  for (let rack = 1; rack <= RACKS; rack++) for (let shelf = 1; shelf <= SHELVES; shelf++) LOCATIONS.push(`${line}-${rack}-${shelf}`);
 
 const ORDER = new Map(LOCATIONS.map((code, i) => [code, i]));
 export const byLocation = (a, b) => (ORDER.get(a) ?? 1e9) - (ORDER.get(b) ?? 1e9);
 export const isLocation = (code) => ORDER.has(code);
 
-/** «1.А.Ж» → «Линия 1, стеллаж 1, жёлтая полка» */
+/** «А-1-2» → «Линия А, стеллаж 1, полка 2» */
 export function describeLocation(code) {
-  const [line, rack, shelf] = String(code).split(".");
-  return `Линия ${line}, стеллаж ${RACKS.indexOf(rack) + 1}, ${(SHELVES.find((x) => x.id === shelf)?.title || "").toLowerCase().replace(/ая$/, "ая")} полка`;
+  const [line, rack, shelf] = String(code).split("-");
+  return `Линия ${line}, стеллаж ${rack}, полка ${shelf}`;
 }
 
-export const shelfOf = (code) => SHELVES.find((x) => x.id === String(code).split(".")[2]);
-/** Метка места с цветной точкой полки; extra — например, количество */
-export const locChip = (code, extra = "", cls = "") => {
-  const sh = shelfOf(code);
-  return `<span class="loc ${cls} sh-${sh?.color || "n"}"><span class="dot"></span>${esc(code)}${extra}</span>`;
-};
+/** Метка места; extra — например, количество */
+export const locChip = (code, extra = "", cls = "") => `<span class="loc ${cls}">${esc(code)}${extra}</span>`;
 
 export const categoryTitle = (id) => CATEGORIES.find((c) => c.id === id)?.title || "Без категории";
 export const product = (id) => db.find("products", id);

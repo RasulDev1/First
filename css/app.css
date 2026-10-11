@@ -12,7 +12,6 @@
   --teal-deep: #0c6566;
   --teal-soft: #d3eeed;
   --mint: #63c9c5;
-  --shelf-g: #2f9e5b; --shelf-y: #e0a406; --shelf-r: #d64545;   /* цвета полок склада */
   --on-teal: #ffffff;
   --grad: linear-gradient(135deg, #63c9c5 0%, #1a9798 50%, #0c6566 100%);
   --ok: #24804b;  --ok-soft: #dcf1e4;
@@ -262,7 +261,6 @@ form { display: flex; flex-direction: column; gap: 14px; }
   display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 12px; font-weight: 700; color: var(--ink-2);
   background: color-mix(in srgb, var(--c) 9%, var(--surface)); }
 .shelf.used { color: var(--ink); background: color-mix(in srgb, var(--c) 42%, var(--surface)); border-color: var(--c); }
-.sh-g { --c: var(--shelf-g); } .sh-y { --c: var(--shelf-y); } .sh-r { --c: var(--shelf-r); }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c, var(--muted)); flex: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; font-weight: 700; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
