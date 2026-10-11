@@ -24,15 +24,14 @@ function log(r, text) {
   (r.history ||= []).push({ at: new Date().toISOString(), by: me?.name || "", text });
 }
 
-const F0 = { cFrom: "", cTo: "", dFrom: "", dTo: "", phone: "", address: "", status: "" };
+const F0 = { created: "", done: "", phone: "", address: "", status: "" };
 let F = { ...F0 };
 const dayOf = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 function matches(r) {
   const c = dayOf(r.created_at), d = r.done_at ? dayOf(r.done_at) : null;
-  if (F.cFrom && c < F.cFrom) return false;
-  if (F.cTo && c > F.cTo) return false;
-  if ((F.dFrom || F.dTo) && (!d || (F.dFrom && d < F.dFrom) || (F.dTo && d > F.dTo))) return false;
+  if (F.created && c !== F.created) return false;
+  if (F.done && d !== F.done) return false;
   if (F.phone && !r.phone.replace(/\D/g, "").includes(F.phone.replace(/\D/g, "")) && !r.phone.includes(F.phone)) return false;
   if (F.address && !r.address.toLowerCase().includes(F.address.toLowerCase())) return false;
   if (F.status && r.status !== F.status) return false;
@@ -77,7 +76,7 @@ function rowsHtml() {
 }
 
 const COLS = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
-const dates = (a, b) => `<div class="fr"><input type="date" name="${a}" value="${F[a]}" data-input="filter" aria-label="С"><input type="date" name="${b}" value="${F[b]}" data-input="filter" aria-label="По"></div>`;
+const date = (name) => `<input type="date" name="${name}" value="${F[name]}" data-input="filter" aria-label="Фильтр по дате">`;
 
 function render(user) {
   me = user;
@@ -91,7 +90,7 @@ function render(user) {
     </div>
     <div class="table-wrap"><table class="tbl req-tbl"><thead>
       <tr>${COLS.map(th).join("")}</tr>
-      <tr class="filter-row"><th></th><th>${dates("cFrom", "cTo")}</th><th>${dates("dFrom", "dTo")}</th>
+      <tr class="filter-row"><th></th><th>${date("created")}</th><th>${date("done")}</th>
         <th><input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…" data-input="filter" aria-label="Фильтр по номеру"></th>
         <th><input type="search" name="address" value="${esc(F.address)}" placeholder="Улица, дом…" data-input="filter" aria-label="Фильтр по адресу"></th>
         <th><select name="status" data-change="filter" aria-label="Фильтр по статусу">${options(STATUSES, F.status, { empty: "Все статусы" })}</select></th></tr>

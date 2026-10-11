@@ -449,5 +449,5 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .th-sort:hover { color: var(--ink); }
 .req-tbl .filter-row th { padding-top: 0; font-weight: 500; text-transform: none; letter-spacing: 0; }
 .req-tbl .filter-row input, .req-tbl .filter-row select { width: 100%; min-width: 120px; padding: 6px 8px; font-size: 13px; }
-.req-tbl .fr { display: flex; flex-direction: column; gap: 4px; }
+
 .req-tbl td:nth-child(5) { min-width: 200px; }
