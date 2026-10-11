@@ -10,7 +10,6 @@ import { levelTitle } from "./masters.js";
 import { openDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
 import { qtyOf, product, shortages, expensedQty, expenseTotal, locChip } from "../stock.js";
 
-const SORTS = [["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
 let sort = { key: "id", dir: -1 }; // по умолчанию — по порядку, новые сверху
 let query = "";
 let me = null;
@@ -25,7 +24,18 @@ function log(r, text) {
   (r.history ||= []).push({ at: new Date().toISOString(), by: me?.name || "", text });
 }
 
+const F0 = { cFrom: "", cTo: "", dFrom: "", dTo: "", phone: "", address: "", status: "" };
+let F = { ...F0 };
+const dayOf = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
 function matches(r) {
+  const c = dayOf(r.created_at), d = r.done_at ? dayOf(r.done_at) : null;
+  if (F.cFrom && c < F.cFrom) return false;
+  if (F.cTo && c > F.cTo) return false;
+  if ((F.dFrom || F.dTo) && (!d || (F.dFrom && d < F.dFrom) || (F.dTo && d > F.dTo))) return false;
+  if (F.phone && !r.phone.replace(/\D/g, "").includes(F.phone.replace(/\D/g, "")) && !r.phone.includes(F.phone)) return false;
+  if (F.address && !r.address.toLowerCase().includes(F.address.toLowerCase())) return false;
+  if (F.status && r.status !== F.status) return false;
   if (!query) return true;
   const hay = `${r.id} ${r.client} ${r.phone} ${r.address} ${r.service} ${masterName(r.master_id)}`.toLowerCase();
   return query.toLowerCase().split(/\s+/).every((w) => hay.includes(w));
@@ -50,30 +60,42 @@ function sorted(list) {
 }
 
 function rowHtml(r) {
-  const visit = r.visit_at && ACTIVE.includes(r.status) ? `<small class="muted">Выезд ${dateTime(r.visit_at)}</small>` : "";
-  return `<button class="req-row" data-act="open" data-id="${r.id}">
-    <span class="req-no">№${r.id}<small>${dateShort(r.created_at)}</small></span>
-    <span class="req-main"><b>${esc(r.client)}</b><small>${esc(r.phone)} · ${esc(r.address)}</small></span>
-    <span class="req-who"><span>${r.master_id ? esc(masterName(r.master_id)) : `<em class="muted">мастер не выбран</em>`}</span>${visit}</span>
-    <span class="req-side">${statusPill(r.status)}${isWarehouse(me) ? "" : `<b class="num">${r.amount ? money(r.amount) : ""}</b>`}</span>
-  </button>`;
+  return `<tr class="clickable" data-act="open" data-id="${r.id}">
+    <td class="num"><b>№${r.id}</b></td>
+    <td class="num nowrap">${dateShort(r.created_at)}</td>
+    <td class="num nowrap">${r.done_at ? dateShort(r.done_at) : `<span class="muted">—</span>`}</td>
+    <td><b class="num nowrap">${esc(r.phone)}</b><small>${esc(r.client)}</small></td>
+    <td>${esc(r.address)}</td>
+    <td>${statusPill(r.status)}</td></tr>`;
 }
 
-function listHtml() {
+function rowsHtml() {
   const list = sorted(db.list("requests").filter(matches));
-  if (!list.length) return empty("Заказов нет", query ? "Попробуйте другой запрос." : "Здесь появятся заказы с сайта и те, что вы добавите сами.");
+  const filtered = query || Object.values(F).some(Boolean);
+  if (!list.length) return `<tr><td colspan="6">${empty("Заказов нет", filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами.")}</td></tr>`;
   return list.map(rowHtml).join("");
 }
+
+const COLS = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
+const dates = (a, b) => `<div class="fr"><input type="date" name="${a}" value="${F[a]}" data-input="filter" aria-label="С"><input type="date" name="${b}" value="${F[b]}" data-input="filter" aria-label="По"></div>`;
 
 function render(user) {
   me = user;
   const warehouse = isWarehouse(user);
+  const th = ([key, title]) => `<th><button class="th-sort" data-act="sort" data-id="${key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
+  const active = query || Object.values(F).some(Boolean);
   return `<div class="toolbar filters">
       <input class="search" type="search" id="reqSearch" placeholder="Поиск: клиент, адрес, №" value="${esc(query)}" data-input="search" aria-label="Поиск заказов">
-      ${SORTS.map(([key, title]) => `<button class="chip sortbtn" data-act="sort" data-id="${key}" aria-pressed="${sort.key === key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`).join("")}
+      ${active ? `<button class="btn ghost" data-act="resetFilters">Сбросить фильтры</button>` : ""}
       ${warehouse ? "" : `<button class="btn primary" data-act="create">Создать заказ</button>`}
     </div>
-    <div class="req-list" id="reqList">${listHtml()}</div>`;
+    <div class="table-wrap"><table class="tbl req-tbl"><thead>
+      <tr>${COLS.map(th).join("")}</tr>
+      <tr class="filter-row"><th></th><th>${dates("cFrom", "cTo")}</th><th>${dates("dFrom", "dTo")}</th>
+        <th><input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…" data-input="filter" aria-label="Фильтр по номеру"></th>
+        <th><input type="search" name="address" value="${esc(F.address)}" placeholder="Улица, дом…" data-input="filter" aria-label="Фильтр по адресу"></th>
+        <th><select name="status" data-change="filter" aria-label="Фильтр по статусу">${options(STATUSES, F.status, { empty: "Все статусы" })}</select></th></tr>
+    </thead><tbody id="reqList">${rowsHtml()}</tbody></table></div>`;
 }
 
 /* ---------- Карточка заказа ---------- */
@@ -352,7 +374,9 @@ export default {
       sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: key === "created" || key === "done" ? -1 : 1 };
       refresh();
     },
-    search(el) { query = el.value.trim(); document.getElementById("reqList").innerHTML = listHtml(); },
+    search(el) { query = el.value.trim(); document.getElementById("reqList").innerHTML = rowsHtml(); },
+    filter(el) { F[el.name] = el.value.trim(); document.getElementById("reqList").innerHTML = rowsHtml(); },
+    resetFilters() { F = { ...F0 }; query = ""; refresh(); },
   },
 };
 
