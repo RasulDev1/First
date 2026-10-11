@@ -171,7 +171,7 @@ function sheetHtml() {
   if (!r) return "";
   const tabs = TABS.filter(([id]) => !(["pay", "survey", "estimate"].includes(id) && isWarehouse(me)));
   if (!tabs.some(([id]) => id === tab)) tab = "main";
-  const body = tab === "survey" ? surveyHtml(r) : tab === "estimate" ? estimateTab(r, me) : tab === "comments" ? `<div class="sheet-cols"><div>${commentsHtml(r.comments)}</div><div>${commentForm("sheetComment")}</div></div>` : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
+  const body = tab === "survey" ? surveyHtml(r, { edit: false }) : tab === "estimate" ? estimateTab(r, me) : tab === "comments" ? `<div class="sheet-cols"><div>${commentsHtml(r.comments)}</div><div>${commentForm("sheetComment")}</div></div>` : tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
   return `<div class="sheet-space" style="height:${sheetH}vh"></div><section class="sheet" style="height:${sheetH}vh" aria-label="Заказ №${r.id}">
     <div class="sheet-grip" role="separator" aria-orientation="horizontal" aria-label="Потяните, чтобы изменить высоту" tabindex="0"></div>
     <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
@@ -310,6 +310,8 @@ function detailHtml(id) {
       <p class="muted small">Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
     </section>
 
+    <section class="d-sec"><h3>Замеры</h3>${surveyHtml(r, { edit: true })}</section>
+
     <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r)}</section>
 
     <section class="d-sec"><h3>Комментарии</h3>${commentsHtml(r.comments)}${commentForm()}</section>
@@ -335,9 +337,9 @@ function saveMargin(fd) {
 }
 
 /* ---------- Замеры ---------- */
-const surveyActions = {
+const makeSurveyActions = (get) => ({
   surveyRoom(fd, form) {
-    const r = selected(), area = Number(fd.get("area")), height = Number(fd.get("height"));
+    const r = get(), area = Number(fd.get("area")), height = Number(fd.get("height"));
     const name = String(fd.get("name") || "").trim();
     if (!name || !(area > 0) || !(height > 0)) return formError(form, "Заполните помещение, площадь и высоту");
     touch(r, me).rooms.push({ name, area, height, ac: fd.get("ac") === "on" });
@@ -345,7 +347,7 @@ const surveyActions = {
     save("Помещение добавлено");
   },
   surveyRoute(fd, form) {
-    const r = selected(), length = Number(fd.get("length"));
+    const r = get(), length = Number(fd.get("length"));
     const name = String(fd.get("name") || "").trim();
     if (!name || !(length > 0)) return formError(form, "Заполните трассу и длину");
     touch(r, me).routes.push({ name, diameter: Number(fd.get("diameter")), length, bends: Math.max(0, Math.round(Number(fd.get("bends")) || 0)) });
@@ -353,12 +355,12 @@ const surveyActions = {
     save("Трасса добавлена");
   },
   surveyDel(el) {
-    const r = selected(), list = touch(r, me)[el.dataset.kind];
+    const r = get(), list = touch(r, me)[el.dataset.kind];
     list.splice(Number(el.dataset.id), 1);
     save("Убрано");
   },
   async surveyPhoto(el) {
-    const r = selected(), files = [...el.files].slice(0, MAX_PHOTOS - (r.survey?.photos?.length || 0));
+    const r = get(), files = [...el.files].slice(0, MAX_PHOTOS - (r.survey?.photos?.length || 0));
     try {
       const shots = [];
       for (const f of files) shots.push(await shrinkPhoto(f));
@@ -367,9 +369,9 @@ const surveyActions = {
       save("Фото добавлено");
     } catch (error) { toast(error.message, "bad"); }
   },
-  surveyDelPhoto(el) { touch(selected(), me).photos.splice(Number(el.dataset.id), 1); save("Фото убрано"); },
-  surveyNote(fd) { touch(selected(), me).note = String(fd.get("note") || "").trim(); save("Заметка сохранена"); },
-};
+  surveyDelPhoto(el) { touch(get(), me).photos.splice(Number(el.dataset.id), 1); save("Фото убрано"); },
+  surveyNote(fd) { touch(get(), me).note = String(fd.get("note") || "").trim(); save("Заметка сохранена"); },
+});
 
 /* ---------- Автосмета (мастер из нескольких шагов) ---------- */
 let est = null; // { id, step, lines }
@@ -451,6 +453,7 @@ function save(text) {
 }
 
 const detailActions = {
+  ...Object.fromEntries(Object.entries(makeSurveyActions(() => current())).map(([k, fn]) => [k, guard(() => current(), fn, k !== "surveyPhoto")])),
   expense: () => openExpense({ requestId: openId }),
   copyPhone: (el) => copyText(current().phone, el),
   edit: guard(() => current(), () => openForm(current()), false),
@@ -580,7 +583,6 @@ export default {
       r.amount = amount; log(r, `Сумма договора: ${money(amount)}`); save("Сумма сохранена");
     }),
     sheetComment(fd) { if (pushComment(selected(), fd.get("text"), me)) save("Комментарий добавлен"); },
-    ...Object.fromEntries(Object.entries(surveyActions).map(([k, fn]) => [k, guard(() => selected(), fn, k !== "surveyPhoto")])),
     estOpen: guard(() => selected(), () => openEstimate(sel), false),
     estMargin: (fd) => saveMargin(fd),
     sheetPay: guard(() => selected(), (fd, form) => {
