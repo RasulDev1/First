@@ -43,8 +43,7 @@ export function surveyHtml(r, { edit = false } = {}) {
     <div><h4>Фото и заметка</h4>
       <div class="photos">${s.photos.map((src, i) => `<figure><img src="${src}" alt="Фото замера ${i + 1}">${edit ? `<button type="button" class="icon-btn" data-act="surveyDelPhoto" data-id="${i}" aria-label="Убрать фото">✕</button>` : ""}</figure>`).join("")}</div>
       ${!edit ? (s.photos.length ? "" : `<p class="muted">Фото нет.</p>`) : s.photos.length < MAX_PHOTOS ? `<label class="btn file-btn">Добавить фото<input type="file" accept="image/*" multiple hidden data-change="surveyPhoto"></label>` : `<p class="muted small">Максимум ${MAX_PHOTOS} фото.</p>`}
-      ${edit ? `<form class="survey-note" data-form="surveyNote"><textarea name="note" rows="3" maxlength="1000" placeholder="Что важно: перекрытия, высота потолка, подъезд">${esc(s.note || "")}</textarea>
-        <button class="btn" type="submit">Сохранить заметку</button></form>` : s.note ? `<p class="prose">${esc(s.note)}</p>` : `<p class="muted">Заметки нет.</p>`}
+      ${edit ? `<textarea name="note" rows="3" maxlength="1000" data-change="surveyNote" aria-label="Заметка" placeholder="Что важно: перекрытия, высота потолка, подъезд">${esc(s.note || "")}</textarea>` : s.note ? `<p class="prose">${esc(s.note)}</p>` : `<p class="muted">Заметки нет.</p>`}
       ${s.at ? `<p class="muted small">Последнее изменение: ${dateTime(s.at)}${s.by ? `, ${esc(s.by)}` : ""}</p>` : ""}</div>
   </div>`;
 }

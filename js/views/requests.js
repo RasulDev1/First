@@ -6,7 +6,7 @@ import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES } from "../config
 import { db } from "../db.js";
 import { ensureClient, findByPhone } from "../clients.js";
 import { commentsHtml, commentForm, pushComment } from "../comments.js";
-import { surveyHtml, shrinkPhoto, touch, MAX_PHOTOS } from "../survey.js";
+import { surveyHtml, shrinkPhoto, touch, emptySurvey, MAX_PHOTOS } from "../survey.js";
 import { estimateWizard, estimateTab, buildEstimate, materialLine, workLine, totals, floorOf, minAmount, setMinMargin, minMargin } from "../estimate.js";
 import { WORKS } from "../config.js";
 import { isDirector, isWarehouse, currentUser } from "../auth.js";
@@ -310,14 +310,12 @@ function detailHtml(id) {
       <p class="muted small">Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
     </section>
 
-    <section class="d-sec"><h3>Замеры</h3>${surveyHtml(r, { edit: true })}</section>
+    ${surveyOpen(r) ? `<section class="d-sec"><h3>Замеры</h3>${surveyHtml(draftOf(r.id), { edit: true })}</section>` : ""}
 
     <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r)}</section>
 
     <section class="d-sec"><h3>Комментарии</h3>${commentsHtml(r.comments)}${commentForm()}</section>
-
-    <section class="d-sec"><h3>История</h3>
-      <ol class="history">${[...(r.history || [])].reverse().map((h) => `<li><b>${esc(h.text)}</b><small>${dateTime(h.at)}${h.by ? ` · ${esc(h.by)}` : ""}</small></li>`).join("")}</ol></section>`;
+    ${surveyOpen(r) ? `<div class="savebar"><button type="button" class="btn primary big" data-act="surveySave"${surveyDirty(r) ? "" : " disabled"}>Сохранить</button></div>` : ""}`;
 }
 
 /** Менеджер не может поставить сумму ниже порога маржи (закупка / (1 − порог)); руководитель может */
@@ -337,40 +335,44 @@ function saveMargin(fd) {
 }
 
 /* ---------- Замеры ---------- */
+// Замеры в карточке — черновик: кнопка «Сохранить» внизу справа записывает его в заказ, после чего замеры остаются только во вкладке «Замеры»
+const drafts = new Map(); // id заказа → { survey }
+const draftOf = (id) => {
+  if (!drafts.has(id)) drafts.set(id, { survey: structuredClone(db.find("requests", id)?.survey || emptySurvey()) });
+  return drafts.get(id);
+};
+const surveyKey = (sv = emptySurvey()) => JSON.stringify([sv.rooms, sv.routes, sv.photos, sv.note || ""]);
+const surveyDirty = (r) => surveyKey(draftOf(r.id).survey) !== surveyKey(r.survey);
+const surveyOpen = (r) => !r.survey?.saved && !["cancelled"].includes(r.status);
+const redraw = () => refreshDrawer(true);
+
 const makeSurveyActions = (get) => ({
   surveyRoom(fd, form) {
-    const r = get(), area = Number(fd.get("area")), height = Number(fd.get("height"));
+    const area = Number(fd.get("area")), height = Number(fd.get("height"));
     const name = String(fd.get("name") || "").trim();
     if (!name || !(area > 0) || !(height > 0)) return formError(form, "Заполните помещение, площадь и высоту");
-    touch(r, me).rooms.push({ name, area, height, ac: fd.get("ac") === "on" });
-    log(r, `Замер: помещение «${name}»`);
-    save("Помещение добавлено");
+    touch(get(), me).rooms.push({ name, area, height, ac: fd.get("ac") === "on" });
+    redraw();
   },
   surveyRoute(fd, form) {
-    const r = get(), length = Number(fd.get("length"));
+    const length = Number(fd.get("length"));
     const name = String(fd.get("name") || "").trim();
     if (!name || !(length > 0)) return formError(form, "Заполните трассу и длину");
-    touch(r, me).routes.push({ name, diameter: Number(fd.get("diameter")), length, bends: Math.max(0, Math.round(Number(fd.get("bends")) || 0)) });
-    log(r, `Замер: трасса «${name}»`);
-    save("Трасса добавлена");
+    touch(get(), me).routes.push({ name, diameter: Number(fd.get("diameter")), length, bends: Math.max(0, Math.round(Number(fd.get("bends")) || 0)) });
+    redraw();
   },
-  surveyDel(el) {
-    const r = get(), list = touch(r, me)[el.dataset.kind];
-    list.splice(Number(el.dataset.id), 1);
-    save("Убрано");
-  },
+  surveyDel(el) { touch(get(), me)[el.dataset.kind].splice(Number(el.dataset.id), 1); redraw(); },
   async surveyPhoto(el) {
-    const r = get(), files = [...el.files].slice(0, MAX_PHOTOS - (r.survey?.photos?.length || 0));
+    const d = get(), files = [...el.files].slice(0, MAX_PHOTOS - d.survey.photos.length);
     try {
       const shots = [];
       for (const f of files) shots.push(await shrinkPhoto(f));
-      touch(r, me).photos.push(...shots);
-      log(r, `Замер: фото (${shots.length})`);
-      save("Фото добавлено");
+      touch(d, me).photos.push(...shots);
+      redraw();
     } catch (error) { toast(error.message, "bad"); }
   },
-  surveyDelPhoto(el) { touch(get(), me).photos.splice(Number(el.dataset.id), 1); save("Фото убрано"); },
-  surveyNote(fd) { touch(get(), me).note = String(fd.get("note") || "").trim(); save("Заметка сохранена"); },
+  surveyDelPhoto(el) { touch(get(), me).photos.splice(Number(el.dataset.id), 1); redraw(); },
+  surveyNote(el) { touch(get(), me).note = String(el.value || "").trim(); redraw(); },
 });
 
 /* ---------- Автосмета (мастер из нескольких шагов) ---------- */
@@ -453,7 +455,15 @@ function save(text) {
 }
 
 const detailActions = {
-  ...Object.fromEntries(Object.entries(makeSurveyActions(() => current())).map(([k, fn]) => [k, guard(() => current(), fn, k !== "surveyPhoto")])),
+  ...Object.fromEntries(Object.entries(makeSurveyActions(() => draftOf(openId))).map(([k, fn]) => [k, guard(() => current(), fn, false)])),
+  surveySave: guard(() => current(), (el) => {
+    const r = current();
+    if (!surveyDirty(r) && r.survey?.saved) return;
+    r.survey = { ...structuredClone(draftOf(r.id).survey), saved: true };
+    drafts.delete(r.id);
+    log(r, "Замеры сохранены");
+    save("Замеры сохранены");
+  }),
   expense: () => openExpense({ requestId: openId }),
   copyPhone: (el) => copyText(current().phone, el),
   edit: guard(() => current(), () => openForm(current()), false),
@@ -517,6 +527,7 @@ const detailActions = {
 export function openRequest(id) {
   me = currentUser();
   openId = Number(id);
+  drafts.delete(openId);
   openDrawer(() => detailHtml(openId), detailActions, { live: true, full: true });
 }
 
