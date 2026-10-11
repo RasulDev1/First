@@ -221,16 +221,6 @@ export function setStatus(r, next, by = me?.name || "") {
 const stageOf = (r) => (r.done_at ? "done" : (r.payments || []).length ? "in_work" : r.survey?.saved ? "pricing" : r.master_id ? "assigned" : "new");
 
 /* ---------- Карточка заказа ---------- */
-const hhmm = (iso) => new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-function masterLoad(masterId, visitAt, selfId) {
-  if (!masterId || !visitAt) return "";
-  const day = localDay(new Date(visitAt));
-  const same = db.list("requests").filter((r) => r.id !== selfId && r.master_id === Number(masterId) && ACTIVE.includes(r.status)
-    && r.visit_at && localDay(new Date(r.visit_at)) === day);
-  return same.length ? `<p class="note warn">У мастера в этот день ещё ${same.length} ${same.length === 1 ? "выезд" : "выезда"}: ${same.map((r) =>
-    `№${r.id} в ${hhmm(r.visit_at)}`).join(", ")}</p>` : "";
-}
-
 /** «Расходы»: материалы, выписанные со склада под заказ, по себестоимости */
 function expensesHtml(r, { button = false } = {}) {
   const list = r.expenses || [];
@@ -265,7 +255,7 @@ function detailHtml(id) {
   return `<header class="d-head">
       <p class="eyebrow">Заказ №${r.id} · ${esc(r.source || "")} · ${dateTime(r.created_at)}</p>
       <h2>${esc(r.client)}</h2>
-      <div class="d-meta">${statusPill(r.status)}<span class="muted">${r.manager_id ? `Менеджер: ${esc(staffName(r.manager_id))}` : "Менеджер не назначен"}</span>${editButton(r)}</div>
+      <div class="d-meta">${statusPill(r.status)}<span class="muted">${r.manager_id ? `Менеджер: ${esc(staffName(r.manager_id))}` : "Менеджер не назначен"}</span></div>
     </header>
 
     <section class="d-sec">
@@ -279,6 +269,8 @@ function detailHtml(id) {
       <button class="btn ghost sm" data-act="edit">Изменить данные клиента</button>
     </section>
 
+    ${r.status === "measure" && r.measured_at ? `<section class="d-sec callout"><p><b>Мастер сделал замеры</b> (${dateTime(r.measured_at)}). Впишите данные замеров ниже и нажмите «Сохранить».</p></section>` : ""}
+
     ${r.status === "new" ? `<section class="d-sec callout">
       <p><b>Заказ создан.</b> Возьмите его, позвоните клиенту и назначьте мастера.</p>
       <button class="btn primary" data-act="take">Взять заказ</button></section>` : ""}
@@ -287,14 +279,12 @@ function detailHtml(id) {
       <form class="inline-form" data-form="setManager"><select name="manager" aria-label="Менеджер">${options(managers.map((s) => ({ id: s.id, title: s.name })), r.manager_id, { empty: "Не назначен" })}</select>
       <button class="btn" type="submit">Назначить</button></form></section>` : ""}
 
-    <section class="d-sec"><h3>Мастер и выезд</h3>
+    <section class="d-sec"><h3>Мастер</h3>
       <form data-form="assign" class="grid2">
-        ${field("Мастер", `<select name="master" data-change="previewLoad">${options(masters.map((m) => ({ id: m.id, title: `${m.name} · ${levelTitle(m)}` })), r.master_id, { empty: "Выберите мастера" })}</select>`)}
-        ${field("Дата и время выезда", `<input name="visit" type="datetime-local" value="${toLocalInput(r.visit_at)}" data-change="previewLoad">`)}
-        <div class="span2" id="loadNote">${masterLoad(r.master_id, r.visit_at, r.id)}</div>
-        <div class="form-actions span2"><button class="btn primary" type="submit"${closed ? " disabled" : ""}>Сохранить мастера и дату</button></div>
+        ${field("Мастер", `<select name="master">${options(masters.map((m) => ({ id: m.id, title: `${m.name} · ${levelTitle(m)}` })), r.master_id, { empty: "Выберите мастера" })}</select>`)}
+        <div class="form-actions span2"><button class="btn primary" type="submit"${closed ? " disabled" : ""}>Назначить мастера</button></div>
       </form>
-      <p class="muted small">У мастеров нет аккаунтов: сообщите мастеру адрес и время сами. Телефон мастера — в разделе «Мастера».</p>
+      <p class="muted small">Мастер видит заказ у себя в «Мои заказы» и сам отмечает, что выехал на замеры. Время выезда запишется тогда.</p>
     </section>
 
     <section class="d-sec btn-row">
@@ -453,13 +443,10 @@ function openEstimate(id) {
   }, { full: true });
 }
 
-let editId = null; // заказ, открытый менеджером для правки кнопкой «Изменить заказ»
-
-/** Менеджер меняет только свои заказы, включив правку кнопкой «Изменить заказ», и подтверждает каждое изменение. Руководитель — без ограничений. */
+/** Менеджер меняет только свои заказы и подтверждает каждое изменение. Руководитель — без ограничений. */
 function allow(r, el, confirm = true) {
   if (!r || isDirector(me)) return true;
   if (r.manager_id !== me.id) { toast(r.manager_id ? "Менеджер меняет только свои заказы" : "Сначала возьмите заказ", "bad"); return false; }
-  if (editId !== r.id) { toast("Нажмите «Изменить заказ»", "bad"); return false; }
   return !confirm || armed(el, "Подтвердить изменение?");
 }
 /** Оборачивает действие: кнопка или отправка формы проходят через allow() */
@@ -467,10 +454,6 @@ const guard = (get, fn, confirm = true) => (a, b) => {
   const el = a instanceof FormData ? b.querySelector("[type=submit]") || b : a;
   if (allow(get(), el, confirm)) return fn(a, b);
 };
-const editButton = (r, cls = "btn ghost sm") => !isDirector(me) && !isWarehouse(me) && r.manager_id === me.id
-  ? `<button type="button" class="${cls}" data-act="editMode" aria-pressed="${editId === r.id}">${editId === r.id ? "Готово" : "Изменить заказ"}</button>` : "";
-const toggleEdit = (id) => { editId = editId === id ? null : id; save(); };
-
 let openId = null;
 const current = () => db.find("requests", openId);
 
@@ -493,7 +476,6 @@ const detailActions = {
   expense: () => openExpense({ requestId: openId }),
   copyPhone: (el) => copyText(current().phone, el),
   edit: guard(() => current(), () => openForm(current()), false),
-  editMode: () => toggleEdit(openId),
   take() {
     const r = current();
     r.manager_id = me.id;
@@ -507,23 +489,14 @@ const detailActions = {
     log(r, id ? `Ответственный менеджер: ${staffName(id)}` : "Менеджер снят");
     save("Менеджер назначен");
   },
-  previewLoad(el) {
-    const form = el.closest("form");
-    document.getElementById("loadNote").innerHTML = masterLoad(form.master.value, form.visit.value ? new Date(form.visit.value).toISOString() : "", openId);
-  },
   assign: guard(() => current(), (fd, form) => {
-    const r = current();
-    const masterId = Number(fd.get("master")) || null, visit = fd.get("visit");
+    const r = current(), masterId = Number(fd.get("master")) || null;
     if (!masterId) return formError(form, "Выберите мастера");
-    if (!visit) return formError(form, "Укажите дату и время выезда");
-    const visitIso = new Date(visit).toISOString();
     if (masterId !== r.master_id) log(r, `Назначен мастер: ${db.find("masters", masterId).name}`);
-    if (visitIso !== r.visit_at) log(r, `Выезд: ${dateTime(visitIso)}`);
     r.master_id = masterId;
-    r.visit_at = visitIso;
     if (!r.manager_id) r.manager_id = me.id;
     if (r.status === "new") setStatus(r, "assigned");
-    save("Мастер и дата сохранены");
+    save("Мастер назначен");
   }),
   cancelOrder: guard(() => current(), () => { setStatus(current(), "cancelled"); save("Заказ отменён"); }),
   restore: guard(() => current(), () => { const r = current(); setStatus(r, stageOf(r)); save("Заказ возвращён в работу"); }),

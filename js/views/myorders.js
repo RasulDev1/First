@@ -47,14 +47,16 @@ function detailHtml(id) {
       <dt>Выезд</dt><dd>${r.visit_at ? dateTime(r.visit_at) : "—"}</dd>
       <dt>Вы заработаете</dt><dd class="num"><b>${earn(r)}</b></dd></dl></section>
     ${r.status === "assigned" ? `<section class="d-sec"><button class="btn primary big" data-act="depart" data-id="${r.id}">Выехал на замеры</button></section>` : ""}
+    ${r.status === "measure" && !r.measured_at ? `<section class="d-sec"><button class="btn primary big" data-act="measured" data-id="${r.id}">Замеры сделаны</button></section>` : ""}
     ${r.status === "in_work" ? `<section class="d-sec"><button class="btn primary big" data-act="finish" data-id="${r.id}">Завершён</button></section>` : ""}
     <section class="d-sec"><h3>Статусы</h3><ol class="history">${hist.map((h) => `<li><b>${esc(h.text.replace("Статус: ", ""))}</b><small>${dateTime(h.at)}</small></li>`).join("")}</ol></section>`;
 }
 
-function step(id, from, to, btn, text) {
+function step(id, from, to, text) {
   const r = mine().find((x) => x.id === id);
   if (!r || r.status !== from) return;
   setStatus(r, to, me.name);
+  if (to === "measure") r.visit_at = new Date().toISOString();
   db.batch(() => {});
   toast(text, "ok");
 }
@@ -64,8 +66,16 @@ export default {
   render,
   actions: {
     open: (el) => openDrawer(() => detailHtml(Number(el.dataset.id)), {
-      depart(btn) { step(Number(btn.dataset.id), "assigned", "measure", btn, "Статус изменён: выезд на замеры"); },
-      finish(btn) { if (armed(btn, "Точно завершён?")) step(Number(btn.dataset.id), "in_work", "done", btn, "Заказ завершён"); },
+      depart(btn) { step(Number(btn.dataset.id), "assigned", "measure", "Выезд на замеры: время записано"); },
+      measured(btn) {
+        const r = mine().find((x) => x.id === Number(btn.dataset.id));
+        if (!r || r.status !== "measure" || r.measured_at) return;
+        r.measured_at = new Date().toISOString();
+        (r.history ||= []).push({ at: r.measured_at, by: me.name, text: "Мастер: замеры сделаны" });
+        db.batch(() => {});
+        toast("Менеджер увидит, что замеры сделаны", "ok");
+      },
+      finish(btn) { if (armed(btn, "Точно завершён?")) step(Number(btn.dataset.id), "in_work", "done", "Заказ завершён"); },
     }, { live: true }),
   },
 };

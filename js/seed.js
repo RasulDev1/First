@@ -187,8 +187,8 @@ export function seed() {
     if (status === "in_work") history.push({ at: past(created + DAY), by: manager.name, text: "Статус: В работе" });
     if (status === "done") history.push({ at: past(created + 4 * DAY), by: manager.name, text: "Статус: Завершён" });
     if (status === "cancelled") history.push({ at: past(created + DAY), by: manager?.name || "", text: "Статус: Отменён" });
-    const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
-    const visitIso = visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null;
+    const visit = master && status !== "assigned" ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
+    const visitIso = visit ? past(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null;
     // Машина на выезд: первая, у которой нет накладки по времени
     const client = pick(clients);
     requests.push({
