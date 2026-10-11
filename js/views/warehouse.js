@@ -35,7 +35,7 @@ function stockRows() {
       const total = qtyOf(p.id), low = isLow(p);
       return `<tr class="clickable${low ? " low" : ""}" data-act="product" data-id="${p.id}" tabindex="0">
         <td><b>${esc(p.name)}</b><small>${esc(p.sku)} · ${esc(p.specs)}</small></td>
-        <td><span class="locs">${placesOf(p.id).map((s) => locChip(s.loc, `<i>${num(s.qty)}</i>`)).join("") || `<span class="muted">нет на складе</span>`}</span></td>
+        <td class="nowrap">${placesOf(p.id).map((s) => esc(s.loc)).join(", ") || `<span class="muted">нет на складе</span>`}</td>
         <td class="r num"><b>${amount(p, total)}</b>${low ? `<small class="bad">мало</small>` : ""}</td>
         <td class="r num muted">${num(p.min_qty)}</td>
         <td class="r num">${money(p.price)}</td></tr>`;
@@ -76,8 +76,7 @@ function cellHtml(loc) {
     <section class="d-sec">${items.length ? `<div class="mini-list">${items.map((s) => {
       const p = product(s.product_id);
       return `<button class="mini-row" data-act="product" data-id="${p.id}"><span><b>${esc(p.name)}</b><small>${esc(p.sku)}</small></span><span class="r num"><b>${amount(p, s.qty)}</b></span></button>`;
-    }).join("")}</div>` : `<p class="muted">Полка пустая.</p>`}</section>
-    <section class="d-sec"><button class="btn primary" data-act="receiveHere">Принять товар на это место</button></section>`;
+    }).join("")}</div>` : `<p class="muted">Полка пустая.</p>`}</section>`;
 }
 
 /* ---------- Закупка ---------- */
@@ -88,29 +87,28 @@ function buyTab() {
   const total = rows.reduce((n, x) => n + x.qty * (x.p.cost || 0), 0);
   return `<p class="lead">Позиции ниже минимального остатка. Предлагаем докупить до двойного минимума.</p>
     <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Наименование</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Купить</th><th class="r">Закупка</th><th></th></tr></thead>
+    <thead><tr><th>Наименование</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Купить</th><th class="r">Закупка</th></tr></thead>
     <tbody>${rows.map(({ p, qty }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}</small></td>
       <td class="r num${qtyOf(p.id) ? "" : " bad"}">${amount(p, qtyOf(p.id))}</td><td class="r num muted">${num(p.min_qty)}</td>
-      <td class="r num"><b>${amount(p, qty)}</b></td><td class="r num">${money(qty * (p.cost || 0))}</td>
-      <td class="r"><button class="btn sm" data-act="receiveBuy" data-id="${p.id}" data-qty="${qty}">Принять</button></td></tr>`).join("")}</tbody>
-    <tfoot><tr><td colspan="4">Итого по закупочным ценам</td><td class="r num"><b>${money(total)}</b></td><td></td></tr></tfoot></table></div>`;
+      <td class="r num"><b>${amount(p, qty)}</b></td><td class="r num">${money(qty * (p.cost || 0))}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="4">Итого по закупочным ценам</td><td class="r num"><b>${money(total)}</b></td></tr></tfoot></table></div>`;
 }
 
 /* ---------- Журнал ---------- */
 const KIND = { in: "Приём", move: "Перемещение", out: "Списание", fix: "Пересчёт", issue: "Расход на заказ" };
-function moveRow(m) {
+function moveRow(m, withProduct = true) {
   const p = product(m.product_id);
   const sign = m.kind === "in" || (m.kind === "fix" && m.delta > 0) ? "+" : m.kind === "move" ? "" : "−";
   const where = m.kind === "move" ? `${m.from} → ${m.to}` : m.to || m.from || "";
   return `<tr><td class="num nowrap">${dateTime(m.at)}</td><td><span class="kind k-${m.kind}">${KIND[m.kind]}</span></td>
-    <td><b>${esc(p?.name || "Удалённый товар")}</b><small>${m.request_id ? `заказ №${m.request_id}` : esc(m.note || "")}</small></td>
+    <td>${withProduct ? `<b>${esc(p?.name || "Удалённый товар")}</b><small>` : "<span>"}${m.request_id ? `заказ №${m.request_id}` : esc(m.note || "")}${withProduct ? "</small>" : "</span>"}</td>
     <td>${where.includes("→") ? where.split(" → ").map((l) => locChip(l)).join(" → ") : where ? locChip(where) : ""}</td><td class="r num"><b>${sign}${amount(p, m.qty)}</b></td><td class="muted">${esc(m.by || "")}</td></tr>`;
 }
 function logTab(filterProduct) {
   const list = db.list("moves").filter((m) => !filterProduct || m.product_id === filterProduct).sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 150);
   if (!list.length) return empty("Движений пока нет");
-  return `<div class="table-wrap"><table class="tbl log"><thead><tr><th>Когда</th><th>Операция</th><th>Товар</th><th>Место</th><th class="r">Кол-во</th><th>Кто</th></tr></thead>
-    <tbody>${list.map(moveRow).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="tbl log"><thead><tr><th>Когда</th><th>Операция</th><th>${filterProduct ? "Комментарий" : "Товар"}</th><th>Место</th><th class="r">Кол-во</th><th>Кто</th></tr></thead>
+    <tbody>${list.map((m) => moveRow(m, !filterProduct)).join("")}</tbody></table></div>`;
 }
 
 function render(user) {
@@ -134,24 +132,17 @@ function productHtml(id) {
       <div class="kpi${isLow(p) ? " bad" : ""}"><small>Остаток</small><b class="num">${amount(p, qtyOf(id))}</b></div>
       <div class="kpi"><small>Минимум</small><b class="num">${amount(p, p.min_qty)}</b></div>
       <div class="kpi"><small>Закупка / продажа</small><b class="num">${money(p.cost)} / ${money(p.price)}</b></div></div></section>
-    <section class="d-sec"><h3>Где лежит</h3>${places.length ? `<div class="places">${places.map((s) => `<div class="place">
-        ${locChip(s.loc, "", "big")}<span class="place-q num">${amount(p, s.qty)}</span>
-        <span class="place-acts"><button class="link" data-act="moveFrom" data-id="${s.loc}">Переместить</button>
-        <button class="link" data-act="writeOff" data-id="${s.loc}">Списать</button><button class="link" data-act="recount" data-id="${s.loc}">Пересчитать</button></span></div>`).join("")}</div>`
+    <section class="d-sec"><h3>Нынешние позиции на складе</h3>${places.length ? `<div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Место</th><th>Где</th><th class="r">Количество</th></tr></thead>
+      <tbody>${places.map((s) => `<tr><td class="num"><b>${esc(s.loc)}</b></td><td class="muted">${describeLocation(s.loc)}</td><td class="r num">${amount(p, s.qty)}</td></tr>`).join("")}</tbody></table></div>`
       : `<p class="muted">Товара нет на складе.</p>`}
-      <div class="btn-row"><button class="btn primary" data-act="receiveThis">Принять</button><button class="btn" data-act="editProduct">Изменить карточку</button></div></section>
-    <section class="d-sec"><h3>Движения</h3>${logTab(id)}</section>`;
+      <p class="muted small">Количество меняется только кнопками «Приём» и «Расход» в разделе «Склад».</p></section>
+    <section class="d-sec"><h3>История приёма и расхода</h3>${logTab(id)}</section>`;
 }
 
 function openProduct(id) {
   id = Number(id);
-  openDrawer(() => productHtml(id), {
-    receiveThis: () => openOperation("in", { productId: id }),
-    moveFrom: (el) => openOperation("move", { productId: id, from: el.dataset.id }),
-    writeOff: (el) => openOperation("out", { productId: id, from: el.dataset.id }),
-    recount: (el) => openOperation("fix", { productId: id, loc: el.dataset.id }),
-    editProduct: () => openProductForm(product(id)),
-  }, { live: true, wide: true });
+  openDrawer(() => productHtml(id), {}, { live: true, wide: true });
 }
 
 /* ---------- Операции ---------- */
@@ -315,10 +306,9 @@ export default {
     product: (el) => openProduct(el.dataset.id),
     receive: () => openOperation("in"),
     expense: () => openOperation("out"),
-    receiveBuy: (el) => openOperation("in", { productId: Number(el.dataset.id), qty: el.dataset.qty }),
     cell(el) {
       const loc = el.dataset.id;
-      openDrawer(() => cellHtml(loc), { product: (b) => openProduct(b.dataset.id), receiveHere: () => openOperation("in", { to: loc }) }, { live: true });
+      openDrawer(() => cellHtml(loc), { product: (b) => openProduct(b.dataset.id) }, { live: true });
     },
   },
 };
