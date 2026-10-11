@@ -14,8 +14,8 @@ const reqRow = (r, side) => `<button class="mini-row" data-act="request" data-id
   <span><b>№${r.id} · ${esc(r.client)}</b><small>${esc(r.service)} · ${esc(r.address)}</small></span>
   <span class="r">${side}</span></button>`;
 
-function panel(title, body, more) {
-  return `<section class="panel"><header class="panel-head"><h3>${title}</h3>${more ? `<button class="link" data-act="go" data-id="${more}">Все →</button>` : ""}</header>${body}</section>`;
+function panel(title, body) {
+  return `<section class="panel"><header class="panel-head"><h3>${title}</h3></header>${body}</section>`;
 }
 
 function visitsPanel(list, title) {
