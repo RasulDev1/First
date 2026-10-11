@@ -74,7 +74,7 @@ function render(user) {
     <div class="kpi"><small>Новых ждут</small><b class="num">${requests.filter((r) => r.status === "new").length}</b><span>менеджера</span></div>
     <div class="kpi"><small>В работе</small><b class="num">${requests.filter((r) => ACTIVE.includes(r.status)).length}</b><span>от мастера до монтажа</span></div>
     <div class="kpi"><small>Заказов за 30 дней</small><b class="num">${month.length}</b><span>${done.length} выполнено</span></div>
-    <div class="kpi accent"><small>Выручка за 30 дней</small><b class="num">${money(done.reduce((n, r) => n + (r.amount || 0), 0))}</b><span>по выполненным</span></div>
+    <div class="kpi accent"><small>Продажи за 30 дней</small><b class="num">${money(done.reduce((n, r) => n + (r.amount || 0), 0))}</b><span>по выполненным</span></div>
   </section>`;
 
   if (isManager(user)) {

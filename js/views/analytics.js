@@ -6,6 +6,7 @@ import { db } from "../db.js";
 import { isDirector } from "../auth.js";
 import { chips, empty } from "../ui.js";
 import { stockValue, isLow } from "../stock.js";
+import { payOf, materialsOf, netOf } from "../pay.js";
 
 let period = 90; // дней; 0 — всё время
 let me = null;
@@ -57,13 +58,14 @@ function render(user) {
   const cancelled = list.filter((r) => r.status === "cancelled");
   const closed = done.length + cancelled.length;
   const revenue = done.reduce((n, r) => n + (r.amount || 0), 0);
+  const materials = done.reduce((n, r) => n + materialsOf(r), 0), salaries = done.reduce((n, r) => n + payOf(r), 0), net = revenue - materials - salaries;
   const group = (key, names) => {
     const map = new Map();
     for (const r of list) {
       const k = r[key] ?? "—";
-      const g = map.get(k) || map.set(k, { label: names ? names(k) : k, all: 0, done: 0, revenue: 0, active: 0 }).get(k);
+      const g = map.get(k) || map.set(k, { label: names ? names(k) : k, all: 0, done: 0, revenue: 0, pay: 0, active: 0 }).get(k);
       g.all++;
-      if (r.status === "done") { g.done++; g.revenue += r.amount || 0; }
+      if (r.status === "done") { g.done++; g.revenue += r.amount || 0; g.pay += payOf(r); }
       if (["assigned", "measure", "pricing", "in_work"].includes(r.status)) g.active++;
     }
     return [...map.values()].sort((a, b) => b.all - a.all);
@@ -80,13 +82,19 @@ function render(user) {
     <section class="kpis">
       <div class="kpi"><small>Заказов</small><b class="num">${num(list.length)}</b><span>${num(list.filter((r) => r.status === "new").length)} ждут менеджера</span></div>
       <div class="kpi"><small>Выполнено</small><b class="num">${num(done.length)}</b><span>${pct(done.length, closed)}% закрытых — успешно</span></div>
-      <div class="kpi accent"><small>Выручка</small><b class="num">${money(revenue)}</b><span>по выполненным заказам</span></div>
+      <div class="kpi accent"><small>Продажи</small><b class="num">${money(revenue)}</b><span>по выполненным заказам</span></div>
       <div class="kpi"><small>Средний чек</small><b class="num">${money(done.length ? revenue / done.length : 0)}</b><span>${num(cancelled.length)} ${pluralize(cancelled.length, "отказ", "отказа", "отказов")}</span></div>
     </section>
+    ${isDirector(user) ? `<section class="kpis">
+      <div class="kpi"><small>Материалы со склада</small><b class="num">${money(materials)}</b><span>по закупочным ценам</span></div>
+      <div class="kpi"><small>Зарплаты мастеров</small><b class="num">${money(salaries)}</b><span>процент от заказов</span></div>
+      <div class="kpi accent"><small>Чистая выручка</small><b class="num">${money(net)}</b><span>продажи − материалы − зарплаты (${pct(net, revenue)}%)</span></div>
+    </section>` : ""}
 
     <div class="an-grid">
       <section class="panel"><h3>Новые заказы по неделям</h3>${columns(list, () => 1, (v) => num(v), "Заказы по неделям")}</section>
-      <section class="panel"><h3>Выручка по неделям создания заказа</h3>${columns(done, (r) => r.amount || 0, money, "Выручка по неделям")}</section>
+      <section class="panel"><h3>Продажи по неделям создания заказа</h3>${columns(done, (r) => r.amount || 0, money, "Продажи по неделям")}</section>
+      ${isDirector(user) ? `<section class="panel wide"><h3>Чистая выручка по неделям создания заказа</h3>${columns(done, netOf, money, "Чистая выручка по неделям")}</section>` : ""}
 
       <section class="panel"><h3>Где сейчас заказы</h3>
         ${bars(STATUSES.map((s) => ({ label: s.title, v: list.filter((r) => r.status === s.id).length, cls: `st-${s.id}` })))}</section>
@@ -95,16 +103,16 @@ function render(user) {
         ${bars(sources.map((g) => ({ label: g.label, v: g.all, extra: `${pct(g.done, g.all)}% выполнено` })))}</section>
 
       <section class="panel wide"><h3>Услуги</h3>
-        <div class="table-wrap"><table class="tbl"><thead><tr><th>Услуга</th><th class="r">Заказов</th><th class="r">Выполнено</th><th class="r">Выручка</th><th class="r">Средний чек</th></tr></thead>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Услуга</th><th class="r">Заказов</th><th class="r">Выполнено</th><th class="r">Продажи</th><th class="r">Средний чек</th></tr></thead>
         <tbody>${services.map((g) => `<tr><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td>
           <td class="r num">${money(g.revenue)}</td><td class="r num">${money(g.done ? g.revenue / g.done : 0)}</td></tr>`).join("")}</tbody></table></div></section>
 
       <section class="panel"><h3>Мастера</h3>
-        <div class="table-wrap"><table class="tbl"><thead><tr><th>Мастер</th><th class="r">В работе</th><th class="r">Выполнено</th><th class="r">Выручка</th></tr></thead>
-        <tbody>${masters.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr><td>${esc(g.label)}</td><td class="r num">${g.active}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td></tr>`).join("")}</tbody></table></div></section>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Мастер</th><th class="r">В работе</th><th class="r">Выполнено</th><th class="r">Продажи</th>${isDirector(user) ? `<th class="r">Зарплата</th>` : ""}</tr></thead>
+        <tbody>${masters.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr><td>${esc(g.label)}</td><td class="r num">${g.active}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td>${isDirector(user) ? `<td class="r num">${money(g.pay)}</td>` : ""}</tr>`).join("")}</tbody></table></div></section>
 
       <section class="panel"><h3>Менеджеры</h3>
-        <div class="table-wrap"><table class="tbl"><thead><tr><th>Менеджер</th><th class="r">Взято</th><th class="r">Выполнено</th><th class="r">Выручка</th></tr></thead>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Менеджер</th><th class="r">Взято</th><th class="r">Выполнено</th><th class="r">Продажи</th></tr></thead>
         <tbody>${managers.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr${me.name === g.label ? ' class="me"' : ""}><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td></tr>`).join("")}</tbody></table></div></section>
 
       ${sv ? `<section class="panel wide"><h3>Склад сейчас</h3><div class="kpis small">

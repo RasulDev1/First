@@ -18,10 +18,12 @@ export const DEMO_ACCOUNTS = [
   { login: "manager2", name: "Ислам Дудаев", position: "manager" },
   { login: "buyer", name: "Ибрагим Магомадов", position: "buyer" },
   { login: "sklad", name: "Ахмед Сулейманов", position: "storekeeper" },
+  { login: "master", name: "Шамиль Абдулаев", position: "master", master_id: 1 },
+  { login: "trainee", name: "Ризван Тагиров", position: "trainee", master_id: 5 },
 ];
 export { DEMO_PASSWORD };
 
-const ROLE_OF = { director: "director", manager: "manager", buyer: "warehouse", storekeeper: "warehouse" };
+const ROLE_OF = { director: "director", manager: "manager", buyer: "warehouse", storekeeper: "warehouse", master: "master", trainee: "master" };
 
 // [категория, артикул, название, характеристики, ед., закупка, продажа, минимум]
 const PRODUCTS = [
@@ -110,11 +112,11 @@ export function seed() {
 
   const staff = DEMO_ACCOUNTS.map((a, i) => {
     const salt = `s${i + 1}demo`;
-    return { id: i + 1, created_at: iso(now - 200 * DAY), login: a.login, name: a.name, position: a.position, role: ROLE_OF[a.position],
+    return { id: i + 1, created_at: iso(now - 200 * DAY), login: a.login, name: a.name, position: a.position, role: ROLE_OF[a.position], ...(a.master_id ? { master_id: a.master_id } : {}),
       salt, password_hash: hashPassword(DEMO_PASSWORD, salt), active: true };
   });
   const managers = staff.filter((s) => s.role === "manager");
-  const masters = MASTERS.map(([name, phone, level], i) => ({ id: i + 1, created_at: iso(now - 180 * DAY), name, phone, level, active: true }));
+  const masters = MASTERS.map(([name, phone, level], i) => ({ id: i + 1, created_at: iso(now - 180 * DAY), name, phone, level, rate: level === "trainee" ? 10 : 20, active: true }));
 
   const products = PRODUCTS.map(([category, sku, name, specs, unit, cost, price, min], i) =>
     ({ id: i + 1, created_at: iso(now - 120 * DAY), category, sku, name, specs, unit, cost, price, min_qty: min }));
@@ -185,6 +187,14 @@ export function seed() {
     });
   }
   requests.sort((a, b) => a.id - b.id);
+  // Чтобы у демо-мастера и демо-стажёра (аккаунты master и trainee) были заказы в работе
+  [1, 5].forEach((masterId, i) => {
+    const r = requests.filter((x) => ["in_work", "pricing", "measure", "assigned"].includes(x.status) && x.master_id)[i];
+    if (!r) return;
+    const old = masters.find((m) => m.id === r.master_id).name;
+    r.master_id = masterId;
+    r.history.forEach((h) => { h.text = h.text.replace(old, masters[masterId - 1].name); });
+  });
 
   const director = staff[0];
   const tasks = TASKS.map(([title, mi, days, done], i) => {

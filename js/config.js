@@ -13,12 +13,15 @@ export const ROLES = {
   director: { title: "Руководитель", sections: ["home", "requests", "masters", "tasks", "warehouse", "analytics", "staff"] },
   manager: { title: "Менеджер по продажам", sections: ["home", "requests", "masters", "tasks", "analytics"] },
   warehouse: { title: "Склад", sections: ["home", "requests", "warehouse"] },
+  master: { title: "Мастер", sections: ["myorders"] },
 };
 export const POSITIONS = [
   { id: "director", role: "director", title: "Руководитель" },
   { id: "manager", role: "manager", title: "Менеджер по продажам" },
   { id: "buyer", role: "warehouse", title: "Закупщик" },
   { id: "storekeeper", role: "warehouse", title: "Складовщик" },
+  { id: "master", role: "master", title: "Мастер" },
+  { id: "trainee", role: "master", title: "Стажёр" },
 ];
 
 // Заказы на вентиляцию

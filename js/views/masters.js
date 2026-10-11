@@ -1,6 +1,9 @@
-// «Мастера»: мастера и стажёры без аккаунтов. Менеджер выбирает их в заказе; здесь — контакты, загрузка и ближайшие выезды.
+// «Мастера»: мастера и стажёры. Менеджер выбирает их в заказе; здесь — контакты, загрузка и ближайшие выезды.
+// Добавляет мастеров, задаёт их ставку и логин с паролем только руководитель; мастер входит и видит свои заказы.
 import { esc, money, dateTime, toast, copyText, armed, pluralize } from "../core.js";
-import { db } from "../db.js";
+import { db, hashPassword, newSalt } from "../db.js";
+import { isDirector } from "../auth.js";
+import { rateOf } from "../pay.js";
 import { MASTER_LEVELS } from "../config.js";
 import { openDrawer, field, empty, formError, statusPill } from "../ui.js";
 import { openRequest } from "./requests.js";
@@ -17,6 +20,8 @@ function statsOf(m) {
     next: active.filter((r) => r.visit_at && new Date(r.visit_at) >= new Date(Date.now() - 864e5)).sort((a, b) => new Date(a.visit_at) - new Date(b.visit_at)) };
 }
 
+const accountOf = (m) => db.list("staff").find((s) => s.master_id === m.id);
+
 function card(m) {
   const s = statsOf(m);
   return `<button class="card master" data-act="open" data-id="${m.id}"${m.active ? "" : ' data-off=""'}>
@@ -31,8 +36,8 @@ function card(m) {
 function render(user) {
   me = user;
   const list = [...db.list("masters")].sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
-  return `<div class="toolbar"><p class="lead">Мастера и стажёры не входят в CRM. Менеджер назначает мастера в заказе и сам сообщает ему адрес и время.</p>
-      <button class="btn primary" data-act="create">Добавить мастера или стажёра</button></div>
+  return `<div class="toolbar"><p class="lead">Менеджер назначает мастера в заказе. Мастер входит в CRM и видит только свои заказы.</p>
+      ${isDirector(user) ? `<button class="btn primary" data-act="create">Добавить мастера или стажёра</button>` : ""}</div>
     <div class="cards">${list.length ? list.map(card).join("") : empty("Мастеров пока нет", "Добавьте первого мастера, чтобы назначать его на заказы.")}</div>`;
 }
 
@@ -41,7 +46,8 @@ function detailHtml(id) {
   if (!m) return empty("Мастер удалён");
   const s = statsOf(m);
   return `<header class="d-head"><p class="eyebrow">${levelTitle(m)}</p><h2>${esc(m.name)}</h2>
-      <div class="d-meta"><span class="num">${esc(m.phone)}</span><button class="link" data-act="copy">Скопировать телефон</button></div></header>
+      <div class="d-meta"><span class="num">${esc(m.phone)}</span><button class="link" data-act="copy">Скопировать телефон</button></div>
+      ${isDirector(me) ? `<p class="muted small">${accountOf(m) ? `Логин: <b>${esc(accountOf(m).login)}</b>` : "Аккаунта нет — мастер не может войти"} · зарплата ${rateOf(m)}% от суммы заказа</p>` : ""}</header>
     <section class="d-sec"><div class="kpis small">
       <div class="kpi"><small>В работе</small><b class="num">${s.active.length}</b></div>
       <div class="kpi"><small>Выполнено</small><b class="num">${s.done.length}</b></div>
@@ -50,8 +56,8 @@ function detailHtml(id) {
       `<button class="mini-row" data-act="request" data-id="${r.id}"><span><b>№${r.id} · ${esc(r.client)}</b><small>${esc(r.address)}</small></span>
         <span class="r">${statusPill(r.status)}<small>${dateTime(r.visit_at)}</small></span></button>`).join("")}</div>`
       : `<p class="muted">Активных заказов нет.</p>`}</section>
-    <section class="d-sec btn-row"><button class="btn" data-act="edit">Изменить</button>
-      <button class="btn ghost${m.active ? " danger" : ""}" data-act="toggle">${m.active ? "Больше не работает" : "Снова работает"}</button></section>
+    ${isDirector(me) ? `<section class="d-sec btn-row"><button class="btn" data-act="edit">Изменить</button>
+      <button class="btn ghost${m.active ? " danger" : ""}" data-act="toggle">${m.active ? "Больше не работает" : "Снова работает"}</button></section>` : ""}
     ${!m.active ? `<p class="muted small">Неработающего мастера нельзя выбрать в новом заказе; история его заказов сохраняется.</p>` : ""}`;
 }
 
@@ -59,29 +65,53 @@ function openMaster(id) {
   openDrawer(() => detailHtml(id), {
     copy: (el) => copyText(db.find("masters", id).phone, el),
     request: (el) => openRequest(el.dataset.id),
-    edit: () => openForm(db.find("masters", id)),
+    edit: () => { if (isDirector(me)) openForm(db.find("masters", id)); },
     toggle(el) {
       const m = db.find("masters", id);
       if (m.active && statsOf(m).active.length && !armed(el, `У мастера ${statsOf(m).active.length} ${pluralize(statsOf(m).active.length, "заказ", "заказа", "заказов")} в работе. Всё равно?`)) return;
       db.patch("masters", id, { active: !m.active });
+      if (accountOf(m)) db.patch("staff", accountOf(m).id, { active: !m.active });
       toast(m.active ? "Мастер снова доступен" : "Мастер отключён");
     },
   }, { live: true });
 }
 
 function openForm(m) {
+  const acc = m && accountOf(m);
   openDrawer(() => `<header class="d-head"><h2>${m ? "Изменить" : "Новый мастер или стажёр"}</h2></header>
     <form data-form="save">
       ${field("ФИО", `<input name="name" required maxlength="80" value="${esc(m?.name || "")}" autofocus>`)}
       ${field("Телефон", `<input name="phone" required type="tel" maxlength="30" value="${esc(m?.phone || "")}" placeholder="+7 928 000-00-00">`)}
       ${field("Кто", `<select name="level">${MASTER_LEVELS.map((l) => `<option value="${l.id}"${l.id === (m?.level || "master") ? " selected" : ""}>${l.title}</option>`).join("")}</select>`)}
+      ${field("Зарплата, % от суммы заказа", `<input name="rate" type="number" min="0" max="100" step="0.5" inputmode="decimal" required value="${m ? rateOf(m) : 20}">`, "Мастер увидит, сколько заработает с каждого заказа")}
+      ${acc ? `<p class="note">Логин: <b>${esc(acc.login)}</b></p>` : field("Логин для входа", `<input name="login" ${m ? "" : "required"} maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="например, petrov">`, "Латинские буквы, цифры, точка, дефис или _")}
+      ${field(acc ? "Новый пароль" : "Пароль", `<input name="password" type="text" autocomplete="new-password" autocapitalize="none" spellcheck="false" ${acc ? 'placeholder="Оставьте пустым, чтобы не менять"' : m ? "" : "required"}>`, "Не короче 8 символов. Передайте его мастеру лично.")}
       <div class="form-actions"><button class="btn primary" type="submit">${m ? "Сохранить" : "Добавить"}</button></div>
     </form>`, {
     save(fd, form) {
-      const values = { name: String(fd.get("name")).trim(), phone: String(fd.get("phone")).trim(), level: fd.get("level") };
+      const values = { name: String(fd.get("name")).trim(), phone: String(fd.get("phone")).trim(), level: fd.get("level"), rate: Math.min(100, Math.max(0, Number(fd.get("rate")) || 0)) };
       if (!values.name || !values.phone) return formError(form, "Впишите ФИО и телефон");
-      if (m) { db.patch("masters", m.id, values); toast("Сохранено", "ok"); openMaster(m.id); }
-      else { const created = db.insert("masters", { ...values, active: true }); toast("Мастер добавлен", "ok"); openMaster(created.id); }
+      const login = String(fd.get("login") || "").trim().toLowerCase(), password = String(fd.get("password") || "");
+      const wantsAccount = !acc && (login || password);
+      if (wantsAccount || (acc && password)) {
+        if (password.length < 8) return formError(form, "Пароль — не короче 8 символов");
+        if (!acc) {
+          if (!/^[a-z0-9._-]{3,32}$/.test(login)) return formError(form, "Логин: 3–32 символа — латинские буквы, цифры, точка, дефис или _");
+          if (db.list("staff").some((x) => x.login === login)) return formError(form, "Такой логин уже занят");
+        }
+      }
+      const saved = m ? (db.patch("masters", m.id, values), m) : db.insert("masters", { ...values, active: true });
+      const position = values.level === "trainee" ? "trainee" : "master";
+      if (acc) {
+        const changes = { name: values.name, position };
+        if (password) { changes.salt = newSalt(); changes.password_hash = hashPassword(password, changes.salt); }
+        db.patch("staff", acc.id, changes);
+      } else if (wantsAccount) {
+        const salt = newSalt();
+        db.insert("staff", { login, name: values.name, position, role: "master", master_id: saved.id, salt, password_hash: hashPassword(password, salt), active: true });
+      }
+      toast(m ? "Сохранено" : "Мастер добавлен", "ok");
+      openMaster(saved.id);
     },
   });
 }
@@ -89,5 +119,5 @@ function openForm(m) {
 export default {
   title: () => "Мастера и стажёры",
   render,
-  actions: { open: (el) => openMaster(Number(el.dataset.id)), create: () => openForm(null) },
+  actions: { open: (el) => openMaster(Number(el.dataset.id)), create: () => { if (isDirector(me)) openForm(null); } },
 };

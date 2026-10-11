@@ -31,3 +31,4 @@ export const can = (user, section) => Boolean(user && ROLES[user.role]?.sections
 export const isDirector = (user) => user?.role === "director";
 export const isManager = (user) => user?.role === "manager";
 export const isWarehouse = (user) => user?.role === "warehouse";
+export const isMaster = (user) => user?.role === "master";

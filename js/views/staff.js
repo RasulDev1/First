@@ -9,19 +9,20 @@ let me = null;
 const ACCESS = {
   director: "Все разделы. Распределяет роли и ставит задачи менеджерам.",
   manager: "Заказы, мастера, свои задачи и аналитика.",
+  master: "Только «Мои заказы»: статус своих заказов и сколько мастер заработает в этом месяце. Аккаунты мастеров создаёт руководитель в разделе «Мастера».",
   warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заказах только выписывает материал в «Расходы».",
 };
-const SECTION_NAMES = { home: "Главная", requests: "Заказы", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники" };
+const SECTION_NAMES = { home: "Главная", requests: "Заказы", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы" };
 const loginLink = () => location.href.split(/[?#]/)[0];
 const activeDirectors = () => db.list("staff").filter((s) => s.active && s.role === "director");
 
 function render(user) {
   me = user;
-  const list = [...db.list("staff")].sort((a, b) => b.active - a.active || POSITIONS.findIndex((p) => p.id === a.position) - POSITIONS.findIndex((p) => p.id === b.position));
+  const list = db.list("staff").filter((s) => s.role !== "master").sort((a, b) => b.active - a.active || POSITIONS.findIndex((p) => p.id === a.position) - POSITIONS.findIndex((p) => p.id === b.position));
   return `<div class="toolbar"><p class="lead">Сотрудник входит по ссылке своим логином и паролем и видит только разделы своей роли.</p>
       <button class="btn primary" data-act="create">Добавить сотрудника</button></div>
     <div class="link-box"><span class="num">${esc(loginLink())}</span><button class="btn sm" data-act="copyLink">Скопировать ссылку для входа</button></div>
-    <div class="roles">${Object.entries(ROLES).map(([id, r]) => `<div class="role-card"><b>${id === "warehouse" ? "Закупщик и складовщик" : esc(r.title)}</b>
+    <div class="roles">${Object.entries(ROLES).map(([id, r]) => `<div class="role-card"><b>${id === "warehouse" ? "Закупщик и складовщик" : id === "master" ? "Мастер и стажёр" : esc(r.title)}</b>
       <p>${ACCESS[id]}</p><small>${r.sections.map((s) => SECTION_NAMES[s]).join(" · ")}</small></div>`).join("")}</div>
     <div class="table-wrap"><table class="tbl"><thead><tr><th>Сотрудник</th><th>Должность</th><th>Логин</th><th>С нами с</th><th></th></tr></thead>
     <tbody>${list.map((s) => `<tr class="clickable${s.active ? "" : " off"}" data-act="open" data-id="${s.id}" tabindex="0">
@@ -34,7 +35,7 @@ function formHtml(s) {
   return `<header class="d-head"><p class="eyebrow">${s ? `Логин ${esc(s.login)}` : "Новый аккаунт"}</p><h2>${s ? esc(s.name) : "Новый сотрудник"}</h2></header>
     <form data-form="save">
       ${field("ФИО", `<input name="name" required maxlength="80" value="${esc(s?.name || "")}" placeholder="Фамилия Имя Отчество" autofocus>`)}
-      ${field("Должность", `<select name="position"${self ? " disabled" : ""}>${options(POSITIONS, s?.position || "manager")}</select>`,
+      ${field("Должность", `<select name="position"${self ? " disabled" : ""}>${options(POSITIONS.filter((p) => p.role !== "master"), s?.position || "manager")}</select>`,
         self ? "Свою роль руководитель поменять не может — так CRM не останется без руководителя." : "От должности зависит, какие разделы видит сотрудник.")}
       ${s ? "" : field("Логин", `<input name="login" required maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="например, petrov">`, "Латинские буквы, цифры, точка, дефис или _")}
       ${field(s ? "Новый пароль" : "Пароль", `<input name="password" type="text" autocomplete="new-password" autocapitalize="none" spellcheck="false" ${s ? 'placeholder="Оставьте пустым, чтобы не менять"' : "required"}>`, "Не короче 8 символов. Передайте его сотруднику лично.")}
