@@ -36,7 +36,7 @@ function matches(r) {
   if (F.created && c !== F.created) return false;
   if (F.done && d !== F.done) return false;
   if (F.phone && !r.phone.replace(/\D/g, "").includes(F.phone.replace(/\D/g, "")) && !r.phone.includes(F.phone)) return false;
-  if (F.city && cityOf(r) !== F.city) return false;
+  if (F.city && !cityOf(r).toLowerCase().replace(/^г\.\s*/, "").includes(F.city.toLowerCase().replace(/^г\.\s*/, ""))) return false;
   if (F.street && !streetOf(r).toLowerCase().includes(F.street.toLowerCase())) return false;
   if (F.status && r.status !== F.status) return false;
   if (!query) return true;
@@ -90,11 +90,12 @@ function render(user) {
   const th = ([key, title]) => `<th><button type="button" class="th-sort" data-act="sort" data-id="${key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   const active = query || Object.values(F).some(Boolean);
   return `<form data-form="find"><div class="filterbar">
-      ${flt("Поиск", `<input type="search" name="q" placeholder="Клиент, №" value="${esc(query)}">`)}
+      ${flt("Поиск", `<input type="search" name="q" placeholder="Заказ №" value="${esc(query)}">`)}
       ${flt("Дата оформления", `<input type="date" name="created" value="${F.created}">`)}
       ${flt("Дата завершения", `<input type="date" name="done" value="${F.done}">`)}
       ${flt("Номер клиента", `<input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…">`)}
-      ${flt("Город", `<select name="city">${options([...new Set(db.list("requests").map(cityOf).filter(Boolean))].sort(), F.city, { empty: "Все города" })}</select>`)}
+      ${flt("Город", `<input type="search" name="city" value="${esc(F.city)}" placeholder="Город" list="cityList">
+        <datalist id="cityList">${[...new Set(db.list("requests").map(cityOf).filter(Boolean))].sort().map((c) => `<option value="${esc(c)}">`).join("")}</datalist>`)}
       ${flt("Улица", `<input type="search" name="street" value="${esc(F.street)}" placeholder="Улица, дом">`)}
       ${flt("Статус заказа", `<select name="status">${options(STATUSES, F.status, { empty: "Все статусы" })}</select>`)}
       <button class="btn" type="submit">Найти</button>
