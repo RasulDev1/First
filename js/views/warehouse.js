@@ -6,7 +6,7 @@ import { db } from "../db.js";
 import { openDrawer, closeDrawer, field, options, empty, chips, formError } from "../ui.js";
 import { currentUser } from "../auth.js";
 import { LOCATIONS, describeLocation, categoryTitle, product, placesOf, qtyOf, qtyAt, contentsOf, isLow, toBuy,
-  receive, move, writeOff, recount, expense, pendingItems, locChip, shelfOf, ACTIVE_REQUESTS } from "../stock.js";
+  receive, move, writeOff, recount, expense, locChip, shelfOf, ACTIVE_REQUESTS } from "../stock.js";
 
 let me = null;
 let tab = "stock";      // stock · map · buy · log
@@ -16,7 +16,6 @@ let query = "";
 
 const TABS = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Журнал"]];
 const amount = (p, n) => `${num(n)} ${esc(p?.unit || "")}`;
-const waitingIssue = () => db.list("requests").filter((r) => ACTIVE_REQUESTS.includes(r.status) && pendingItems(r).length);
 
 /* ---------- Остатки ---------- */
 function matches(p) {
@@ -84,19 +83,14 @@ function cellHtml(loc) {
 
 /* ---------- Закупка ---------- */
 function buyTab() {
-  const needed = new Map(); // product_id → сколько нужно под заказы сверх остатка
-  for (const r of waitingIssue()) for (const it of pendingItems(r)) needed.set(it.product_id, (needed.get(it.product_id) || 0) + it.qty);
-  const rows = db.list("products").map((p) => {
-    const forRequests = Math.max(0, (needed.get(p.id) || 0) - qtyOf(p.id));
-    const qty = Math.max(toBuy(p), forRequests);
-    return { p, qty, forRequests };
-  }).filter((x) => x.qty > 0 && (isLow(x.p) || x.forRequests)).sort((a, b) => b.forRequests - a.forRequests || a.p.category.localeCompare(b.p.category));
+  const rows = db.list("products").map((p) => ({ p, qty: toBuy(p) })).filter((x) => x.qty > 0 && isLow(x.p))
+    .sort((a, b) => a.p.category.localeCompare(b.p.category));
   if (!rows.length) return empty("Закупать нечего", "Всех позиций больше минимального остатка.");
   const total = rows.reduce((n, x) => n + x.qty * (x.p.cost || 0), 0);
-  return `<p class="lead">Позиции ниже минимального остатка и то, чего не хватает под заказы. Предлагаем докупить до двойного минимума.</p>
+  return `<p class="lead">Позиции ниже минимального остатка. Предлагаем докупить до двойного минимума.</p>
     <div class="table-wrap"><table class="tbl">
     <thead><tr><th>Наименование</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Купить</th><th class="r">Закупка</th><th></th></tr></thead>
-    <tbody>${rows.map(({ p, qty, forRequests }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}${forRequests ? ` · под заказы не хватает ${amount(p, forRequests)}` : ""}</small></td>
+    <tbody>${rows.map(({ p, qty }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}</small></td>
       <td class="r num${qtyOf(p.id) ? "" : " bad"}">${amount(p, qtyOf(p.id))}</td><td class="r num muted">${num(p.min_qty)}</td>
       <td class="r num"><b>${amount(p, qty)}</b></td><td class="r num">${money(qty * (p.cost || 0))}</td>
       <td class="r"><button class="btn sm" data-act="receiveBuy" data-id="${p.id}" data-qty="${qty}">Принять</button></td></tr>`).join("")}</tbody>
@@ -239,14 +233,12 @@ const expenseRequests = () => db.list("requests").filter((r) => ACTIVE_REQUESTS.
 function expenseHtml(o) {
   const requests = expenseRequests();
   const request = db.find("requests", o.requestId);
-  const pending = request ? pendingItems(request) : [];
   const places = o.productId ? placesOf(o.productId) : [];
   const p = product(o.productId);
   return `<header class="d-head"><p class="eyebrow">Добавить расход</p><h2>${request ? `Заказ №${request.id}` : "Материал в заказ"}</h2>
       ${request ? `<p class="muted">${esc(request.client)} · ${esc(request.address)}</p>` : ""}</header>
     <form data-form="expense">
       ${o.lockRequest ? "" : field("Заказ", `<select name="request" required data-change="pickExpense">${options(requests.map((r) => ({ id: r.id, title: `№${r.id} · ${r.client}` })), o.requestId, { empty: "Выберите заказ" })}</select>`)}
-      ${pending.length ? `<div class="note">По плану менеджера осталось выписать:<br>${pending.map((it) => `<button type="button" class="link" data-act="planItem" data-id="${it.product_id}">${esc(product(it.product_id)?.name || "")} — ${num(it.qty)} ${esc(product(it.product_id)?.unit || "")}</button>`).join("<br>")}</div>` : ""}
       ${field("Товар", `<select name="product" required data-change="pickExpense">${productOptions(o.productId)}</select>`)}
       ${o.productId ? field("Откуда берём", places.length ? `<select name="from" required>${options(places.map((s) => ({ id: s.loc, title: `${s.loc} · ${(shelfOf(s.loc)?.title || "").toLowerCase()} — ${num(s.qty)} ${p.unit}` })), o.from || places[0].loc)}</select>`
         : `<p class="note warn">Этого товара нет на складе.</p>`) : ""}
@@ -268,14 +260,6 @@ export function openExpense(o = {}) {
       state.productId = next;
       state.qty = form.qty.value;
       state.note = form.note.value;
-      document.getElementById("drawerBody").innerHTML = expenseHtml(state);
-    },
-    planItem(el) {
-      const it = pendingItems(db.find("requests", state.requestId)).find((x) => x.product_id === Number(el.dataset.id));
-      state.productId = it.product_id;
-      state.qty = it.qty;
-      state.note = document.querySelector("#drawerBody form")?.note.value || "";
-      state.from = null;
       document.getElementById("drawerBody").innerHTML = expenseHtml(state);
     },
     expense(fd, form) {

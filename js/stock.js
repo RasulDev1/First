@@ -104,15 +104,8 @@ export function recount({ productId, loc, qty }, user) {
   return delta;
 }
 
-/** Хватает ли на складе материалов заказа */
-export const shortages = (request) => (request.items || [])
-  .map((it) => ({ ...it, have: qtyOf(it.product_id) })).filter((it) => it.have < it.qty);
-
 /** Сколько штук товара уже выписано в расходы заказа */
 export const expensedQty = (request, productId) => (request.expenses || []).filter((e) => e.product_id === Number(productId)).reduce((n, e) => n + e.qty, 0);
-/** Материалы по плану менеджера, которые ещё не выписаны полностью: [{ product_id, qty (осталось), plan }] */
-export const pendingItems = (request) => (request.items || [])
-  .map((it) => ({ product_id: it.product_id, plan: it.qty, qty: Math.round((it.qty - expensedQty(request, it.product_id)) * 1000) / 1000 })).filter((it) => it.qty > 0);
 export const expenseTotal = (request) => (request.expenses || []).reduce((n, e) => n + e.qty * (e.cost || 0), 0);
 export const ACTIVE_REQUESTS = ["new", "assigned", "measure", "pricing", "in_work"];
 

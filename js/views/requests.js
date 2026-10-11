@@ -1,5 +1,5 @@
 // «Заказы» (менеджер и руководитель): единый список по порядку с сортировками, создание и удаление заказов, мастер, выезд, статусы,
-// сумма договора, материалы по плану, расходы со склада и история изменений.
+// сумма договора, расходы со склада (их добавляет только складовщик) и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
 import { storage, esc, money, num, dateTime, dateShort, toLocalInput, toast, copyText, armed, localDay } from "../core.js";
 import { STATUSES, ACTIVE_STATUSES, SERVICES, OBJECTS, SOURCES, CATEGORIES } from "../config.js";
@@ -8,7 +8,7 @@ import { isDirector, isWarehouse, currentUser } from "../auth.js";
 import { openExpense } from "./warehouse.js";
 import { levelTitle } from "./masters.js";
 import { openDrawer, statusPill, options, field, empty, chips, formError } from "../ui.js";
-import { qtyOf, product, shortages, expensedQty, expenseTotal, locChip } from "../stock.js";
+import { product, expenseTotal, locChip } from "../stock.js";
 
 let sort = { key: "updated", dir: -1 }; // по умолчанию — по последней смене статуса, свежие сверху
 let sel = null;      // выбранный заказ: открыт в нижней панели
@@ -20,7 +20,6 @@ const ACTIVE = ACTIVE_STATUSES;
 const staffName = (id) => db.find("staff", id)?.name || "";
 const masterName = (id) => db.find("masters", id)?.name || "";
 export const requestTotal = (r) => r.amount || 0;
-export const itemsTotal = (r) => (r.items || []).reduce((n, it) => n + it.qty * (it.price || 0), 0);
 
 function log(r, text) {
   (r.history ||= []).push({ at: new Date().toISOString(), by: me?.name || "", text });
@@ -217,11 +216,6 @@ function setStatus(r, next, el) {
 }
 
 /* ---------- Карточка заказа ---------- */
-function productOptions() {
-  return CATEGORIES.map((c) => `<optgroup label="${esc(c.title)}">${db.list("products").filter((p) => p.category === c.id)
-    .map((p) => `<option value="${p.id}">${esc(p.name)} — ${num(qtyOf(p.id))} ${esc(p.unit)}</option>`).join("")}</optgroup>`).join("");
-}
-
 function masterLoad(masterId, visitAt, selfId) {
   if (!masterId || !visitAt) return "";
   const day = localDay(new Date(visitAt));
@@ -229,26 +223,6 @@ function masterLoad(masterId, visitAt, selfId) {
     && r.visit_at && localDay(new Date(r.visit_at)) === day);
   return same.length ? `<p class="note warn">У мастера в этот день ещё ${same.length} ${same.length === 1 ? "выезд" : "выезда"}: ${same.map((r) =>
     `№${r.id} в ${new Date(r.visit_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`).join(", ")}</p>` : "";
-}
-
-function itemsHtml(r) {
-  const items = r.items || [];
-  const short = new Set(shortages(r).map((s) => s.product_id));
-  const editable = !["done", "cancelled"].includes(r.status) && !isWarehouse(me);
-  return `<div class="items">${items.length ? `<div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Материал</th><th class="r">Кол-во</th><th class="r">Цена</th><th class="r">Сумма</th>${editable ? "<th></th>" : ""}</tr></thead>
-    <tbody>${items.map((it, i) => {
-      const p = product(it.product_id);
-      return `<tr><td>${esc(p?.name || "Удалённый товар")}${short.has(it.product_id) && expensedQty(r, it.product_id) < it.qty ? `<small class="bad">на складе ${num(qtyOf(it.product_id))}</small>` : ""}${expensedQty(r, it.product_id) ? `<small>выписано ${num(expensedQty(r, it.product_id))} из ${num(it.qty)}</small>` : ""}</td>
-        <td class="r num">${num(it.qty)} ${esc(p?.unit || "")}</td><td class="r num">${money(it.price)}</td><td class="r num">${money(it.qty * it.price)}</td>
-        ${editable ? `<td class="r"><button class="icon-btn" data-act="removeItem" data-id="${i}" aria-label="Убрать">✕</button></td>` : ""}</tr>`;
-    }).join("")}</tbody>
-    <tfoot><tr><td colspan="3">Материалы по прайсу</td><td class="r num"><b>${money(itemsTotal(r))}</b></td>${editable ? "<td></td>" : ""}</tr></tfoot></table></div>` : `<p class="muted">Материалы не добавлены.</p>`}
-    ${items.length && !r.expenses?.length ? `<p class="note">Складовщик добавляет материалы во вкладке «Расходы» заказа, они появятся ниже.</p>` : ""}
-    ${editable ? `<form class="inline-form" data-form="addItem">
-      <select name="product" aria-label="Материал" required><option value="">Добавить материал со склада…</option>${productOptions()}</select>
-      <input name="qty" type="number" min="0.1" step="any" inputmode="decimal" placeholder="Кол-во" aria-label="Количество" required>
-      <button class="btn" type="submit">Добавить</button></form>` : ""}</div>`;
 }
 
 /** «Расходы»: материалы, выписанные со склада под заказ, по себестоимости */
@@ -263,9 +237,8 @@ function expensesHtml(r, { button = false } = {}) {
     ${button && open ? `<button class="btn primary" data-act="expense">Добавить расход</button>` : ""}`;
 }
 
-/** Складовщик видит заказ без цен и контактов: адрес, мастера, материалы по плану и расходы */
+/** Складовщик видит заказ без цен и контактов: адрес, мастера и расходы */
 function warehouseDetailHtml(r) {
-  const plan = r.items || [];
   const master = db.find("masters", r.master_id);
   return `<header class="d-head"><p class="eyebrow">Заказ №${r.id} · ${dateTime(r.created_at)}</p><h2>${esc(r.client)}</h2>
       <div class="d-meta">${statusPill(r.status)}</div></header>
@@ -273,9 +246,6 @@ function warehouseDetailHtml(r) {
       <dt>Адрес</dt><dd>${esc(r.address)}</dd><dt>Услуга</dt><dd>${esc(r.service)}</dd>
       <dt>Мастер</dt><dd>${master ? `${esc(master.name)} · ${esc(levelTitle(master))}` : "Не назначен"}</dd>
       ${r.visit_at ? `<dt>Выезд</dt><dd>${dateTime(r.visit_at)}</dd>` : ""}</dl></section>
-    <section class="d-sec"><h3>Материалы по плану менеджера</h3>${plan.length ? `<div class="mini-list">${plan.map((it) => { const p = product(it.product_id), done = expensedQty(r, it.product_id);
-      return `<div class="mini-row static"><span><b>${esc(p?.name || "")}</b><small>${done >= it.qty ? "выписано полностью" : done ? `выписано ${num(done)}` : `на складе ${num(qtyOf(it.product_id))}`}</small></span>
-        <span class="r num"><b>${num(it.qty)} ${esc(p?.unit || "")}</b></span></div>`; }).join("")}</div>` : `<p class="muted">Менеджер не добавил материалы. Выписать можно любой товар.</p>`}</section>
     <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r, { button: me?.position === "storekeeper" })}</section>`;
 }
 
@@ -336,8 +306,6 @@ function detailHtml(id) {
         <span class="muted">₽</span><button class="btn" type="submit">Сохранить</button></form>
       <p class="muted small">Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
     </section>
-
-    <section class="d-sec"><h3>Материалы по плану</h3>${itemsHtml(r)}</section>
 
     <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r)}</section>
 
@@ -410,20 +378,6 @@ const detailActions = {
     r.amount = amount;
     log(r, `Сумма договора: ${money(amount)}`);
     save("Сумма сохранена");
-  },
-  addItem(fd, form) {
-    const r = current(), p = product(fd.get("product")), qty = Number(String(fd.get("qty")).replace(",", "."));
-    if (!p) return formError(form, "Выберите материал");
-    if (!(qty > 0)) return formError(form, "Впишите количество");
-    const existing = (r.items ||= []).find((it) => it.product_id === p.id);
-    if (existing) existing.qty = Math.round((existing.qty + qty) * 1000) / 1000;
-    else r.items.push({ product_id: p.id, qty, price: p.price });
-    save(`Добавлено: ${p.name}`);
-  },
-  removeItem(el) {
-    const r = current();
-    r.items.splice(Number(el.dataset.id), 1);
-    save();
   },
   comment(fd) {
     const r = current();

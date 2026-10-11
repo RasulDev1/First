@@ -4,7 +4,7 @@ import { db } from "../db.js";
 import { isDirector, isManager, isWarehouse } from "../auth.js";
 import { statusPill } from "../ui.js";
 import { openRequest } from "./requests.js";
-import { isLow, qtyOf, product, toBuy, pendingItems, locChip } from "../stock.js";
+import { isLow, qtyOf, product, toBuy, locChip } from "../stock.js";
 
 let me = null;
 const DAY = 864e5;
@@ -56,13 +56,13 @@ function render(user) {
   const hello = `<p class="lead">Здравствуйте, ${esc(user.name.split(" ")[0])}! Сегодня ${new Date().toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" })}.</p>`;
 
   if (isWarehouse(user)) {
-    const toIssue = requests.filter((r) => ["new", ...ACTIVE].includes(r.status) && pendingItems(r).length);
+    const working = requests.filter((r) => ACTIVE.includes(r.status)).sort((a, b) => new Date(a.visit_at || a.created_at) - new Date(b.visit_at || b.created_at)).slice(0, 8);
     const moves = [...db.list("moves")].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 6);
     return `${hello}<div class="home-grid">
       ${stockPanel()}
-      ${panel(`Выписать в расходы${toIssue.length ? ` <i class="count">${toIssue.length}</i>` : ""}`, toIssue.length ? `<div class="mini-list">${toIssue.map((r) => `<button class="mini-row" data-act="request" data-id="${r.id}">
-        <span><b>Заказ №${r.id}</b><small>${pendingItems(r).length} ${pluralize(pendingItems(r).length, "позиция", "позиции", "позиций")} · ${esc(db.find("masters", r.master_id)?.name || "мастер не назначен")}</small></span>
-        <span class="r"><small>${r.visit_at ? `выезд ${dateTime(r.visit_at)}` : ""}</small></span></button>`).join("")}</div>` : `<p class="muted">Выписывать нечего.</p>`, "requests")}
+      ${panel(`Заказы в работе${working.length ? ` <i class="count">${working.length}</i>` : ""}`, working.length ? `<div class="mini-list">${working.map((r) => `<button class="mini-row" data-act="request" data-id="${r.id}">
+        <span><b>Заказ №${r.id}</b><small>${esc(db.find("masters", r.master_id)?.name || "мастер не назначен")} · ${esc(r.address)}</small></span>
+        <span class="r"><small>${r.visit_at ? `выезд ${dateTime(r.visit_at)}` : ""}</small></span></button>`).join("")}</div>` : `<p class="muted">Заказов в работе нет.</p>`, "requests")}
       ${panel("Последние движения", `<div class="mini-list">${moves.map((m) => `<div class="mini-row static"><span><b>${esc(product(m.product_id)?.name || "")}</b><small>${esc(m.by)} · ${dateTime(m.at)}</small></span>
         <span class="r">${m.kind === "move" ? `${locChip(m.from)} → ${locChip(m.to)}` : locChip(m.to || m.from)}</span></div>`).join("")}</div>`, "warehouse")}
     </div>`;

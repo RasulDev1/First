@@ -5,7 +5,7 @@ import { db } from "./db.js";
 import { login, logout, currentUser, can, positionTitle, isWarehouse } from "./auth.js";
 import { initUi, setViewActions, closeDrawer, refreshDrawer, drawerOpen } from "./ui.js";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "./seed.js";
-import { isLow, pendingItems, ACTIVE_REQUESTS } from "./stock.js";
+import { isLow } from "./stock.js";
 import home from "./views/home.js";
 import requests from "./views/requests.js";
 import masters from "./views/masters.js";
@@ -67,7 +67,7 @@ function initLogin() {
 
 /* ---------- Меню и разделы ---------- */
 function badge(id) {
-  if (id === "requests") return isWarehouse(user) ? db.list("requests").filter((r) => ACTIVE_REQUESTS.includes(r.status) && pendingItems(r).length).length : db.list("requests").filter((r) => r.status === "new").length;
+  if (id === "requests") return isWarehouse(user) ? 0 : db.list("requests").filter((r) => r.status === "new").length;
   if (id === "tasks") {
     const now = new Date();
     return db.list("tasks").filter((t) => !t.done_at && (user.role === "director" || t.assignee_id === user.id) && new Date(t.due) <= now).length;

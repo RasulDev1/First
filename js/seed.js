@@ -157,7 +157,7 @@ export function seed() {
     const big = /рекуперац|ресторан|приточной/i.test(service);
     const amount = ["cancelled", "new", "assigned", "measure"].includes(status) ? 0
       : Math.round(((big ? 90000 : 18000) + rand() * (big ? 260000 : 60000)) / 500) * 500;
-    const items = master && /Монтаж|рекуперац|кухни/i.test(service) ? [
+    const used = master && /Монтаж|рекуперац|кухни/i.test(service) ? [
       { product_id: bySku(pick(["VK-160", "VK-200", "BV-100", "VK-100"])), qty: 1 },
       { product_id: bySku(pick(["D-160", "D-125", "D-200"])), qty: 6 + Math.floor(rand() * 12) },
       { product_id: bySku(pick(["O90-160", "O90-125"])), qty: 2 + Math.floor(rand() * 4) },
@@ -178,8 +178,8 @@ export function seed() {
       address: `${pick(CITIES)}, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
       note: NOTE_BY_SERVICE[service] || pick(NOTES), status, manager_id: manager?.id || null, master_id: master?.id || null,
       visit_at: visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null,
-      amount, items, comment: "", history,
-      expenses: (status === "done" ? items : status === "in_work" ? items.slice(0, 2) : []).map((it) => ({ product_id: it.product_id, qty: it.qty,
+      amount, items: [], comment: "", history,
+      expenses: (status === "done" ? used : status === "in_work" ? used.slice(0, 2) : []).map((it) => ({ product_id: it.product_id, qty: it.qty,
         loc: stock.find((x) => x.product_id === it.product_id)?.loc || null, cost: products[it.product_id - 1].cost, at: past(created + 2 * DAY), by: DEMO_ACCOUNTS[4].name })),
       done_at: status === "done" ? past(created + 4 * DAY) : null,
     });
