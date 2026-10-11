@@ -71,8 +71,8 @@ function render(user) {
   const month = requests.filter((r) => new Date(r.created_at) >= new Date(Date.now() - 30 * DAY));
   const done = month.filter((r) => r.status === "done");
   const kpis = `<section class="kpis">
-    <div class="kpi"><small>Новых ждут</small><b class="num">${requests.filter((r) => r.status === "new").length}</b><span>менеджера</span></div>
-    <div class="kpi"><small>В работе</small><b class="num">${requests.filter((r) => ACTIVE.includes(r.status)).length}</b><span>от мастера до монтажа</span></div>
+    <div class="kpi"><small>Новые заказы</small><b class="num">${requests.filter((r) => r.status === "new").length}</b></div>
+    <div class="kpi"><small>Заказы в работе</small><b class="num">${requests.filter((r) => ACTIVE.includes(r.status)).length}</b></div>
     <div class="kpi"><small>Заказов за 30 дней</small><b class="num">${month.length}</b><span>${done.length} выполнено</span></div>
     <div class="kpi accent"><small>Продажи за 30 дней</small><b class="num">${money(done.reduce((n, r) => n + (r.amount || 0), 0))}</b><span>по выполненным</span></div>
   </section>`;
