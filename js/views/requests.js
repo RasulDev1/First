@@ -290,10 +290,10 @@ function detailHtml(id) {
       <p class="muted small">Мастер видит заказ у себя в «Мои заказы» и сам отмечает, что выехал на замеры. Время выезда запишется тогда.</p>`}
     </section>
 
-    <section class="d-sec btn-row">
+    ${isDirector(me) ? `<section class="d-sec btn-row">
       ${r.status === "cancelled" ? `<button class="btn" data-act="restore">Вернуть заказ в работу</button>` : r.status === "done" ? "" : `<button class="btn ghost danger" data-act="cancelOrder">Отменить заказ</button>`}
-      ${isDirector(me) ? `<button class="btn ghost danger" data-act="remove">Удалить заказ</button>` : ""}
-    </section>
+      <button class="btn ghost danger" data-act="remove">Удалить заказ</button>
+    </section>` : ""}
 
     <section class="d-sec"><h3>Сумма договора</h3>
       <form class="inline-form" data-form="amount">
@@ -503,8 +503,9 @@ const detailActions = {
     if (r.status === "new") setStatus(r, "assigned");
     save("Мастер назначен");
   }),
-  cancelOrder: guard(() => current(), () => { setStatus(current(), "cancelled"); save("Заказ отменён"); }),
-  restore: guard(() => current(), () => { const r = current(); setStatus(r, stageOf(r)); save("Заказ возвращён в работу"); }),
+  cancelOrder: guard(() => current(), () => {
+    if (!isDirector(me)) return; setStatus(current(), "cancelled"); save("Заказ отменён"); }),
+  restore: guard(() => current(), () => { if (!isDirector(me)) return; const r = current(); setStatus(r, stageOf(r)); save("Заказ возвращён в работу"); }),
   remove(el) {
     if (!isDirector(me)) return toast("Удалять заказы может руководитель", "bad");
     if (!armed(el, "Точно удалить?")) return;
