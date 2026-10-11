@@ -8,11 +8,11 @@ import { openDrawer, closeDrawer, field, options, formError } from "../ui.js";
 let me = null;
 const ACCESS = {
   director: "Все разделы. Распределяет роли и ставит задачи менеджерам.",
-  manager: "Заказы, мастера, свои задачи и аналитика.",
+  manager: "Заказы, мастера, свои задачи и «Моя статистика»: свои заказы, их сумма и премия. Общей аналитики у менеджера нет.",
   master: "Только «Мои заказы»: статус своих заказов и сколько мастер заработает в этом месяце. Аккаунты мастеров создаёт руководитель в разделе «Мастера».",
   warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заказах только выписывает материал в «Расходы».",
 };
-const SECTION_NAMES = { home: "Главная", requests: "Заказы", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы" };
+const SECTION_NAMES = { home: "Главная", requests: "Заказы", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы", mystats: "Моя статистика" };
 const loginLink = () => location.href.split(/[?#]/)[0];
 const activeDirectors = () => db.list("staff").filter((s) => s.active && s.role === "director");
 

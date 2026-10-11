@@ -7,6 +7,8 @@ import { isDirector } from "../auth.js";
 import { chips, empty } from "../ui.js";
 import { stockValue, isLow } from "../stock.js";
 import { payOf, materialsOf, netOf } from "../pay.js";
+import { bonusFor } from "../bonus.js";
+import { openBonus } from "./mystats.js";
 
 let period = 90; // дней; 0 — всё время
 let me = null;
@@ -63,7 +65,7 @@ function render(user) {
     const map = new Map();
     for (const r of list) {
       const k = r[key] ?? "—";
-      const g = map.get(k) || map.set(k, { label: names ? names(k) : k, all: 0, done: 0, revenue: 0, pay: 0, active: 0 }).get(k);
+      const g = map.get(k) || map.set(k, { key: k, label: names ? names(k) : k, all: 0, done: 0, revenue: 0, pay: 0, active: 0 }).get(k);
       g.all++;
       if (r.status === "done") { g.done++; g.revenue += r.amount || 0; g.pay += payOf(r); }
       if (["assigned", "measure", "pricing", "in_work"].includes(r.status)) g.active++;
@@ -112,8 +114,8 @@ function render(user) {
         <tbody>${masters.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr><td>${esc(g.label)}</td><td class="r num">${g.active}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td>${isDirector(user) ? `<td class="r num">${money(g.pay)}</td>` : ""}</tr>`).join("")}</tbody></table></div></section>
 
       <section class="panel"><h3>Менеджеры</h3>
-        <div class="table-wrap"><table class="tbl"><thead><tr><th>Менеджер</th><th class="r">Взято</th><th class="r">Выполнено</th><th class="r">Продажи</th></tr></thead>
-        <tbody>${managers.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr${me.name === g.label ? ' class="me"' : ""}><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td></tr>`).join("")}</tbody></table></div></section>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Менеджер</th><th class="r">Взято</th><th class="r">Выполнено</th><th class="r">Продажи</th><th class="r">Премия за месяц</th></tr></thead>
+        <tbody>${managers.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr class="clickable" data-act="bonus" data-id="${g.key}" tabindex="0"><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td><td class="r num"><b>${money(bonusFor(g.key).total)}</b></td></tr>`).join("")}</tbody></table></div><p class="muted small">Нажмите на менеджера, чтобы увидеть премию по причинам.</p></section>
 
       ${sv ? `<section class="panel wide"><h3>Склад сейчас</h3><div class="kpis small">
         <div class="kpi"><small>Стоимость остатков</small><b class="num">${money(sv.cost)}</b></div>
@@ -124,5 +126,5 @@ function render(user) {
 export default {
   title: () => "Аналитика",
   render,
-  actions: { period(el) { period = Number(el.dataset.id); document.getElementById("view").innerHTML = render(me); } },
+  actions: { bonus: (el) => openBonus(Number(el.dataset.id)), period(el) { period = Number(el.dataset.id); document.getElementById("view").innerHTML = render(me); } },
 };
