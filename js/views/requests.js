@@ -170,7 +170,7 @@ function sheetHtml() {
   if (!r) return "";
   const tabs = TABS.filter(([id]) => !(id === "pay" && isWarehouse(me)));
   if (!tabs.some(([id]) => id === tab)) tab = "main";
-  const body = tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: isWarehouse(me) }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
+  const body = tab === "pay" ? sheetPay(r) : tab === "exp" ? expensesHtml(r, { button: me?.position === "storekeeper" }) : tab === "hist" ? sheetHist(r) : sheetMain(r);
   return `<div class="sheet-space"></div><section class="sheet" aria-label="Заказ №${r.id}">
     <header class="sheet-head"><b>Заказ №${r.id}</b>${statusPill(r.status)}
       <nav class="sheet-tabs">${tabs.map(([id, title]) => `<button type="button" data-act="tab" data-id="${id}" aria-pressed="${id === tab}">${esc(title)}</button>`).join("")}</nav>
@@ -251,7 +251,7 @@ function warehouseDetailHtml(r) {
     <section class="d-sec"><h3>Материалы по плану менеджера</h3>${plan.length ? `<div class="mini-list">${plan.map((it) => { const p = product(it.product_id), done = expensedQty(r, it.product_id);
       return `<div class="mini-row static"><span><b>${esc(p?.name || "")}</b><small>${done >= it.qty ? "выписано полностью" : done ? `выписано ${num(done)}` : `на складе ${num(qtyOf(it.product_id))}`}</small></span>
         <span class="r num"><b>${num(it.qty)} ${esc(p?.unit || "")}</b></span></div>`; }).join("")}</div>` : `<p class="muted">Менеджер не добавил материалы. Выписать можно любой товар.</p>`}</section>
-    <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r, { button: true })}</section>`;
+    <section class="d-sec"><h3>Расходы</h3>${expensesHtml(r, { button: me?.position === "storekeeper" })}</section>`;
 }
 
 function detailHtml(id) {
