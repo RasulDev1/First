@@ -68,6 +68,7 @@ const CLIENTS = ["Зарема Мусаева", "ООО «Северный дв�
   "ООО «Грозстрой»", "Магомед Алиев", "Ресторан «Нохчийн»", "Тимур Гериев", "Хава Исмаилова", "ТЦ «Беркат-Плаза»", "Айшат Берсанова",
   "Пекарня «Хлебный дом»", "Аслан Хадизов", "ООО «ТехноСклад»", "Луиза Арсанова", "Стоматология «Дента»", "Зелимхан Висаитов",
   "Аминат Окуева", "Ризван Тагиров", "Раиса Юсупова", "Мовсар Эдильсултанов"];
+const CITIES = ["г. Город", "г. Город", "г. Заречный", "г. Северный"];
 const STREETS = ["ул. Ленина", "ул. Мира", "ул. Садовая", "пр. Победы", "ул. Школьная", "ул. Центральная", "ул. Заводская", "ул. Парковая"];
 const NOTE_BY_SERVICE = {
   "Монтаж приточной вентиляции": "Офис на 12 человек, душно, хотят приток с подогревом.",
@@ -172,7 +173,7 @@ export function seed() {
     const visit = master ? created + (1 + Math.floor(rand() * 3)) * DAY : null;
     requests.push({
       id: 1000 + 46 - i, created_at: iso(created), client: pick(CLIENTS), phone: `+7 900 ${100 + Math.floor(rand() * 899)}-${10 + Math.floor(rand() * 89)}-${10 + Math.floor(rand() * 89)}`,
-      address: `г. Город, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
+      address: `${pick(CITIES)}, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
       note: NOTE_BY_SERVICE[service] || pick(NOTES), status, manager_id: manager?.id || null, master_id: master?.id || null,
       visit_at: visit ? iso(new Date(visit).setHours(10 + Math.floor(rand() * 7), 0, 0, 0)) : null,
       amount, items, comment: "", history,

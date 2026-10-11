@@ -24,7 +24,10 @@ function log(r, text) {
   (r.history ||= []).push({ at: new Date().toISOString(), by: me?.name || "", text });
 }
 
-const F0 = { created: "", done: "", phone: "", address: "", status: "" };
+// Адрес хранится строкой «г. Город, ул. Мира, 5»: город — до первой запятой, остальное — улица и дом
+const cityOf = (r) => (r.address.includes(",") ? r.address.split(",")[0].trim() : "");
+const streetOf = (r) => (r.address.includes(",") ? r.address.slice(r.address.indexOf(",") + 1).trim() : r.address);
+const F0 = { created: "", done: "", phone: "", city: "", street: "", status: "" };
 let F = { ...F0 };
 const dayOf = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
@@ -33,7 +36,8 @@ function matches(r) {
   if (F.created && c !== F.created) return false;
   if (F.done && d !== F.done) return false;
   if (F.phone && !r.phone.replace(/\D/g, "").includes(F.phone.replace(/\D/g, "")) && !r.phone.includes(F.phone)) return false;
-  if (F.address && !r.address.toLowerCase().includes(F.address.toLowerCase())) return false;
+  if (F.city && cityOf(r) !== F.city) return false;
+  if (F.street && !streetOf(r).toLowerCase().includes(F.street.toLowerCase())) return false;
   if (F.status && r.status !== F.status) return false;
   if (!query) return true;
   const hay = `${r.id} ${r.client} ${r.phone} ${r.address} ${r.service} ${masterName(r.master_id)}`.toLowerCase();
@@ -45,7 +49,8 @@ const sortValue = {
   created: (r) => new Date(r.created_at).getTime(),
   done: (r) => (r.done_at ? new Date(r.done_at).getTime() : null),
   phone: (r) => r.phone.replace(/\D/g, ""),
-  address: (r) => r.address.toLowerCase(),
+  city: (r) => cityOf(r).toLowerCase(),
+  street: (r) => streetOf(r).toLowerCase(),
   status: (r) => STATUSES.findIndex((s) => s.id === r.status),
 };
 
@@ -64,18 +69,19 @@ function rowHtml(r) {
     <td class="num nowrap">${dateShort(r.created_at)}</td>
     <td class="num nowrap">${r.done_at ? dateShort(r.done_at) : `<span class="muted">—</span>`}</td>
     <td><b class="num nowrap">${esc(r.phone)}</b><small>${esc(r.client)}</small></td>
-    <td>${esc(r.address)}</td>
+    <td class="nowrap">${esc(cityOf(r))}</td>
+    <td>${esc(streetOf(r))}</td>
     <td>${statusPill(r.status)}</td></tr>`;
 }
 
 function rowsHtml() {
   const list = sorted(db.list("requests").filter(matches));
   const filtered = query || Object.values(F).some(Boolean);
-  if (!list.length) return `<tr><td colspan="6">${empty("Заказов нет", filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами.")}</td></tr>`;
+  if (!list.length) return `<tr><td colspan="7">${empty("Заказов нет", filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами.")}</td></tr>`;
   return list.map(rowHtml).join("");
 }
 
-const COLS = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["address", "Адрес клиента"], ["status", "Статус"]];
+const COLS = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 const flt = (label, control, cls = "") => `<label class="flt${cls}"><span>${esc(label)}</span>${control}</label>`;
 
 function render(user) {
@@ -84,15 +90,16 @@ function render(user) {
   const th = ([key, title]) => `<th><button type="button" class="th-sort" data-act="sort" data-id="${key}">${esc(title)}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   const active = query || Object.values(F).some(Boolean);
   return `<form data-form="find"><div class="filterbar">
-      ${flt("Поиск", `<input type="search" name="q" placeholder="Клиент, адрес, №" value="${esc(query)}">`)}
-      ${flt("Дата оформления", `<input type="date" name="created" value="${F.created}">`, " date")}
-      ${flt("Дата завершения", `<input type="date" name="done" value="${F.done}">`, " date")}
+      ${flt("Поиск", `<input type="search" name="q" placeholder="Клиент, №" value="${esc(query)}">`)}
+      ${flt("Дата оформления", `<input type="date" name="created" value="${F.created}">`)}
+      ${flt("Дата завершения", `<input type="date" name="done" value="${F.done}">`)}
       ${flt("Номер клиента", `<input type="search" name="phone" value="${esc(F.phone)}" placeholder="+7 900…">`)}
-      ${flt("Адрес клиента", `<input type="search" name="address" value="${esc(F.address)}" placeholder="Улица, дом…">`)}
-      ${flt("Статус", `<select name="status">${options(STATUSES, F.status, { empty: "Все статусы" })}</select>`)}
-      <div class="flt-btns"><button class="btn" type="submit">Найти</button>
-        ${active ? `<button class="btn ghost" type="button" data-act="resetFilters">Сбросить</button>` : ""}
-        ${warehouse ? "" : `<button class="btn primary" type="button" data-act="create">Создать заказ</button>`}</div>
+      ${flt("Город", `<select name="city">${options([...new Set(db.list("requests").map(cityOf).filter(Boolean))].sort(), F.city, { empty: "Все города" })}</select>`)}
+      ${flt("Улица", `<input type="search" name="street" value="${esc(F.street)}" placeholder="Улица, дом">`)}
+      ${flt("Статус заказа", `<select name="status">${options(STATUSES, F.status, { empty: "Все статусы" })}</select>`)}
+      <button class="btn" type="submit">Найти</button>
+      <button class="btn" type="button" data-act="resetFilters"${active ? "" : " disabled"}>Сбросить</button>
+      ${warehouse ? "" : `<button class="btn primary" type="button" data-act="create">Создать заказ</button>`}
     </div>
     <div class="table-wrap"><table class="tbl req-tbl"><thead>
       <tr>${COLS.map(th).join("")}</tr>

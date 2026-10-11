@@ -4,7 +4,7 @@
 import { STORAGE_PREFIX, emit } from "./core.js";
 import { seed } from "./seed.js";
 
-const DB_KEY = STORAGE_PREFIX + "db_v3";
+const DB_KEY = STORAGE_PREFIX + "db_v4";
 const TABLES = ["staff", "masters", "requests", "products", "stock", "moves", "tasks"];
 
 let data = null;

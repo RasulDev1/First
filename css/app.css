@@ -433,17 +433,10 @@ form { display: flex; flex-direction: column; gap: 14px; }
 
 .req-tbl td:nth-child(5) { min-width: 200px; }
 
-.filterbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
-.flt { display: flex; flex-direction: column; gap: 4px; flex: 1 1 130px; min-width: 0; }
-.flt:first-child { flex: 1.6 1 170px; }
-.flt span { font-size: 11.5px; font-weight: 700; color: var(--muted); white-space: nowrap; }
-.flt input, .flt select { width: 100%; padding: 8px 10px; font-size: 14px; }
-.flt-btns { display: flex; gap: 8px; flex: none; }
-@media (min-width: 1100px) {
-  .filterbar { flex-wrap: nowrap; }
-  .flt { flex: 1 1 0; min-width: 96px; }
-  .flt:first-child { flex: 1.4 1 0; }
-  .flt-btns .btn { padding-left: 14px; padding-right: 14px; }
-  .flt.date { flex: 0 0 132px; }
-  .flt input, .flt select { padding: 8px; font-size: 13.5px; }
-}
+.filterbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 8px; margin-bottom: 14px; }
+@media (min-width: 1500px) { .filterbar { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .filterbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.flt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.flt span { font-size: 11.5px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filterbar input, .filterbar select, .filterbar .btn { width: 100%; height: 42px; min-height: 42px; padding: 0 10px; font-size: 14px; border-radius: 0; }
+.filterbar .btn { padding: 0 6px; white-space: nowrap; }
