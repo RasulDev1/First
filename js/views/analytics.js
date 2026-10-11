@@ -108,8 +108,7 @@ function render(user) {
         <tbody>${managers.sort((a, b) => b.revenue - a.revenue).map((g) => `<tr${me.name === g.label ? ' class="me"' : ""}><td>${esc(g.label)}</td><td class="r num">${g.all}</td><td class="r num">${g.done}</td><td class="r num">${money(g.revenue)}</td></tr>`).join("")}</tbody></table></div></section>
 
       ${sv ? `<section class="panel wide"><h3>Склад сейчас</h3><div class="kpis small">
-        <div class="kpi"><small>По закупочным ценам</small><b class="num">${money(sv.cost)}</b></div>
-        <div class="kpi"><small>По ценам продажи</small><b class="num">${money(sv.price)}</b></div>
+        <div class="kpi"><small>Стоимость остатков</small><b class="num">${money(sv.cost)}</b></div>
         <div class="kpi${db.list("products").filter(isLow).length ? " bad" : ""}"><small>Позиций ниже минимума</small><b class="num">${db.list("products").filter(isLow).length}</b></div></div></section>` : ""}
     </div>`;
 }

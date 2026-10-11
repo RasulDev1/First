@@ -465,3 +465,6 @@ form { display: flex; flex-direction: column; gap: 14px; }
 .sheet-grip:hover::after, .sheet-grip:focus-visible::after { background: var(--teal); }
 /* Все кнопки — с прямыми углами */
 button, .btn, .chip, .icon-btn, .nav-item, .link-btn, .drawer-close, .check, .demo-bar button { border-radius: 0 !important; }
+.filterbar.wh { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 1200px) { .filterbar.wh { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .filterbar.wh { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

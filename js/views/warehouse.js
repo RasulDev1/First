@@ -10,47 +10,51 @@ import { LOCATIONS, describeLocation, categoryTitle, product, placesOf, qtyOf, q
 
 let me = null;
 let tab = "stock";      // stock · map · buy · log
-let category = "all";
-let lowOnly = false;
-let query = "";
+const WF0 = { name: "", type: "", price: "", place: "" };
+let WF = { ...WF0 }; // фильтры остатков, применяются кнопкой «Найти»
 
 const TABS = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Журнал"]];
 const amount = (p, n) => `${num(n)} ${esc(p?.unit || "")}`;
 
 /* ---------- Остатки ---------- */
 function matches(p) {
-  if (category !== "all" && p.category !== category) return false;
-  if (lowOnly && !isLow(p)) return false;
-  if (!query) return true;
-  const hay = `${p.sku} ${p.name} ${p.specs} ${placesOf(p.id).map((s) => s.loc).join(" ")}`.toLowerCase();
-  return query.toLowerCase().split(/\s+/).every((w) => hay.includes(w));
+  if (WF.name && !`${p.name} ${p.sku} ${p.specs}`.toLowerCase().includes(WF.name.toLowerCase())) return false;
+  if (WF.type && p.category !== WF.type) return false;
+  if (WF.price && (p.cost || 0) > Number(WF.price)) return false;
+  if (WF.place && !placesOf(p.id).some((s) => s.loc.toLowerCase().includes(WF.place.toLowerCase()))) return false;
+  return true;
 }
 
 function stockRows() {
   const list = db.list("products").filter(matches);
-  if (!list.length) return empty("Ничего не нашлось", "Измените поиск или категорию.");
+  if (!list.length) return empty("Ничего не нашлось", "Измените фильтры.");
   return `<div class="table-wrap"><table class="tbl stock-tbl">
-    <thead><tr><th>Наименование</th><th>Места</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Цена</th></tr></thead>
+    <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th class="r">Остаток</th><th class="r">Мин.</th><th class="r">Цена</th></tr></thead>
     <tbody>${list.map((p) => {
       const total = qtyOf(p.id), low = isLow(p);
       return `<tr class="clickable${low ? " low" : ""}" data-act="product" data-id="${p.id}" tabindex="0">
         <td><b>${esc(p.name)}</b><small>${esc(p.sku)} · ${esc(p.specs)}</small></td>
+        <td>${esc(categoryTitle(p.category))}</td>
         <td class="nowrap">${placesOf(p.id).map((s) => esc(s.loc)).join(", ") || `<span class="muted">нет на складе</span>`}</td>
         <td class="r num"><b>${amount(p, total)}</b>${low ? `<small class="bad">мало</small>` : ""}</td>
         <td class="r num muted">${num(p.min_qty)}</td>
-        <td class="r num">${money(p.price)}</td></tr>`;
+        <td class="r num">${money(p.cost)}</td></tr>`;
     }).join("")}</tbody></table></div>`;
 }
 
 function stockTab() {
-  const products = db.list("products");
-  return `<div class="toolbar">
-      <input class="search" type="search" id="whSearch" placeholder="Поиск: название, артикул, место (Б-2-1)" value="${esc(query)}" data-input="search" aria-label="Поиск по складу">
-      <label class="toggle"><input type="checkbox" id="whLow" data-change="low"${lowOnly ? " checked" : ""}><span>Только заканчивается</span></label>
-      <button class="btn primary" data-act="receive">Приём</button>
-      <button class="btn primary" data-act="expense">Расход</button>
-    </div>
-    ${chips("category", [["all", "Все", products.length], ...CATEGORIES.map((c) => [c.id, c.title, products.filter((p) => p.category === c.id).length])], category)}
+  const flt = (label, control) => `<label class="flt"><span>${esc(label)}</span>${control}</label>`;
+  const active = Object.values(WF).some(Boolean);
+  return `<form data-form="whFind" class="filterbar wh">
+      ${flt("Название", `<input type="search" name="name" value="${esc(WF.name)}" placeholder="Название, артикул">`)}
+      ${flt("Тип", `<select name="type">${options(CATEGORIES, WF.type, { empty: "Все типы" })}</select>`)}
+      ${flt("Цена", `<input type="number" name="price" min="0" step="1" inputmode="numeric" value="${esc(WF.price)}" placeholder="до, ₽">`)}
+      ${flt("Место на складе", `<input type="search" name="place" value="${esc(WF.place)}" placeholder="Б-2-1">`)}
+      <button class="btn" type="submit">Найти</button>
+      <button class="btn" type="button" data-act="whReset"${active ? "" : " disabled"}>Сброс</button>
+      <button class="btn primary" type="button" data-act="receive">Приём</button>
+      <button class="btn primary" type="button" data-act="expense">Расход</button>
+    </form>
     <div id="stockRows">${stockRows()}</div>`;
 }
 
@@ -91,7 +95,7 @@ function buyTab() {
     <tbody>${rows.map(({ p, qty }) => `<tr><td><b>${esc(p.name)}</b><small>${esc(p.sku)}</small></td>
       <td class="r num${qtyOf(p.id) ? "" : " bad"}">${amount(p, qtyOf(p.id))}</td><td class="r num muted">${num(p.min_qty)}</td>
       <td class="r num"><b>${amount(p, qty)}</b></td><td class="r num">${money(qty * (p.cost || 0))}</td></tr>`).join("")}</tbody>
-    <tfoot><tr><td colspan="4">Итого по закупочным ценам</td><td class="r num"><b>${money(total)}</b></td></tr></tfoot></table></div>`;
+    <tfoot><tr><td colspan="4">Итого</td><td class="r num"><b>${money(total)}</b></td></tr></tfoot></table></div>`;
 }
 
 /* ---------- Журнал ---------- */
@@ -131,7 +135,7 @@ function productHtml(id) {
     <section class="d-sec"><div class="kpis small">
       <div class="kpi${isLow(p) ? " bad" : ""}"><small>Остаток</small><b class="num">${amount(p, qtyOf(id))}</b></div>
       <div class="kpi"><small>Минимум</small><b class="num">${amount(p, p.min_qty)}</b></div>
-      <div class="kpi"><small>Закупка / продажа</small><b class="num">${money(p.cost)} / ${money(p.price)}</b></div></div></section>
+      <div class="kpi"><small>Цена</small><b class="num">${money(p.cost)}</b></div></div></section>
     <section class="d-sec"><h3>Нынешние позиции на складе</h3>${places.length ? `<div class="table-wrap"><table class="tbl">
       <thead><tr><th>Место</th><th>Где</th><th class="r">Количество</th></tr></thead>
       <tbody>${places.map((s) => `<tr><td class="num"><b>${esc(s.loc)}</b></td><td class="muted">${describeLocation(s.loc)}</td><td class="r num">${amount(p, s.qty)}</td></tr>`).join("")}</tbody></table></div>`
@@ -176,7 +180,7 @@ function operationHtml(kind, o) {
       ${kind === "out" && o.productId ? (placesOf(o.productId).length ? field("С места", `<select name="from">${locationOptions(o.from, { onlyWith: o.productId })}</select>`) : `<p class="note warn">Этого товара нет на складе.</p>`) : ""}
       ${kind === "fix" ? `<p class="note">Место <b>${esc(o.loc)}</b>: по учёту ${amount(p, qtyAt(o.productId, o.loc))}. Впишите, сколько лежит на самом деле — разница попадёт в журнал.</p>` : ""}
       ${field(kind === "fix" ? "Фактически на месте" : "Количество", `<input name="qty" type="number" min="0" step="any" inputmode="decimal" required value="${o.qty ?? ""}" autofocus>`, p ? `в ${esc(p.unit)}` : "")}
-      ${kind === "in" ? field("Закупочная цена за единицу, ₽", `<input name="cost" type="number" min="0" step="0.01" inputmode="decimal" value="${p?.cost ?? ""}">`, "Обновит закупочную цену в карточке товара") : ""}
+      ${kind === "in" ? field("Цена за единицу, ₽", `<input name="cost" type="number" min="0" step="0.01" inputmode="decimal" value="${p?.cost ?? ""}">`, "Обновит цену в карточке товара") : ""}
       ${kind === "in" || kind === "out" ? field("Комментарий", `<input name="note" maxlength="200" placeholder="${kind === "out" ? "Куда и зачем: брак, возврат поставщику, на нужды офиса…" : "Поставщик, номер накладной"}"${kind === "out" ? " required" : ""}>`) : ""}
       <div class="form-actions"><button class="btn primary" type="submit">${{ in: "Принять", move: "Переместить", out: "Убрать со склада", fix: "Сохранить пересчёт" }[kind]}</button></div>
     </form>`;
@@ -273,14 +277,13 @@ function openProductForm(p) {
       <div class="span2">${field("Характеристики", `<input name="specs" maxlength="200" value="${esc(p?.specs || "")}" placeholder="Диаметр, толщина металла, производительность, напряжение">`)}</div>
       ${field("Единица", `<select name="unit">${options(UNITS, p?.unit || "шт.")}</select>`)}
       ${field("Минимальный остаток", `<input name="min_qty" type="number" min="0" step="any" value="${p?.min_qty ?? 0}">`, "Ниже — попадёт в «Закупку»")}
-      ${field("Закупочная цена, ₽", `<input name="cost" type="number" min="0" step="0.01" value="${p?.cost ?? ""}">`)}
-      ${field("Цена продажи, ₽", `<input name="price" type="number" min="0" step="0.01" value="${p?.price ?? ""}">`)}
+      ${field("Цена, ₽", `<input name="cost" type="number" min="0" step="0.01" value="${p?.cost ?? ""}">`)}
       <div class="form-actions span2"><button class="btn primary" type="submit">${p ? "Сохранить" : "Добавить товар"}</button>
         ${p && !qtyOf(p.id) ? `<button class="btn ghost danger" type="button" data-act="remove">Удалить товар</button>` : ""}</div>
     </form>`, {
     save(fd, form) {
       const values = { name: String(fd.get("name")).trim(), sku: String(fd.get("sku")).trim(), category: fd.get("category"), specs: String(fd.get("specs") || "").trim(),
-        unit: fd.get("unit"), min_qty: Number(fd.get("min_qty")) || 0, cost: Number(fd.get("cost")) || 0, price: Number(fd.get("price")) || 0 };
+        unit: fd.get("unit"), min_qty: Number(fd.get("min_qty")) || 0, cost: Number(fd.get("cost")) || 0 };
       if (!values.name || !values.sku) return formError(form, "Впишите наименование и артикул");
       if (db.list("products").some((x) => x.sku.toLowerCase() === values.sku.toLowerCase() && x.id !== p?.id)) return formError(form, "Такой артикул уже есть");
       if (p) { db.patch("products", p.id, values); toast("Карточка сохранена", "ok"); openProduct(p.id); }
@@ -300,9 +303,8 @@ export default {
   render,
   actions: {
     tab(el) { tab = el.dataset.id; rerender(); },
-    category(el) { category = el.dataset.id; rerender(); },
-    low(el) { lowOnly = el.checked; rerender(); },
-    search(el) { query = el.value.trim(); document.getElementById("stockRows").innerHTML = stockRows(); },
+    whFind(fd) { for (const k of Object.keys(WF0)) WF[k] = String(fd.get(k) || "").trim(); rerender(); },
+    whReset() { WF = { ...WF0 }; rerender(); },
     product: (el) => openProduct(el.dataset.id),
     receive: () => openOperation("in"),
     expense: () => openOperation("out"),
