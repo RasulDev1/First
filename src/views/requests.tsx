@@ -19,6 +19,7 @@ import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
 } from "./requests/shared";
+import { OrderNo } from "./requests/order-no";
 import type { View } from "./types";
 
 export { openRequest, openNewOrder };
@@ -215,7 +216,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
         <span className="absolute left-1/2 top-[5px] w-12 h-[5px] -ml-6 rounded-[3px] bg-line group-hover:bg-brand group-focus-visible:bg-brand" />
       </div>
       <header className="flex items-center gap-x-3.5 gap-y-2.5 flex-wrap px-[clamp(16px,3vw,36px)] py-2 border-b border-line">
-        <button type="button" className={orderNo} onClick={() => openRequest(r.id)}>Заказ №{r.id}</button>
+        <OrderNo id={r.id} user={user} onOpen={() => openRequest(r.id)}>Заказ №{r.id}</OrderNo>
         <StatusPill id={r.status} />
         <nav className="flex gap-0.5 flex-wrap">
           {tabs.map(([id, title]) => (
@@ -294,8 +295,7 @@ function Requests({ user }: { user: Staff }) {
             <tr key={r.id} className={cx(r.id === ui.sel && "[&>td]:bg-brand-soft")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
-                <button type="button" className={orderNo} aria-label={`Открыть карточку заказа №${r.id}`}
-                  onClick={(e) => { e.stopPropagation(); openRequest(r.id); }}>№{r.id}</button>
+                <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
               <td className="tabular-nums whitespace-nowrap">{dateShort(r.created_at)}</td>
               <td className="tabular-nums whitespace-nowrap">{r.done_at ? dateShort(r.done_at) : <span className={muted}>—</span>}</td>

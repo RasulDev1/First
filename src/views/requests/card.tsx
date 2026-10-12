@@ -141,14 +141,7 @@ function OrderCard({ id }: { id: number }) {
     if (r.status === "new") setStatus(r, "assigned", user.name);
     save("Мастер назначен");
   };
-  const cancelOrder = () => { if (!isDirector(user)) return; setStatus(r, "cancelled", user.name); save("Заказ отменён"); };
   const restore = () => { if (!isDirector(user)) return; setStatus(r, stageOf(r), user.name); save("Заказ возвращён в работу"); };
-  const remove = () => {
-    if (!isDirector(user)) { toast("Удалять заказы может руководитель", "bad"); return; }
-    db.remove("requests", r.id);
-    closeDrawer();
-    toast(`Заказ №${r.id} удалён`);
-  };
   const amount = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = new FormData(e.currentTarget).get("amount");
@@ -225,9 +218,7 @@ function OrderCard({ id }: { id: number }) {
 
       {isDirector(user) ? (
         <DSec>
-          {r.status === "cancelled" ? <Button onClick={restore}>Вернуть заказ в работу</Button>
-            : r.status === "done" ? null : <Button variant="danger" onClick={cancelOrder}>Отменить заказ</Button>}
-          <ArmedButton variant="danger" question="Точно удалить?" onConfirm={remove}>Удалить заказ</ArmedButton>
+          {r.status === "cancelled" ? <Button onClick={restore}>Вернуть заказ в работу</Button> : null}
         </DSec>
       ) : null}
 
