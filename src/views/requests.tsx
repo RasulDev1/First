@@ -1,6 +1,6 @@
 "use client";
 // «Заказы» (менеджер и руководитель): единый список по порядку с сортировками, создание и удаление заказов, мастер, выезд, статусы,
-// сумма договора, расходы со склада (их добавляет только складовщик) и история изменений.
+// стоимость работы, расходы со склада (их добавляет только складовщик) и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
 import { useReducer, useRef, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { storage, money, dateTime, dateShort, localDay } from "@/lib/core";
@@ -134,14 +134,14 @@ function SheetPay({ r, user, readOnly }: { r: Request; user: Staff; readOnly?: b
     <div className={sheetCols}>
       <div>
         <Kv wide items={[
-          ["Сумма договора", <b key="a">{money(r.amount || 0)}</b>, "tabular-nums"],
+          ["Стоимость работы", <b key="a">{money(r.amount || 0)}</b>, "tabular-nums"],
           ["Оплачено", money(paid), "tabular-nums"],
           ["Остаток", <b key="l">{money(Math.max(0, (r.amount || 0) - paid))}</b>, cx("tabular-nums", (r.amount || 0) - paid > 0 && "text-bad")],
           ["Материалы со склада", money(cost), "tabular-nums"],
           ["Прибыль", money((r.amount || 0) - cost), "tabular-nums"],
         ]} />
         {readOnly ? null : <form key={r.amount || 0} className={cx(inlineForm, "mt-2.5")} onSubmit={amount}>
-          <input name="amount" type="number" min="0" step="100" inputMode="numeric" defaultValue={r.amount || ""} placeholder="Сумма договора" aria-label="Сумма договора, ₽" />
+          <input name="amount" type="number" min="0" step="100" inputMode="numeric" defaultValue={r.amount || ""} placeholder="Стоимость работы" aria-label="Стоимость работы, ₽" />
           <GuardButton g={g} type="submit">Сохранить сумму</GuardButton>
         </form>}
       </div>
