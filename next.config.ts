@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
-  // ARTIFACT=1 — пути к файлам относительные: сборку можно открыть из любой папки (демо-страница, файл на диске)
-  ...(process.env.ARTIFACT ? { assetPrefix: "./", env: { NEXT_PUBLIC_DEMO: "1" } } : {}),
+  // ARTIFACT=1 — демо-страница: пути к файлам относительные, папку out/_next кладём как app/_next
+  ...(process.env.ARTIFACT ? { assetPrefix: "./app", env: { NEXT_PUBLIC_DEMO: "1" } } : {}),
 };
 
 export default nextConfig;
