@@ -180,15 +180,16 @@ function Revenue({ director }: { director: boolean }) {
 
 function Traffic() {
   const [period, set] = useState(savedPeriod.traffic);
-  const { list, done, cancelled, closed, group } = stats(period);
+  const { list, done, cancelled, group } = stats(period);
   const sources = group("source");
   return (
     <>
       <Period tab="traffic" period={period} set={set} />
-      <div className={kpiGrid}>
-        <Kpi label="Заказов" value={num(list.length)} sub={`${num(list.filter((r) => r.status === "new").length)} ждут менеджера`} />
-        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, closed)}% закрытых — успешно`} />
-        <Kpi label="Отказы" value={num(cancelled.length)} sub={`${pct(cancelled.length, closed)}% закрытых`} />
+      <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-3">
+        <Kpi label="Заказов" value={num(list.length)} sub="всего за период" />
+        <Kpi label="Ждут менеджера" value={num(list.filter((r) => r.status === "new").length)} sub={`${pct(list.filter((r) => r.status === "new").length, list.length)}% от заказов`} />
+        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, list.length)}% от заказов`} />
+        <Kpi label="Отказы" value={num(cancelled.length)} sub={`${pct(cancelled.length, list.length)}% от заказов`} />
       </div>
       <div className="grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5">
         <Panel title="Новые заказы по неделям" className={wide}><Columns list={list} period={period} value={() => 1} format={(v) => num(v)} label="Заказы по неделям" /></Panel>
