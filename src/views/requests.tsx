@@ -291,7 +291,7 @@ function Requests({ user }: { user: Staff }) {
         </thead>
         <tbody>
           {list.length ? list.map((r) => (
-            <tr key={r.id} className={cx("cursor-pointer", r.id === ui.sel && "[&>td]:bg-brand-soft")}
+            <tr key={r.id} className={cx(r.id === ui.sel && "[&>td]:bg-brand-soft")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
                 <button type="button" className={orderNo} aria-label={`Открыть карточку заказа №${r.id}`}
