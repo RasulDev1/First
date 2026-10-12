@@ -276,7 +276,7 @@ function Requests({ user }: { user: Staff }) {
           <select name="status" defaultValue={ui.F.status} className={fltCtl}><Options list={STATUSES} empty="Все статусы" /></select>
         </Flt>
         <div className="col-span-full min-[1000px]:col-span-5 order-7 flex items-center gap-4">
-          <button type="submit" className={cx(buttonClass(), fltBtn, "!bg-brand !border-brand !text-white hover:!bg-ink hover:!border-ink")}>Найти</button>
+          <button type="submit" className={cx(buttonClass(), fltBtn, "!bg-brand !border-brand !text-white hover:!bg-brand-deep hover:!border-brand-deep")}>Найти</button>
           <button type="button" className="bg-transparent border-0 p-0 text-sm text-muted cursor-pointer hover:text-heading hover:underline" onClick={reset}>Сбросить</button>
           {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "ml-auto gap-2")} onClick={openCreate}><IconPlus />Создать заказ</button>}
         </div>

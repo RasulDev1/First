@@ -13,7 +13,7 @@ export const cx = (...list: (string | false | null | undefined)[]) => list.filte
 const BTN = {
   base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
   secondary: "bg-surface-2 border-surface-2 text-ink hover:bg-line hover:border-line disabled:hover:bg-surface-2",
-  primary: "bg-brand border-brand text-white hover:bg-ink hover:border-ink disabled:hover:bg-brand disabled:hover:border-brand",
+  primary: "bg-brand border-brand text-white hover:bg-brand-deep hover:border-brand-deep disabled:hover:bg-brand disabled:hover:border-brand",
   danger: "bg-bad border-bad text-white hover:bg-bad-deep hover:border-bad-deep",
   md: "min-h-10 px-4 py-2",
   sm: "min-h-8 px-3 py-1 text-[13px]",

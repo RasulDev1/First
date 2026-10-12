@@ -10,18 +10,18 @@
   --color-ink-2: #475569;
   --color-muted: #64748b;
   --color-line: #e2e8f0;
-  --color-brand: #1e293b;         /* графит: главное действие */
-  --color-brand-deep: #1e293b;
-  --color-brand-soft: #eef1f5;
-  --color-brand-light: #64748b;
+  --color-brand: #1e3a8a;         /* графит: главное действие */
+  --color-brand-deep: #172554;
+  --color-brand-soft: #e8eefc;
+  --color-brand-light: #3b6bdc;
   --color-ok: #059669;  --color-ok-soft: #d9f4e8;
-  --color-warn: #8a6a2f; --color-warn-soft: #f6edd9;
-  --color-bad: #b84a4a;  --color-bad-deep: #9b3b3b; --color-bad-soft: #f6e3e3;
-  --color-st-new: #3f5a8a;      --color-st-new-soft: #e6ebf4;
-  --color-st-assigned: #6b5aa8; --color-st-assigned-soft: #ece9f5;
-  --color-st-measure: #2f7f8a;  --color-st-measure-soft: #dff0f2;
-  --color-st-pricing: #a05278;  --color-st-pricing-soft: #f6e6ee;
-  --color-st-in_work: #8a6a2f;  --color-st-in_work-soft: #f6edd9;
+  --color-warn: #b45309; --color-warn-soft: #fdecd0;
+  --color-bad: #dc2626;  --color-bad-deep: #9b3b3b; --color-bad-soft: #f6e3e3;
+  --color-st-new: #2563eb;      --color-st-new-soft: #dbe7ff;
+  --color-st-assigned: #7c3aed; --color-st-assigned-soft: #ece4fd;
+  --color-st-measure: #0891b2;  --color-st-measure-soft: #d3f1f8;
+  --color-st-pricing: #db2777;  --color-st-pricing-soft: #fbe0ec;
+  --color-st-in_work: #d97706;  --color-st-in_work-soft: #fdecd0;
   --color-st-done: #059669;     --color-st-done-soft: #d9f4e8;
   --color-st-cancelled: #64748b; --color-st-cancelled-soft: #e8ecf0;
   --font-display: "Geist", system-ui, sans-serif;
