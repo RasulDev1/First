@@ -121,7 +121,7 @@ function Detail({ id }: { id: number }) {
   );
 }
 
-function openClient(id: number) {
+export function openClient(id: number) {
   openDrawer(() => <Detail id={id} />);
 }
 

@@ -17,8 +17,9 @@ import {
 } from "@/components/ui";
 import { closeDrawer, openDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
+import { openClient } from "../clients";
 import { SurveyView } from "./survey";
-import { Expenses, GuardButton, P, allowed, inlineForm, logBy, masterName, muted, save, small, staffName, useGuard } from "./shared";
+import { Expenses, GuardButton, P, allowed, inlineForm, logBy, masterName, muted, orderNo, save, small, staffName, useGuard } from "./shared";
 
 /** Менеджер не может поставить сумму ниже порога маржи (закупка / (1 − порог)); руководитель может */
 export function amountAllowed(r: Request, amount: number, user: Staff) {
@@ -86,6 +87,7 @@ function OrderCard({ id }: { id: number }) {
   const r = r0;
   if (!r) return <Empty title="Заказ удалён" />;
   if (isWarehouse(user)) return <WarehouseCard r={r} user={user} />;
+  const client = (r.client_id ? db.find("clients", r.client_id) : null) || findByPhone(r.phone);
 
   const masters = db.list("masters").filter((m) => m.active || m.id === r.master_id);
   const managers = db.list("staff").filter((s) => s.active && (s.role === "manager" || s.role === "director"));
@@ -160,13 +162,12 @@ function OrderCard({ id }: { id: number }) {
 
       <DSec>
         <Kv items={[
-          ["Телефон", <><span className="tabular-nums">{r.phone}</span> <CopyPhone phone={r.phone} /></>],
+          ["Телефон", <>{client ? <button type="button" className={cx(orderNo, "tabular-nums")} onClick={() => openClient(client.id)}>{r.phone}</button> : <span className="tabular-nums">{r.phone}</span>} <CopyPhone phone={r.phone} /></>],
           ["Адрес", r.address],
           ["Объект", r.object || "—"],
           ["Услуга", r.service],
           r.note ? ["Со слов клиента", r.note] : null,
         ]} />
-        <Button size="sm" onClick={() => { if (allowed(r, user)) openForm(r.id); }}>Изменить данные клиента</Button>
       </DSec>
 
       {r.status === "measure" && r.measured_at ? (
