@@ -18,6 +18,14 @@ const mine = (me: Staff) => db.list("requests").filter((r) => r.master_id === me
 const visible = (r: Request) => ACTIVE_STATUSES.includes(r.status) || (r.status === "done" && Boolean(r.done_at) && monthOf(r.done_at!));
 const Earn = ({ r }: { r: Request }) => (r.amount ? <>{money(payOf(r))}</> : <span className="text-muted">цена не согласована</span>);
 
+const nextStep = (r: Request) => ({
+  assigned: "Дальше: выехать на замеры",
+  measure: r.measured_at ? "Менеджер оформляет смету" : "Дальше: сделать замеры",
+  pricing: "Менеджер согласует стоимость",
+  in_work: "Дальше: выполнить работы и завершить заказ",
+  done: "Заказ завершён",
+} as Partial<Record<StatusId, string>>)[r.status] ?? "";
+
 function step(me: Staff, id: number, from: StatusId, to: StatusId, text: string) {
   const r = mine(me).find((x) => x.id === id);
   if (!r || r.status !== from) return;
@@ -58,6 +66,12 @@ function Detail({ id }: { id: number }) {
       <DHead eyebrow={`Заказ №${r.id}`} title={r.address}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"><StatusPill id={r.status} /></div>
       </DHead>
+      <DSec>
+        <b>{r.client}</b>
+        {r.phone ? <a href={`tel:${r.phone.replace(/[^\d+]/g, "")}`} className="block text-center no-underline rounded-card bg-brand text-white font-bold px-4 py-3.5">Позвонить {r.phone}</a> : null}
+        <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.address)}`} target="_blank" rel="noreferrer"
+          className="block text-center no-underline rounded-card bg-surface-2 text-ink font-bold px-4 py-3.5">Открыть адрес на карте</a>
+      </DSec>
       <DSec>
         <Kv items={[
           ["Услуга", <>{r.service}{r.object ? ` · ${r.object}` : ""}</>],
@@ -105,18 +119,21 @@ function MyOrders({ user }: { user: Staff }) {
         <Kpi label="Ваша ставка" value={`${rateOf(master)}%`} sub="от суммы заказа" />
       </Kpis>
       {orders.length ? (
-        <Table>
-          <thead><tr><th>№</th><th>Адрес</th><th>Выезд</th><th>Статус заказа</th><th className="text-right!">Вы заработаете</th></tr></thead>
-          <tbody>{orders.map((r) => (
-            <tr key={r.id} className={rowClickable} onClick={() => openDrawer(() => <Detail id={r.id} />)}>
-              <td className="tabular-nums"><b>№{r.id}</b></td>
-              <td>{r.address}<small>{r.service}</small></td>
-              <td className="tabular-nums whitespace-nowrap">{r.visit_at ? dateTime(r.visit_at) : <span className="text-muted">—</span>}</td>
-              <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
-              <td className="text-right tabular-nums whitespace-nowrap"><b><Earn r={r} /></b></td>
-            </tr>
-          ))}</tbody>
-        </Table>
+        <div className="flex flex-col gap-3">
+          {orders.map((r) => (
+            <button key={r.id} type="button" onClick={() => openDrawer(() => <Detail id={r.id} />)}
+              className="text-left flex flex-col gap-2 p-3.5 bg-surface border border-line rounded-card cursor-pointer hover:border-brand">
+              <span className="flex items-center justify-between gap-2"><b className="text-lg tabular-nums">№{r.id}</b><StatusPill id={r.status} /></span>
+              <b className="text-base">{r.address}</b>
+              <span className="text-ink-2">{r.service}</span>
+              <span className="text-brand font-semibold">{nextStep(r)}</span>
+              <span className="flex items-center justify-between gap-2 pt-2 border-t border-line text-sm text-ink-2">
+                <span>{r.visit_at ? `Выезд: ${dateTime(r.visit_at)}` : "Выезд не отмечен"}</span>
+                <b className="text-ink tabular-nums"><Earn r={r} /></b>
+              </span>
+            </button>
+          ))}
+        </div>
       ) : <Empty title="Заказов пока нет">Когда менеджер назначит вам заказ, он появится здесь.</Empty>}
     </>
   );
