@@ -67,7 +67,7 @@ function WarehouseCard({ r, user }: { r: Request; user: Staff }) {
 function CopyPhone({ phone }: { phone: string }) {
   const [done, setDone] = useState(false);
   return (
-    <button type="button" className="bg-transparent border-0 p-0 text-brand font-bold cursor-pointer text-[13px] hover:underline"
+    <button type="button" className="bg-transparent border-0 p-0 text-brand font-medium cursor-pointer text-[13px] hover:underline"
       onClick={async () => {
         if (await copyText(phone)) { setDone(true); setTimeout(() => setDone(false), 1500); }
         else toast("Выделите и скопируйте текст вручную");

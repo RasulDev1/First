@@ -71,7 +71,7 @@ export function OrderNo({ id, user, onOpen, label, children }: { id: number; use
         onContextMenu={director ? (e) => { e.preventDefault(); e.stopPropagation(); setAt({ x: e.clientX, y: e.clientY }); } : undefined}>{children}</button>
       {at ? (
         <div role="menu" style={{ left: at.x + 8, top: at.y }} onClick={(e) => e.stopPropagation()}
-          className="fixed z-60 flex gap-2 p-2 bg-surface border border-line rounded-card shadow-[0_8px_24px_rgba(20,50,52,.18)] cursor-default">
+          className="fixed z-60 flex gap-2 p-2 bg-surface border border-black/[.04] rounded-card shadow-[0_8px_24px_rgba(15,23,42,.14)] cursor-default">
           {status !== "done" && status !== "cancelled" ? <Button size="sm" variant="danger" onClick={() => act("cancel")}>Отменить заказ</Button> : null}
           <Button size="sm" variant="danger" onClick={() => act("delete")}>Удалить заказ</Button>
         </div>

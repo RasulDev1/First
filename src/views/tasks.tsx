@@ -82,7 +82,7 @@ function ConfirmForm({ id, user }: { id: number; user: Staff }) {
 function TaskRow({ t, user }: { t: Task; user: Staff }) {
   const done = Boolean(t.done_at);
   return (
-    <div className={cx("flex items-start gap-3 px-3.5 py-2.5 bg-surface border rounded-[10px]", isLate(t) ? "border-bad" : "border-line")}>
+    <div className={cx("flex items-start gap-3 px-5 py-4 bg-surface border rounded-card shadow-card", isLate(t) ? "border-bad/60" : "border-black/[.04]")}>
       <button type="button" onClick={() => openTask(t.id, user)}
         className="flex-1 min-w-0 flex flex-col bg-transparent border-0 p-0 text-left cursor-pointer">
         <b className={cx(done && "line-through text-muted")}>{t.title}</b>
@@ -112,7 +112,7 @@ function Tasks({ user }: { user: Staff }) {
       ) : null}
       {list.length ? groups(list).map(([title, items]) => (
         <section key={title} className="flex flex-col gap-1.5">
-          <h3 className={cx("text-[13px] font-extrabold tracking-[.05em] uppercase flex gap-2 items-center", title === "Просрочено" ? "text-bad" : "text-muted")}>
+          <h3 className={cx("text-[11px] font-medium tracking-[.05em] uppercase flex gap-2 items-center", title === "Просрочено" ? "text-bad" : "text-muted")}>
             {title}<i className="not-italic text-ink-2">{items.length}</i>
           </h3>
           {items.map((t) => <TaskRow key={t.id} t={t} user={user} />)}

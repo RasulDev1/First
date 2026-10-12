@@ -45,13 +45,13 @@ function StaffView({ user }: { user: Staff }) {
         <p className="m-0 text-ink-2 max-w-[70ch] flex-[1_1_320px]">Сотрудник входит по ссылке своим логином и паролем и видит только разделы своей роли.</p>
         <Button variant="primary" onClick={() => openForm(null, user)}>Добавить сотрудника</Button>
       </div>
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 px-3.5 py-2.5 rounded-card bg-brand-soft text-brand-deep font-bold">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 px-4 py-3 rounded-card bg-brand-soft text-brand-deep font-medium">
         <span className="tabular-nums wrap-anywhere min-w-0 flex-[1_1_240px]">{loginLink()}</span>
         <CopyButton text={loginLink}>Скопировать ссылку для входа</CopyButton>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2.5">
         {(Object.entries(ROLES) as [Role, (typeof ROLES)[Role]][]).map(([id, r]) => (
-          <div key={id} className="px-3.5 py-3 rounded-card border border-line bg-surface flex flex-col gap-1">
+          <div key={id} className="px-5 py-4 rounded-card border border-black/[.04] shadow-card bg-surface flex flex-col gap-1.5">
             <b>{id === "warehouse" ? "Закупщик и складовщик" : id === "master" ? "Мастер и стажёр" : r.title}</b>
             <p className="m-0 text-sm text-ink-2">{ACCESS[id]}</p>
           </div>

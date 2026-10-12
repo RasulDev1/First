@@ -21,7 +21,7 @@ function MiniRow({ main, sub, side, onClick }: { main: ReactNode; sub?: ReactNod
   const Tag = onClick ? "button" : "div";
   return (
     <Tag type={onClick ? "button" : undefined} onClick={onClick}
-      className={cx("flex justify-between gap-3 px-1 py-[9px] border-0 border-b border-line last:border-b-0 bg-transparent text-left", onClick && "cursor-pointer hover:bg-surface-2")}>
+      className={cx("flex justify-between gap-3 px-1 py-3 border-0 border-b border-line/70 last:border-b-0 bg-transparent text-left", onClick && "cursor-pointer hover:bg-surface-2")}>
       <span className="flex flex-col min-w-0"><b>{main}</b>{sub ? <small className="text-[12.5px] text-muted truncate">{sub}</small> : null}</span>
       <span className="flex flex-col items-end text-right flex-none gap-0.5 text-[12.5px]">{side}</span>
     </Tag>

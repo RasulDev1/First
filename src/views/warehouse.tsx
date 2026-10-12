@@ -68,13 +68,13 @@ function StockRows({ wf }: { wf: WhFilter }) {
 
 // Панель фильтров: поля и кнопки одной высоты, без скруглений
 const fbar = cx("grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-4 min-[1200px]:grid-cols-8",
-  "[&_input]:h-[42px] [&_input]:min-h-[42px] [&_input]:px-2.5 [&_input]:py-0 [&_input]:text-sm [&_input]:rounded-none",
-  "[&_select]:h-[42px] [&_select]:min-h-[42px] [&_select]:px-2.5 [&_select]:py-0 [&_select]:text-sm [&_select]:rounded-none",
+  "[&_input]:h-[42px] [&_input]:min-h-[42px] [&_input]:px-2.5 [&_input]:py-0 [&_input]:text-sm [&_input]:rounded-lg",
+  "[&_select]:h-[42px] [&_select]:min-h-[42px] [&_select]:px-2.5 [&_select]:py-0 [&_select]:text-sm [&_select]:rounded-lg",
   "[&_button]:w-full [&_button]:h-[42px] [&_button]:min-h-[42px] [&_button]:px-1.5 [&_button]:py-0 [&_button]:text-sm");
 function Flt({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 min-w-0">
-      <span className="text-[11.5px] font-bold text-muted truncate">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-muted truncate">{label}</span>
       {children}
     </label>
   );
@@ -116,23 +116,23 @@ function MapTab() {
       <p className="m-0 text-ink-2 max-w-[70ch]">Место пишется как <b>линия-стеллаж-полка</b>: <Loc code="А-1-2" /> — линия А, первый стеллаж, вторая полка.
         Занято {used} из {LOCATIONS.length} мест. Нажмите на полку, чтобы увидеть, что на ней лежит.</p>
       <div className="flex flex-col gap-3.5">{LINES.map((line) => (
-        <section key={line} aria-label={`Линия ${line}`} className="bg-surface border border-line rounded-card shadow-card px-4 py-3.5 flex flex-col gap-2.5">
-          <h3 className="font-display text-sm font-bold">Линия {line}</h3>
+        <section key={line} aria-label={`Линия ${line}`} className="bg-surface border border-black/[.04] rounded-card shadow-card px-5 py-5 flex flex-col gap-3">
+          <h3 className="font-display text-sm font-semibold">Линия {line}</h3>
           <div className="overflow-x-auto pb-1">
             <div className="grid grid-cols-[repeat(6,minmax(64px,1fr))] gap-2.5 min-w-[420px]">
               {Array.from({ length: RACKS }, (_, ri) => (
                 <div key={ri} className="flex flex-col gap-1">
-                  <span className="flex justify-between items-baseline font-extrabold text-[13px] px-0.5">Стеллаж {ri + 1}</span>
+                  <span className="flex justify-between items-baseline font-semibold text-[13px] px-0.5">Стеллаж {ri + 1}</span>
                   {Array.from({ length: SHELVES }, (_, si) => {
                     const loc = `${line}-${ri + 1}-${si + 1}`, n = contentsOf(loc).length;
                     return (
                       <button key={loc} type="button" title={describeLocation(loc)} style={shelfStyle} onClick={() => openCell(loc)}
-                        className={cx("relative h-[38px] rounded-md border cursor-pointer flex items-center justify-between px-2 text-xs font-bold",
+                        className={cx("relative h-[38px] rounded-md border cursor-pointer flex items-center justify-between px-2 text-xs font-medium",
                           "hover:border-brand! hover:shadow-[0_0_0_2px_var(--color-brand-soft)]",
                           n ? "text-ink bg-[color-mix(in_srgb,var(--c)_42%,var(--color-surface))] border-(--c)"
                             : "text-ink-2 bg-[color-mix(in_srgb,var(--c)_9%,var(--color-surface))] border-[color-mix(in_srgb,var(--c)_45%,var(--color-line))]")}>
                         <span>{loc}</span>
-                        {n ? <i className="not-italic font-extrabold text-ink bg-surface rounded px-[5px] tabular-nums">{n}</i> : null}
+                        {n ? <i className="not-italic font-semibold text-ink bg-surface rounded px-[5px] tabular-nums">{n}</i> : null}
                       </button>
                     );
                   })}
@@ -147,7 +147,7 @@ function MapTab() {
   );
 }
 
-const miniRow = "flex justify-between gap-3 px-1 py-[9px] border-0 border-b border-line last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2";
+const miniRow = "flex justify-between gap-3 px-1 py-3 border-0 border-b border-line/70 last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2";
 
 function CellDetail({ loc }: { loc: string }) {
   const items = contentsOf(loc);
@@ -211,7 +211,7 @@ function LowTab() {
         <tbody>{rows.map((p) => (
           <tr key={p.id} tabIndex={0} className="cursor-pointer" onClick={() => openProduct(p.id)}>
             <td><b>{p.name}</b><small>{p.sku}</small></td>
-            <td className={cx(R, "text-bad font-bold")}>{amount(p, qtyOf(p.id))}</td>
+            <td className={cx(R, "text-bad font-semibold")}>{amount(p, qtyOf(p.id))}</td>
             <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
           </tr>
         ))}</tbody>
@@ -235,7 +235,7 @@ function MoveRow({ m, withProduct }: { m: Move; withProduct: boolean }) {
   return (
     <tr>
       <td className="tabular-nums whitespace-nowrap">{dateTime(m.at)}</td>
-      <td><span className={cx("text-xs font-extrabold px-2 py-0.5 rounded-md whitespace-nowrap", KIND_CLASS[m.kind])}>{KIND[m.kind]}</span></td>
+      <td><span className={cx("text-xs font-medium px-2 py-0.5 rounded-md whitespace-nowrap", KIND_CLASS[m.kind])}>{KIND[m.kind]}</span></td>
       <td>{withProduct ? <><b>{p?.name || "Удалённый товар"}</b><small>{comment}</small></> : <span>{comment}</span>}</td>
       <td>{where.includes("→")
         ? where.split(" → ").map((l, i) => <span key={i}>{i ? " → " : null}<Loc code={l} /></span>)
@@ -508,7 +508,7 @@ function ExpenseForm({ initRequestId, lockRequest }: { initRequestId: number | n
           </Field>
         ) : (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-bold text-ink-2">Откуда берём</span>
+            <span className="text-[13px] font-medium text-ink-2">Откуда берём</span>
             <Note tone="warn">Этого товара нет на складе.</Note>
           </div>
         )) : null}

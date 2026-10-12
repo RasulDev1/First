@@ -68,9 +68,9 @@ function Detail({ id }: { id: number }) {
       </DHead>
       <DSec>
         <b>{r.client}</b>
-        {r.phone ? <a href={`tel:${r.phone.replace(/[^\d+]/g, "")}`} className="block text-center no-underline rounded-card bg-brand text-white font-bold px-4 py-3.5">Позвонить {r.phone}</a> : null}
+        {r.phone ? <a href={`tel:${r.phone.replace(/[^\d+]/g, "")}`} className="block text-center no-underline rounded-card bg-brand text-white font-medium px-4 py-3.5">Позвонить {r.phone}</a> : null}
         <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.address)}`} target="_blank" rel="noreferrer"
-          className="block text-center no-underline rounded-card bg-surface-2 text-ink font-bold px-4 py-3.5">Открыть адрес на карте</a>
+          className="block text-center no-underline rounded-card bg-surface-2 text-ink font-medium px-4 py-3.5">Открыть адрес на карте</a>
       </DSec>
       <DSec>
         <Kv items={[
@@ -123,12 +123,12 @@ function MyOrders({ user }: { user: Staff }) {
         <div className="flex flex-col gap-3">
           {orders.map((r) => (
             <button key={r.id} type="button" onClick={() => openDrawer(() => <Detail id={r.id} />)}
-              className="text-left flex flex-col gap-2 p-3.5 bg-surface border border-line rounded-card cursor-pointer hover:border-brand">
+              className="text-left flex flex-col gap-2 p-5 bg-surface border border-black/[.04] rounded-card shadow-card cursor-pointer hover:shadow-[0_6px_12px_-2px_rgba(0,0,0,.08)]">
               <span className="flex items-center justify-between gap-2"><b className="text-lg tabular-nums">№{r.id}</b><StatusPill id={r.status} /></span>
               <b className="text-base">{r.address}</b>
               <span className="text-ink-2">{r.service}</span>
               <span className="text-brand font-semibold">{nextStep(r)}</span>
-              <span className="flex items-center justify-between gap-2 pt-2 border-t border-line text-sm text-ink-2">
+              <span className="flex items-center justify-between gap-2 pt-3 border-t border-line/70 text-sm text-ink-2">
                 <span>{r.visit_at ? `Выезд: ${dateTime(r.visit_at)}` : "Выезд не отмечен"}</span>
                 <b className="text-ink tabular-nums"><Earn r={r} /></b>
               </span>

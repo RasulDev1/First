@@ -19,6 +19,7 @@ import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
 } from "./requests/shared";
+import { IconArrow, IconPlus } from "@/components/icons";
 import { OrderNo } from "./requests/order-no";
 import type { View } from "./types";
 
@@ -109,7 +110,7 @@ function SheetMain({ r, user }: { r: Request; user: Staff }) {
         r.note ? ["Со слов клиента", r.note] : null,
       ]} />
       <div className="mt-4">
-        <h4 className="m-0 mb-2 text-sm font-bold">Комментарии</h4>
+        <h4 className="m-0 mb-2 text-sm font-semibold">Комментарии</h4>
         <CommentsList list={r.comments} />
         {warehouse ? null : <CommentForm stacked onSend={(text) => {
           if (!pushComment(r, text, user)) return false;
@@ -221,7 +222,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
         <nav className="flex gap-0.5 flex-wrap">
           {tabs.map(([id, title]) => (
             <button key={id} type="button" aria-pressed={id === tab} onClick={() => onTab(id)}
-              className={cx("text-sm font-bold px-3 py-1.5 border-0 border-b-2 bg-transparent cursor-pointer", id === tab ? "text-brand-deep border-brand" : "text-muted border-transparent")}>
+              className={cx("text-sm font-medium px-3 py-1.5 border-0 border-b-2 bg-transparent cursor-pointer", id === tab ? "text-brand-deep border-brand" : "text-muted border-transparent")}>
               {title}
             </button>
           ))}
@@ -277,7 +278,7 @@ function Requests({ user }: { user: Staff }) {
         <div className="col-span-full min-[1000px]:col-span-5 order-7 flex items-center gap-4">
           <button type="submit" className={cx(buttonClass(), fltBtn, "!bg-heading !border-heading !text-white hover:!bg-ink hover:!border-ink")}>Найти</button>
           <button type="button" className="bg-transparent border-0 p-0 text-sm text-muted cursor-pointer hover:text-heading hover:underline" onClick={reset}>Сбросить</button>
-          {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "ml-auto gap-2")} onClick={openCreate}><span aria-hidden="true" className="text-lg leading-none">+</span>Создать заказ</button>}
+          {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "ml-auto gap-2")} onClick={openCreate}><IconPlus />Создать заказ</button>}
         </div>
       </form>
 
@@ -287,7 +288,7 @@ function Requests({ user }: { user: Staff }) {
             <th key={key}>
               <button type="button" onClick={() => sortBy(key)}
                 className="bg-transparent border-0 p-0 cursor-pointer uppercase hover:text-ink">
-                {title}{ui.sort.key === key ? (ui.sort.dir > 0 ? " ↑" : " ↓") : ""}
+                {title}{ui.sort.key === key ? <IconArrow up={ui.sort.dir > 0} className="inline size-3 ml-1 -mt-0.5" /> : null}
               </button>
             </th>
           ))}</tr>

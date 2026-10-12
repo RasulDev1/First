@@ -53,7 +53,7 @@ function Columns({ list, period, value, format, label }: { list: Request[]; peri
           return (
             <div key={i} tabIndex={0} className="group relative h-full flex items-end outline-offset-0">
               <span style={{ height: `${(w.v / max) * 100}%` }}
-                className={cx("w-[58%] max-w-9 mx-auto min-h-[2px] rounded-t-md transition-colors duration-150", last ? "bg-brand" : "bg-brand-light/80 group-hover:bg-brand group-focus:bg-brand")} />
+                className={cx("w-[58%] max-w-9 mx-auto min-h-[2px] rounded-t-[4px] transition-colors duration-150", last ? "bg-brand" : "bg-brand-light/80 group-hover:bg-brand group-focus:bg-brand")} />
               <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-ink text-page text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
                 last ? "right-0" : first ? "left-0" : "left-1/2 -translate-x-1/2")}>
                 Неделя с {dayMonth(w.from)}: <b>{format(w.v)}</b>
@@ -145,7 +145,7 @@ function Bars({ rows }: { rows: { label: string; v: number; fill?: string; extra
           <span className="h-3 rounded-r-[4px] bg-surface-2 overflow-hidden">
             <span style={{ width: `${(r.v / max) * 100}%` }} className={cx("block h-full min-w-[2px] rounded-r-[4px]", r.fill ?? "bg-brand")} />
           </span>
-          <span className="font-extrabold text-right flex flex-col items-end leading-tight tabular-nums">
+          <span className="font-medium text-right flex flex-col items-end leading-tight tabular-nums">
             {num(r.v)}{r.extra ? <small className="font-medium text-[11.5px] text-muted">{r.extra}</small> : null}
           </span>
         </div>

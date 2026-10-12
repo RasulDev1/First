@@ -10,20 +10,20 @@
   --color-ink-2: #475569;
   --color-muted: #64748b;
   --color-line: #e2e8f0;
-  --color-brand: #2563eb;         /* королевский синий: главное действие */
-  --color-brand-deep: #1d4ed8;
-  --color-brand-soft: #eaf1fe;
-  --color-brand-light: #3b82f6;
+  --color-brand: #1e293b;         /* графит: главное действие */
+  --color-brand-deep: #0f172a;
+  --color-brand-soft: #eef1f5;
+  --color-brand-light: #64748b;
   --color-ok: #059669;  --color-ok-soft: #d9f4e8;
-  --color-warn: #9a5b00; --color-warn-soft: #fbecd0;
-  --color-bad: #dc2626;  --color-bad-deep: #b91c1c; --color-bad-soft: #fbe0de;
-  --color-st-new: #2563eb;      --color-st-new-soft: #eaf1fe;
-  --color-st-assigned: #7444c2; --color-st-assigned-soft: #ece4f9;
-  --color-st-measure: #0b7a8a;  --color-st-measure-soft: #d8f0f3;
-  --color-st-pricing: #a8386b;  --color-st-pricing-soft: #f9e1ec;
-  --color-st-in_work: #9a5b00;  --color-st-in_work-soft: #fbecd0;
+  --color-warn: #8a6a2f; --color-warn-soft: #f6edd9;
+  --color-bad: #b84a4a;  --color-bad-deep: #9b3b3b; --color-bad-soft: #f6e3e3;
+  --color-st-new: #3f5a8a;      --color-st-new-soft: #e6ebf4;
+  --color-st-assigned: #6b5aa8; --color-st-assigned-soft: #ece9f5;
+  --color-st-measure: #2f7f8a;  --color-st-measure-soft: #dff0f2;
+  --color-st-pricing: #a05278;  --color-st-pricing-soft: #f6e6ee;
+  --color-st-in_work: #8a6a2f;  --color-st-in_work-soft: #f6edd9;
   --color-st-done: #059669;     --color-st-done-soft: #d9f4e8;
-  --color-st-cancelled: #5f6b6d; --color-st-cancelled-soft: #e7ecec;
+  --color-st-cancelled: #64748b; --color-st-cancelled-soft: #e8ecf0;
   --font-display: "Geist", system-ui, sans-serif;
   --font-body: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, .05), 0 2px 4px -1px rgba(0, 0, 0, .03);
@@ -38,7 +38,7 @@
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand; }
   /* Поля ввода — одинаковые во всей CRM */
   input:not([type="checkbox"]):not([type="file"]), select, textarea {
-    @apply w-full min-h-[42px] px-3 py-[9px] border border-transparent rounded-[10px] bg-[#f4f5f7] transition-[border-color,box-shadow,background-color];
+    @apply w-full min-h-[42px] px-3 py-[9px] border border-transparent rounded-lg bg-[#f4f5f7] transition-[border-color,box-shadow,background-color];
   }
   textarea { @apply resize-y leading-snug; }
   input:focus, select:focus, textarea:focus { @apply outline-none border-brand bg-surface ring-0; }

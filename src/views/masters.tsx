@@ -52,7 +52,7 @@ function CopyLink({ text, children }: { text: () => string; children: ReactNode 
 function MiniRow({ main, sub, side, onClick }: { main: ReactNode; sub?: ReactNode; side?: ReactNode; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      className="flex justify-between gap-3 px-1 py-[9px] border-0 border-b border-line last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2">
+      className="flex justify-between gap-3 px-1 py-3 border-0 border-b border-line/70 last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2">
       <span className="flex flex-col min-w-0"><b>{main}</b>{sub ? <small className="text-[12.5px] text-muted truncate">{sub}</small> : null}</span>
       <span className="flex flex-col items-end text-right flex-none gap-0.5 text-[12.5px]">{side}</span>
     </button>
@@ -65,8 +65,8 @@ function MasterCard({ m, user }: { m: Master; user: Staff }) {
   const s = statsOf(m);
   return (
     <button type="button" onClick={() => openMaster(m.id, user)}
-      className={cx("grid grid-cols-[auto_1fr] gap-x-3 gap-y-2.5 text-left cursor-pointer px-4 py-3.5 bg-surface border border-line shadow-card hover:border-brand", !m.active && "opacity-60")}>
-      <span aria-hidden="true" className="size-11 rounded-full grid place-items-center bg-linear-135 from-brand-light via-brand via-55% to-brand-deep text-white font-extrabold">{initials(m.name)}</span>
+      className={cx("grid grid-cols-[auto_1fr] gap-x-3 gap-y-2.5 text-left cursor-pointer px-5 py-5 bg-surface border border-black/[.04] rounded-card shadow-card hover:shadow-[0_6px_12px_-2px_rgba(0,0,0,.08)]", !m.active && "opacity-60")}>
+      <span aria-hidden="true" className="size-11 rounded-full grid place-items-center bg-linear-135 from-brand-light via-brand via-55% to-brand-deep text-white font-medium">{initials(m.name)}</span>
       <span className="flex flex-col min-w-0">
         <b>{m.name}</b>
         <small className="text-muted text-[13px]">{levelTitle(m)}{m.active ? "" : " · не работает"}</small>
