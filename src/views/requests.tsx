@@ -11,7 +11,7 @@ import { pushComment } from "@/lib/comments";
 import { levelTitle, statusAt } from "@/lib/orders";
 import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
-import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx, rowClickable } from "@/components/ui";
+import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab, openEstimate } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
@@ -215,7 +215,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
         <span className="absolute left-1/2 top-[5px] w-12 h-[5px] -ml-6 rounded-[3px] bg-line group-hover:bg-brand group-focus-visible:bg-brand" />
       </div>
       <header className="flex items-center gap-x-3.5 gap-y-2.5 flex-wrap px-[clamp(16px,3vw,36px)] py-2 border-b border-line">
-        {warehouse ? <b>Заказ №{r.id}</b> : <button type="button" className={orderNo} onClick={() => openRequest(r.id)}>Заказ №{r.id}</button>}
+        <button type="button" className={orderNo} onClick={() => openRequest(r.id)}>Заказ №{r.id}</button>
         <StatusPill id={r.status} />
         <nav className="flex gap-0.5 flex-wrap">
           {tabs.map(([id, title]) => (
@@ -291,7 +291,7 @@ function Requests({ user }: { user: Staff }) {
         </thead>
         <tbody>
           {list.length ? list.map((r) => (
-            <tr key={r.id} className={cx(rowClickable, r.id === ui.sel && "[&>td]:bg-brand-soft")}
+            <tr key={r.id} className={cx("cursor-pointer", r.id === ui.sel && "[&>td]:bg-brand-soft")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
                 <button type="button" className={orderNo} aria-label={`Открыть карточку заказа №${r.id}`}
