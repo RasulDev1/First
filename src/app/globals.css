@@ -38,10 +38,10 @@
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand; }
   /* Поля ввода — одинаковые во всей CRM */
   input:not([type="checkbox"]):not([type="file"]), select, textarea {
-    @apply w-full min-h-[42px] px-3 py-[9px] border border-line rounded-[10px] bg-surface transition-[border-color,box-shadow];
+    @apply w-full min-h-[42px] px-3 py-[9px] border border-transparent rounded-[10px] bg-[#f4f5f7] transition-[border-color,box-shadow,background-color];
   }
   textarea { @apply resize-y leading-snug; }
-  input:focus, select:focus, textarea:focus { @apply outline-none border-brand ring-3 ring-brand-soft; }
+  input:focus, select:focus, textarea:focus { @apply outline-none border-brand bg-surface ring-0; }
   input[type="checkbox"] { @apply accent-brand; }
   [hidden] { display: none !important; }
 }

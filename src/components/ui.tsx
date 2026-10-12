@@ -10,7 +10,7 @@ export const cx = (...list: (string | false | null | undefined)[]) => list.filte
 /* ---------- Кнопки ---------- */
 // Все кнопки CRM с прямыми углами. Второстепенная — по умолчанию, главная — синяя, опасная — красная.
 const BTN = {
-  base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-bold border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
+  base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
   secondary: "bg-surface-2 border-surface-2 text-ink hover:bg-line hover:border-line disabled:hover:bg-surface-2",
   primary: "bg-brand border-brand text-white hover:bg-brand-deep hover:border-brand-deep disabled:hover:bg-brand",
   danger: "bg-bad border-bad text-white hover:bg-bad-deep hover:border-bad-deep",
@@ -83,9 +83,9 @@ export const formCol = "flex flex-col gap-3.5";
 
 /* ---------- Статусы и метки ---------- */
 const PILL: Record<string, string> = {
-  new: "text-st-new bg-st-new-soft", assigned: "text-st-assigned bg-st-assigned-soft", measure: "text-st-measure bg-st-measure-soft",
-  pricing: "text-st-pricing bg-st-pricing-soft", in_work: "text-st-in_work bg-st-in_work-soft", done: "text-st-done bg-st-done-soft",
-  cancelled: "text-st-cancelled bg-st-cancelled-soft",
+  new: "text-st-new bg-st-new/10", assigned: "text-st-assigned bg-st-assigned/10", measure: "text-st-measure bg-st-measure/10",
+  pricing: "text-st-pricing bg-st-pricing/10", in_work: "text-st-in_work bg-st-in_work/10", done: "text-st-done bg-st-done/10",
+  cancelled: "text-st-cancelled bg-st-cancelled/10",
 };
 /** Цвет заливки статуса — для полос графиков */
 export const STATUS_FILL: Record<string, string> = {
@@ -95,7 +95,7 @@ export const STATUS_FILL: Record<string, string> = {
 export const statusTitle = (id: string) => STATUSES.find((s) => s.id === id)?.title || id;
 export function Pill({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center self-start w-max px-2.5 py-0.5 rounded-full text-xs font-extrabold whitespace-nowrap before:content-[''] before:size-1.5 before:rounded-full before:bg-current before:mr-1.5", className)}>
+    <span className={cx("inline-flex items-center self-start w-max px-2.5 py-px rounded-full text-[11px] font-medium whitespace-nowrap before:content-[''] before:size-1.5 before:rounded-full before:bg-current before:mr-1.5", className)}>
       {children}
     </span>
   );
@@ -208,10 +208,10 @@ export function Table({ className, children }: { className?: string; children: R
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
       <table className={cx("w-full border-collapse text-sm",
-        "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-muted [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:border-b [&_th]:border-line [&_th]:bg-surface-2 [&_th]:whitespace-nowrap [&_th]:align-bottom",
-        "[&_td]:px-3.5 [&_td]:py-2.5 [&_td]:border-b [&_td]:border-line [&_td]:align-top",
+        "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-[#94a3b8] [&_th]:px-3.5 [&_th]:py-3 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
+        "[&_td]:px-3.5 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-top",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-bold",
-        "[&_td_small]:block [&_td_small]:text-[12.5px] [&_td_small]:text-muted [&_td_small]:font-medium")}>
+        "[&_td_small]:block [&_td_small]:text-xs [&_td_small]:text-muted [&_td_small]:font-medium [&_td_small]:mt-0.5")}>
         {children}
       </table>
     </div>
