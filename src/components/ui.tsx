@@ -13,7 +13,7 @@ export const cx = (...list: (string | false | null | undefined)[]) => list.filte
 const BTN = {
   base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
   secondary: "bg-surface-2 border-surface-2 text-ink hover:bg-line hover:border-line disabled:hover:bg-surface-2",
-  primary: "bg-brand border-brand text-white hover:bg-brand-deep hover:border-brand-deep disabled:hover:bg-brand",
+  primary: "bg-brand border-brand text-white hover:bg-ink hover:border-ink disabled:hover:bg-brand disabled:hover:border-brand",
   danger: "bg-bad border-bad text-white hover:bg-bad-deep hover:border-bad-deep",
   md: "min-h-10 px-4 py-2",
   sm: "min-h-8 px-3 py-1 text-[13px]",
@@ -129,7 +129,7 @@ export function Chips({ items, active, onChange, tabs }: { items: readonly ChipI
           <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
             className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer",
               tabs ? cx("px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-brand-deep border-brand" : "text-ink-2 border-transparent")
-                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-ink border-ink text-page" : "bg-surface border-black/[.06] text-ink-2"))}>
+                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-ink-2"))}>
             {label}
             {count != null ? <i className={cx("not-italic tabular-nums", on ? (tabs ? "text-brand-deep" : "text-page/75") : "text-muted")}>{count}</i> : null}
           </button>

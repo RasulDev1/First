@@ -54,7 +54,7 @@ function Columns({ list, period, value, format, label }: { list: Request[]; peri
             <div key={i} tabIndex={0} className="group relative h-full flex items-end outline-offset-0">
               <span style={{ height: `${(w.v / max) * 100}%` }}
                 className={cx("w-[58%] max-w-9 mx-auto min-h-[2px] rounded-t-[4px] transition-colors duration-150", last ? "bg-brand" : "bg-brand-light/80 group-hover:bg-brand group-focus:bg-brand")} />
-              <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-ink text-page text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
+              <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-brand text-white text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
                 last ? "right-0" : first ? "left-0" : "left-1/2 -translate-x-1/2")}>
                 Неделя с {dayMonth(w.from)}: <b>{format(w.v)}</b>
               </span>
@@ -115,7 +115,7 @@ function Area({ list, period, value, format, label }: { list: Request[]; period:
             <div key={i} tabIndex={0} className="group relative h-full outline-offset-0">
               <span style={{ bottom: `${((H - pts[i][1]) / H) * 100}%` }}
                 className="absolute left-1/2 -translate-x-1/2 translate-y-1/2 size-2.5 rounded-full bg-surface border-2 border-brand opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100" />
-              <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-ink text-page text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
+              <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-brand text-white text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
                 i === n - 1 ? "right-0" : i === 0 ? "left-0" : "left-1/2 -translate-x-1/2")}>
                 Неделя с {dayMonth(w.from)}: <b>{format(w.v)}</b>
               </span>

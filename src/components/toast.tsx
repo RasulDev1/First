@@ -22,7 +22,7 @@ export function ToastHost() {
   return (
     <div role="status" aria-live="polite"
       className={cx("fixed left-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+20px)] z-[80] -translate-x-1/2 max-w-[calc(100%-32px)] px-4.5 py-2.5 rounded-lg font-medium text-sm shadow-card pointer-events-none transition-[opacity,transform] duration-200",
-        msg?.kind === "bad" ? "bg-bad text-white" : "bg-ink text-page", show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5")}>
+        msg?.kind === "bad" ? "bg-bad text-white" : "bg-brand text-white", show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5")}>
       {msg?.text}
     </div>
   );
