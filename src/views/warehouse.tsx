@@ -20,8 +20,8 @@ import { toast } from "@/components/toast";
 import type { View } from "./types";
 
 /* ---------- Состояние раздела: живёт между переходами, как в прежней версии ---------- */
-type Tab = "stock" | "map" | "buy" | "log";
-const TABS: readonly (readonly [Tab, string])[] = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Журнал"]];
+type Tab = "stock" | "map" | "buy" | "log" | "low";
+const TABS: readonly (readonly [Tab, string])[] = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Журнал"], ["low", "Заканчиваются"]];
 interface WhFilter { name: string; type: string; price: string; place: string }
 const WF0: WhFilter = { name: "", type: "", price: "", place: "" };
 const saved: { tab: Tab; wf: WhFilter } = { tab: "stock", wf: { ...WF0 } }; // фильтры остатков применяются кнопкой «Найти»
@@ -199,6 +199,27 @@ function BuyTab() {
   );
 }
 
+/* ---------- Заканчиваются ---------- */
+function LowTab() {
+  const rows = db.list("products").filter(isLow).sort((a, b) => qtyOf(a.id) - qtyOf(b.id));
+  if (!rows.length) return <Empty title="Всё в достатке">Ни одна позиция не опустилась до минимального остатка.</Empty>;
+  return (
+    <>
+      <p className="m-0 text-ink-2 max-w-[70ch]">Товары, которых осталось мало: остаток не больше минимального.</p>
+      <Table>
+        <thead><tr><th>Наименование</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th></tr></thead>
+        <tbody>{rows.map((p) => (
+          <tr key={p.id} tabIndex={0} className="cursor-pointer" onClick={() => openProduct(p.id)}>
+            <td><b>{p.name}</b><small>{p.sku}</small></td>
+            <td className={cx(R, "text-bad font-bold")}>{amount(p, qtyOf(p.id))}</td>
+            <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
+          </tr>
+        ))}</tbody>
+      </Table>
+    </>
+  );
+}
+
 /* ---------- Журнал ---------- */
 const KIND: Record<MoveKind, string> = { in: "Приём", move: "Перемещение", out: "Списание", fix: "Пересчёт", issue: "Расход на заказ" };
 const KIND_CLASS: Record<MoveKind, string> = {
@@ -246,12 +267,12 @@ function Warehouse() {
     setTabState(next);
   };
   const low = db.list("products").filter(isLow).length;
-  const counts: Partial<Record<Tab, number>> = { buy: low };
+  const counts: Partial<Record<Tab, number>> = { buy: low, low };
   return (
     <>
       <Chips tabs items={TABS.map(([id, label]) => [id, label, counts[id] || undefined] as const)} active={tab} onChange={setTab} />
       <div className="flex flex-col gap-3.5">
-        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? <BuyTab /> : <LogTable />}
+        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? <BuyTab /> : tab === "low" ? <LowTab /> : <LogTable />}
       </div>
     </>
   );
