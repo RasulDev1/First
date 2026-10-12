@@ -83,10 +83,6 @@ function TaskRow({ t, user }: { t: Task; user: Staff }) {
   const done = Boolean(t.done_at);
   return (
     <div className={cx("flex items-start gap-3 px-3.5 py-2.5 bg-surface border rounded-[10px]", isLate(t) ? "border-bad" : "border-line")}>
-      <button type="button" aria-pressed={done} aria-label={done ? "Вернуть в работу" : "Отметить выполненной"} onClick={() => toggle(t.id, user)} disabled={done && !isDirector(user)}
-        className={cx("flex-none size-[22px] mt-px border-2 cursor-pointer relative", done ? "bg-brand border-brand" : "bg-surface border-line hover:border-brand")}>
-        {done ? <span aria-hidden="true" className="absolute left-1.5 top-0.5 w-[5px] h-2.5 border-solid border-white border-0 border-r-2 border-b-2 rotate-45" /> : null}
-      </button>
       <button type="button" onClick={() => openTask(t.id, user)}
         className="flex-1 min-w-0 flex flex-col bg-transparent border-0 p-0 text-left cursor-pointer">
         <b className={cx(done && "line-through text-muted")}>{t.title}</b>
