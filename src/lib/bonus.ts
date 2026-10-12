@@ -8,8 +8,7 @@ export const BONUS = {
   repeatClient: 500,    // за завершённый заказ повторного клиента
   planSales: 1500000,   // план продаж на месяц
   planBonus: 15000,     // за выполнение плана
-  noCancelMin: 5,       // заказов за месяц, начиная с которых работает бонус «без отказов»
-  noCancelBonus: 5000,  // за месяц без отменённых заказов
+  noCancelBonus: 5000,  // за месяц без отменённых заказов: идёт в зарплату, пока в месяце не было отмены
 };
 
 const sameMonth = (iso: string, now: Date) => { const d = new Date(iso); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); };
@@ -28,7 +27,7 @@ export function monthOrders(managerId: number, now = new Date()) {
 export interface BonusRow { id: string; title: string; rule: string; amount: number; earned: boolean; bonus?: number }
 
 export function bonusFor(managerId: number, now = new Date()) {
-  const { done, cancelled, taken } = monthOrders(managerId, now);
+  const { done, cancelled } = monthOrders(managerId, now);
   const sales = done.reduce((n, r) => n + (r.amount || 0), 0);
   const repeat = done.filter((r) => r.source === "Повторный клиент").length;
   const money = (n: number) => n.toLocaleString("ru-RU");
@@ -38,8 +37,8 @@ export function bonusFor(managerId: number, now = new Date()) {
     { id: "orders", title: "За каждый завершённый заказ", rule: `${money(BONUS.perOrder)} ₽ × ${done.length}`, amount: BONUS.perOrder * done.length, earned: done.length > 0 },
     { id: "repeat", title: "За повторных клиентов", rule: `${money(BONUS.repeatClient)} ₽ × ${repeat} завершённых заказов повторных клиентов`, amount: BONUS.repeatClient * repeat, earned: repeat > 0 },
     { id: "plan", title: "За выполнение плана продаж", rule: `План ${money(BONUS.planSales)} ₽ в месяц, сейчас ${money(sales)} ₽`, amount: sales >= BONUS.planSales ? BONUS.planBonus : 0, earned: sales >= BONUS.planSales, bonus: BONUS.planBonus },
-    { id: "nocancel", title: "За месяц без отказов", rule: `Не меньше ${BONUS.noCancelMin} заказов и ни одной отмены, сейчас ${taken.length} заказов, отмен ${cancelled.length}`,
-      amount: taken.length >= BONUS.noCancelMin && !cancelled.length ? BONUS.noCancelBonus : 0, earned: taken.length >= BONUS.noCancelMin && !cancelled.length, bonus: BONUS.noCancelBonus },
+    { id: "nocancel", title: "За месяц без отказов", rule: cancelled.length ? `Был отказ: отменено заказов — ${cancelled.length}` : "Начисляется, пока в этом месяце не было отказов",
+      amount: cancelled.length ? 0 : BONUS.noCancelBonus, earned: !cancelled.length, bonus: BONUS.noCancelBonus },
   ];
   return { rows, total: rows.reduce((n, r) => n + r.amount, 0), sales };
 }
