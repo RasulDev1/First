@@ -217,6 +217,7 @@ export function seed(): Data {
       name: ac ? AC_ROOMS[(i + r.id) % AC_ROOMS.length] : ROOMS[(i + r.id) % ROOMS.length], area: Math.round(12 + rand() * 28), height: 2.7, ac }));
     const routes = ac ? [] : rooms.map((room) => ({ name: `${room.name} → улица`, diameter: pick([125, 160, 200]), length: round05(4 + rand() * 10), bends: 1 + Math.floor(rand() * 4) }));
     r.survey = { rooms, routes, photos: [], note: pick(SURVEY_NOTES), at: past(at), by: staff.find((x) => x.id === r.manager_id)?.name || "", saved: true };
+    r.measured_at = past(at - 2 * 3600e3);
     r.history.push({ at: past(at), by: r.survey.by ?? "", text: "Замеры сохранены" });
     const lines = buildEstimate(r, products);
     if (!lines.length) continue;
