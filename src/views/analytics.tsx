@@ -133,8 +133,8 @@ function Analytics({ user }: { user: Staff }) {
     <>
       {periodChips}
       <Kpis>
-        <Kpi label="Заказов" value={num(list.length)} sub={`${num(list.filter((r) => r.status === "new").length)} ждут менеджера`} />
-        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, closed)}% закрытых — успешно`} />
+        <Kpi label="Заказов" value={num(list.length)} sub={`${num(list.filter((r) => r.status === "new").length)} ждут менеджера`} subTone="warn" />
+        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, closed)}% закрытых — успешно`} subTone="ok" />
         <Kpi label="Продажи" value={money(revenue)} sub="по выполненным заказам" tone="accent" />
         <Kpi label="Средний чек" value={money(done.length ? revenue / done.length : 0)} sub={`${num(cancelled.length)} ${pluralize(cancelled.length, "отказ", "отказа", "отказов")}`} />
       </Kpis>

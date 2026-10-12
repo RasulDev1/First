@@ -2,7 +2,7 @@
 
 /* Цвета и шрифты CRM. Используются как классы Tailwind: bg-brand, text-muted, border-line, bg-st-new-soft и т. д. */
 @theme {
-  --color-page: #f1f5f9;          /* фон страницы */
+  --color-page: #f8f9fa;          /* фон страницы */
   --color-surface: #ffffff;
   --color-surface-2: #f1f5f9;
   --color-heading: #0f172a;
@@ -10,22 +10,22 @@
   --color-ink-2: #475569;
   --color-muted: #64748b;
   --color-line: #e2e8f0;
-  --color-brand: #003399;         /* чернильно-синий: главное действие */
-  --color-brand-deep: #002673;
-  --color-brand-soft: #e6ecf7;
-  --color-brand-light: #3366cc;
-  --color-ok: #24804b;  --color-ok-soft: #dcf1e4;
+  --color-brand: #2563eb;         /* королевский синий: главное действие */
+  --color-brand-deep: #1d4ed8;
+  --color-brand-soft: #eaf1fe;
+  --color-brand-light: #3b82f6;
+  --color-ok: #059669;  --color-ok-soft: #d9f4e8;
   --color-warn: #9a5b00; --color-warn-soft: #fbecd0;
   --color-bad: #dc2626;  --color-bad-deep: #b91c1c; --color-bad-soft: #fbe0de;
-  --color-st-new: #003399;      --color-st-new-soft: #e6ecf7;
+  --color-st-new: #2563eb;      --color-st-new-soft: #eaf1fe;
   --color-st-assigned: #7444c2; --color-st-assigned-soft: #ece4f9;
   --color-st-measure: #0b7a8a;  --color-st-measure-soft: #d8f0f3;
   --color-st-pricing: #a8386b;  --color-st-pricing-soft: #f9e1ec;
   --color-st-in_work: #9a5b00;  --color-st-in_work-soft: #fbecd0;
-  --color-st-done: #24804b;     --color-st-done-soft: #dcf1e4;
+  --color-st-done: #059669;     --color-st-done-soft: #d9f4e8;
   --color-st-cancelled: #5f6b6d; --color-st-cancelled-soft: #e7ecec;
-  --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
-  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --shadow-card: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 20px rgba(15, 23, 42, .05);
   --radius-card: 12px;
 }

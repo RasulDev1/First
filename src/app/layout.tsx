@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "CRM для компании по монтажу вентиляции и кондиционеров",
   icons: { icon: "img/mark.svg" },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f1f5f9" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f8f9fa" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" />
       </head>
       <body>{children}</body>
     </html>

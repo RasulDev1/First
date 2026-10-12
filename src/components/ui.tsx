@@ -169,16 +169,19 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
 export function Kpis({ small, children }: { small?: boolean; children: ReactNode }) {
   return <div className={cx("grid", small ? "grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2" : "grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3")}>{children}</div>;
 }
-export function Kpi({ label, value, sub, tone, small, onClick }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: "accent" | "bad"; small?: boolean; onClick?: () => void }) {
+export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: "accent" | "bad"; subTone?: "ok" | "warn"; small?: boolean; onClick?: () => void }) {
   const Tag = onClick ? "button" : "div";
   return (
-    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-0.5 min-w-0 text-left",
-      small ? "px-3 py-2.5 rounded-card bg-surface-2" : "px-4 py-3.5 rounded-card",
-      !small && (tone === "accent" ? "bg-linear-135 from-brand-light via-brand to-brand-deep text-white shadow-card" : "bg-surface border border-line shadow-card"),
+    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-1 min-w-0 text-left",
+      small ? "px-3 py-2.5 rounded-card bg-surface-2" : "px-4 py-3.5 rounded-card bg-surface border border-line shadow-card",
       onClick && "cursor-pointer hover:border-brand")}>
-      <small className={cx("text-xs font-extrabold tracking-wider uppercase", tone === "accent" ? "text-white/85" : "text-muted")}>{label}</small>
-      <b className={cx("font-display font-bold leading-tight wrap-anywhere tabular-nums", small ? "text-base" : "text-lg sm:text-2xl", tone === "bad" && "text-bad")}>{value}</b>
-      {sub ? <span className={cx("text-[13px]", tone === "accent" ? "text-white/85" : "text-muted")}>{sub}</span> : null}
+      <small className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{label}</small>
+      <b className={cx("font-display font-medium leading-tight wrap-anywhere tabular-nums text-heading", small ? "text-lg" : "text-[28px] sm:text-[32px]", tone === "bad" && "text-bad")}>{value}</b>
+      {sub ? (
+        <span className={cx("text-[11px] leading-snug",
+          subTone === "ok" ? "self-start px-2 py-0.5 rounded-full bg-ok-soft text-ok font-medium"
+            : subTone === "warn" ? "self-start px-2 py-0.5 rounded-full bg-warn-soft text-warn font-medium" : "text-muted")}>{sub}</span>
+      ) : null}
     </Tag>
   );
 }
@@ -189,7 +192,7 @@ export function Table({ className, children }: { className?: string; children: R
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
       <table className={cx("w-full border-collapse text-sm",
-        "[&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:tracking-wide [&_th]:uppercase [&_th]:text-muted [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:border-b [&_th]:border-line [&_th]:bg-surface-2 [&_th]:whitespace-nowrap [&_th]:align-bottom",
+        "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-muted [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:border-b [&_th]:border-line [&_th]:bg-surface-2 [&_th]:whitespace-nowrap [&_th]:align-bottom",
         "[&_td]:px-3.5 [&_td]:py-2.5 [&_td]:border-b [&_td]:border-line [&_td]:align-top",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-bold",
         "[&_td_small]:block [&_td_small]:text-[12.5px] [&_td_small]:text-muted [&_td_small]:font-medium")}>
