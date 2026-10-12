@@ -237,6 +237,24 @@ export function seed(): Data {
       { sum: r.amount - Math.round(r.amount / 2), method: pick(["Наличные", "Перевод на карту", "Банковская карта"]), note: "Остаток после монтажа", at: r.done_at ?? null, by }];
     else if (r.status === "in_work") r.payments = [{ sum: Math.round(r.amount / 2), method: pick(["Наличные", "Перевод на карту", "Банковская карта"]), note: "Предоплата", at: past(Date.parse(r.created_at) + 2 * DAY), by }];
   }
+  // Зарплата менеджера считается по заказам, завершённым в текущем месяце: у каждого менеджера их должно быть несколько
+  const monthStart = new Date(now); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  for (const m of managers) {
+    const done = requests.filter((r) => r.status === "done" && r.manager_id === m.id).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+    let inMonth = done.filter((r) => r.done_at && Date.parse(r.done_at) >= monthStart.getTime()).length;
+    for (const r of done) {
+      if (inMonth >= 6) break;
+      if (r.done_at && Date.parse(r.done_at) >= monthStart.getTime()) continue;
+      const from = Math.max(monthStart.getTime(), Date.parse(r.created_at) + 3600e3), to = Math.max(from, now - 15 * 60e3);
+      const at = past(from + rand() * (to - from));
+      r.done_at = at;
+      const h = [...r.history].reverse().find((x) => x.text === "Статус: Завершён");
+      if (h) h.at = at;
+      const last = r.payments?.[r.payments.length - 1];
+      if (last) last.at = at;
+      inMonth++;
+    }
+  }
   // Чтобы у демо-мастера и демо-стажёра (аккаунты master и trainee) были заказы в работе
   [1, 5].forEach((masterId, i) => {
     const r = requests.filter((x) => ["in_work", "pricing", "measure", "assigned"].includes(x.status) && x.master_id)[i];

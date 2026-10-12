@@ -6,7 +6,7 @@ import { STORAGE_PREFIX } from "./core";
 import { seed } from "./seed";
 import type { Data, Row, TableName } from "./types";
 
-const DB_KEY = STORAGE_PREFIX + "db_v14";
+const DB_KEY = STORAGE_PREFIX + "db_v15";
 const TABLES: TableName[] = ["staff", "masters", "requests", "products", "stock", "moves", "tasks", "clients", "settings"];
 
 let data: Data | null = null;
