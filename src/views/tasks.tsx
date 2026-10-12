@@ -1,5 +1,5 @@
 "use client";
-// «Задачи»: задания менеджерам со сроком. Ставит задачи только руководитель; менеджер видит свои и отмечает выполнение.
+// «Задачи»: задания менеджерам со сроком. Ставит задачи только руководитель; менеджер видит свои и отмечает выполнение с комментарием; вернуть задачу в работу может только руководитель.
 import { useState } from "react";
 import { dateTime, toLocalInput, localDay, formValue } from "@/lib/core";
 import { db } from "@/lib/db";
@@ -41,19 +41,49 @@ function groups(list: Task[]) {
   return [...out];
 }
 
+/** Выполнение и возврат в работу — только с комментарием; возвращает задачу в работу один руководитель */
 function toggle(id: number, user: Staff) {
   const t = db.find("tasks", id);
   if (!t) return;
-  if (!isDirector(user) && t.assignee_id !== user.id) return;
-  db.patch("tasks", id, { done_at: t.done_at ? null : new Date().toISOString() });
-  toast(t.done_at ? "Задача выполнена" : "Задача снова в работе");
+  if (!isDirector(user) && (t.assignee_id !== user.id || t.done_at)) return;
+  openDrawer(() => <ConfirmForm id={id} user={user} />);
+}
+
+function ConfirmForm({ id, user }: { id: number; user: Staff }) {
+  const [error, setError] = useState("");
+  const t = db.find("tasks", id);
+  if (!t) return <Empty title="Задача удалена" />;
+  const restore = Boolean(t.done_at);
+  const save = (fd: FormData) => {
+    const text = formValue(fd, "comment");
+    if (!text) return setError(restore ? "Напишите, почему задача возвращается в работу" : "Напишите, что именно сделано");
+    pushComment(t, `${restore ? "Возвращена в работу" : "Выполнено"}: ${text}`, user);
+    db.patch("tasks", id, { done_at: restore ? null : new Date().toISOString(), comments: t.comments });
+    toast(restore ? "Задача снова в работе" : "Задача выполнена");
+    openTask(id, user);
+  };
+  return (
+    <>
+      <DHead eyebrow={restore ? "Вернуть в работу" : "Подтверждение"} title={t.title} />
+      <form className={formCol} onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }}>
+        <Field label={restore ? "Почему возвращаете" : "Что сделано"} hint="Комментарий обязателен, он останется в переписке задачи.">
+          <textarea name="comment" rows={4} maxLength={1000} autoFocus required />
+        </Field>
+        <FormError>{error}</FormError>
+        <div className={btnRow}>
+          <Button variant="primary" type="submit">{restore ? "Вернуть в работу" : "Подтвердить выполнение"}</Button>
+          <Button onClick={() => openTask(id, user)}>Назад</Button>
+        </div>
+      </form>
+    </>
+  );
 }
 
 function TaskRow({ t, user }: { t: Task; user: Staff }) {
   const done = Boolean(t.done_at);
   return (
     <div className={cx("flex items-start gap-3 px-3.5 py-2.5 bg-surface border rounded-[10px]", isLate(t) ? "border-bad" : "border-line")}>
-      <button type="button" aria-pressed={done} aria-label={done ? "Вернуть в работу" : "Отметить выполненной"} onClick={() => toggle(t.id, user)}
+      <button type="button" aria-pressed={done} aria-label={done ? "Вернуть в работу" : "Отметить выполненной"} onClick={() => toggle(t.id, user)} disabled={done && !isDirector(user)}
         className={cx("flex-none size-[22px] mt-px border-2 cursor-pointer relative", done ? "bg-brand border-brand" : "bg-surface border-line hover:border-brand")}>
         {done ? <span aria-hidden="true" className="absolute left-1.5 top-0.5 w-[5px] h-2.5 border-solid border-white border-0 border-r-2 border-b-2 rotate-45" /> : null}
       </button>
@@ -76,7 +106,7 @@ function Tasks({ user }: { user: Staff }) {
     <>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
         <p className="m-0 text-ink-2 max-w-[70ch] flex-[1_1_320px]">
-          {director ? "Задания менеджерам со сроком. Менеджер видит свои задачи и отмечает выполнение." : "Задания от руководителя. Отметьте задачу, когда сделаете."}
+          {director ? "Задания менеджерам со сроком. Менеджер видит свои задачи и отмечает выполнение с комментарием; вернуть задачу в работу может только руководитель." : "Задания от руководителя. Когда сделаете, отметьте задачу и напишите комментарий."}
         </p>
         {director ? <Button variant="primary" onClick={() => openForm(null, user)}>Поставить задачу</Button> : null}
       </div>
@@ -122,7 +152,7 @@ function TaskDetail({ id, user }: { id: number; user: Staff }) {
         }} />
       </DSec>
       <DSec className={btnRow}>
-        <Button variant="primary" onClick={() => toggle(id, user)}>{t.done_at ? "Вернуть в работу" : "Выполнено"}</Button>
+        {!t.done_at || isDirector(user) ? <Button variant="primary" onClick={() => toggle(id, user)}>{t.done_at ? "Вернуть в работу" : "Выполнено"}</Button> : null}
         {isDirector(user) ? <>
           <Button onClick={() => openForm(db.find("tasks", id), user)}>Изменить</Button>
           <ArmedButton variant="danger" question="Точно удалить?" onConfirm={() => { db.remove("tasks", id); closeDrawer(); toast("Задача удалена"); }}>Удалить</ArmedButton>
