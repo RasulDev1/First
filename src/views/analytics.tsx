@@ -132,20 +132,21 @@ function Analytics({ user }: { user: Staff }) {
   return (
     <>
       {periodChips}
-      <Kpis>
+      <div className="grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-5 gap-3">
         <Kpi label="Заказов" value={num(list.length)} sub={`${num(list.filter((r) => r.status === "new").length)} ждут менеджера`} subTone="warn" />
         <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, closed)}% закрытых — успешно`} subTone="ok" />
+        <Kpi label="Отказы" value={num(cancelled.length)} sub={`${pct(cancelled.length, closed)}% закрытых`} />
         <Kpi label="Продажи" value={money(revenue)} sub="по выполненным заказам" tone="accent" />
-        <Kpi label="Средний чек" value={money(done.length ? revenue / done.length : 0)} sub={`${num(cancelled.length)} ${pluralize(cancelled.length, "отказ", "отказа", "отказов")}`} />
-      </Kpis>
-      {director ? (
-        <Kpis>
-          <Kpi label="Расход на материалы" value={money(materials)} sub="по закупочным ценам" />
-          <Kpi label="Закуплено товара" value={money(bought?.sum ?? 0)} sub={`${num(bought?.list.length ?? 0)} ${pluralize(bought?.list.length ?? 0, "позиция", "позиции", "позиций")}`} />
-          <Kpi label="Зарплаты мастеров" value={money(salaries)} sub="процент от заказов" />
-          <Kpi label="Чистая выручка" value={money(net)} sub={`продажи − материалы − зарплаты (${pct(net, revenue)}%)`} tone="accent" />
-        </Kpis>
-      ) : null}
+        <Kpi label="Средний чек" value={money(done.length ? revenue / done.length : 0)} sub="по выполненным заказам" />
+        {director ? (
+          <>
+            <Kpi label="Расход на материалы" value={money(materials)} sub="по закупочным ценам" />
+            <Kpi label="Закуплено товара" value={money(bought?.sum ?? 0)} sub={`${num(bought?.list.length ?? 0)} ${pluralize(bought?.list.length ?? 0, "позиция", "позиции", "позиций")}`} />
+            <Kpi label="Зарплаты мастеров" value={money(salaries)} sub="процент от заказов" />
+            <Kpi label="Чистая выручка" value={money(net)} sub={`продажи − материалы − зарплаты (${pct(net, revenue)}%)`} tone="accent" />
+          </>
+        ) : null}
+      </div>
 
       <div className="grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5">
         <Panel title="Новые заказы по неделям"><Columns list={list} period={period} value={() => 1} format={(v) => num(v)} label="Заказы по неделям" /></Panel>
