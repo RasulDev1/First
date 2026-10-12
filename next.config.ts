@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
+  // ARTIFACT=1 — пути к файлам относительные: сборку можно открыть из любой папки (демо-страница, файл на диске)
+  ...(process.env.ARTIFACT ? { assetPrefix: "./" } : {}),
 };
 
 export default nextConfig;
