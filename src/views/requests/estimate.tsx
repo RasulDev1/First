@@ -174,7 +174,7 @@ function EstimateWizard({ id }: { id: number }) {
     r.estimate = { lines: kept, at: new Date().toISOString(), by: user.name };
     r.amount = Math.round(t.total);
     logBy(r, `Смета: ${money(t.total)}, прибыль ${money(t.profit)} (${Math.round(t.margin)}%)`, user);
-    save("Смета сохранена, сумма договора обновлена");
+    save("Смета сохранена, стоимость работы обновлена");
     closeDrawer();
   };
 
@@ -235,14 +235,14 @@ function EstimateWizard({ id }: { id: number }) {
           ["Материалы", sum("mat"), "tabular-nums"],
           ["Работы", sum("work"), "tabular-nums"],
           ["Закупка материалов", money(t.cost), "tabular-nums"],
-          ["Сумма договора сейчас", money(r.amount || 0), "tabular-nums"],
+          ["Стоимость работы сейчас", money(r.amount || 0), "tabular-nums"],
         ]} />
         {bad.length ? <Note tone="warn">Ниже порога {num(minMargin())}%: {bad.map((l) => l.name).join(", ")}.{user.role === "director" ? " Руководитель может сохранить так." : " Поднимите цены, чтобы сохранить."}</Note> : null}
         <MarginForm user={user} />
         <div className={btnRow}>
           <Button onClick={() => setStep(1)}>Назад</Button>
           <GuardButton g={g} variant="primary" disabled={!lines.length || (bad.length > 0 && user.role !== "director")} onClick={onSave}>
-            Сохранить смету и поставить сумму договора</GuardButton>
+            Сохранить смету и поставить стоимость работы</GuardButton>
         </div>
       </DSec>
     );

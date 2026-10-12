@@ -27,7 +27,7 @@ export function totals(lines: EstimateLine[]) {
   return { total, cost, profit: total - cost, margin: marginOf(total, cost) };
 }
 
-/** Самая низкая допустимая сумма договора для менеджера; 0 — основы для расчёта ещё нет */
+/** Самая низкая допустимая стоимость работы для менеджера; 0 — основы для расчёта ещё нет */
 export function minAmount(r: Request) {
   if (r.estimate?.lines?.length) return r.estimate.lines.reduce((n, l) => n + l.qty * floorOf(l.cost || 0), 0);
   const cost = expenseTotal(r);
