@@ -119,7 +119,7 @@ function SheetMain({ r, user }: { r: Request; user: Staff }) {
   );
 }
 
-function SheetPay({ r, user }: { r: Request; user: Staff }) {
+function SheetPay({ r, user, readOnly }: { r: Request; user: Staff; readOnly?: boolean }) {
   const g = useGuard(user);
   const paid = (r.payments || []).reduce((n, p) => n + p.sum, 0);
   const cost = expenseTotal(r);
@@ -139,10 +139,10 @@ function SheetPay({ r, user }: { r: Request; user: Staff }) {
           ["Материалы со склада", money(cost), "tabular-nums"],
           ["Прибыль", money((r.amount || 0) - cost), "tabular-nums"],
         ]} />
-        <form key={r.amount || 0} className={cx(inlineForm, "mt-2.5")} onSubmit={amount}>
+        {readOnly ? null : <form key={r.amount || 0} className={cx(inlineForm, "mt-2.5")} onSubmit={amount}>
           <input name="amount" type="number" min="0" step="100" inputMode="numeric" defaultValue={r.amount || ""} placeholder="Сумма договора" aria-label="Сумма договора, ₽" />
           <GuardButton g={g} type="submit">Сохранить сумму</GuardButton>
-        </form>
+        </form>}
       </div>
       <div>
         {(r.payments || []).length ? (
@@ -152,7 +152,7 @@ function SheetPay({ r, user }: { r: Request; user: Staff }) {
             sub: `${dateTime(p.at)}${p.by ? ` · ${p.by}` : ""}`,
           }))} />
         ) : <p className={cx(P, muted)}>Оплат пока не было.</p>}
-        {r.status === "cancelled" ? null : (
+        {r.status === "cancelled" || readOnly ? null : (
           <Button variant="primary" onClick={() => { if (allowed(r, user)) openPayment(r.id); }}>Внести оплату</Button>
         )}
       </div>
@@ -165,7 +165,8 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
 }) {
   const sheetRef = useRef<HTMLElement>(null);
   const warehouse = isWarehouse(user);
-  const tabs = TABS.filter(([id]) => !(["pay", "survey", "estimate"].includes(id) && warehouse));
+  // Склад (складовщик и закупщик) видит все вкладки, но замеры, смету и оплату — только для просмотра
+  const tabs = TABS;
   if (!tabs.some(([id]) => id === ui.tab)) ui.tab = "main";
   const tab = ui.tab;
   const h = ui.sheetH ?? 40;
@@ -193,8 +194,8 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
 
   const estOpen = () => { if (allowed(r, user)) openEstimate(r.id); };
   const body = tab === "survey" ? <SurveyView survey={r.survey || { rooms: [], routes: [], photos: [], note: "" }} />
-    : tab === "estimate" ? <EstimateTab r={r} user={user} onOpen={estOpen} />
-    : tab === "pay" ? <SheetPay r={r} user={user} />
+    : tab === "estimate" ? <EstimateTab r={r} user={user} onOpen={estOpen} readOnly={warehouse} />
+    : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />
     : tab === "hist" ? <OrderHistory r={r} />
     : <SheetMain r={r} user={user} />;

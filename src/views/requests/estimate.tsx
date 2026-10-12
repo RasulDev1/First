@@ -34,9 +34,9 @@ export function MarginForm({ user, className }: { user: Staff; className?: strin
 }
 
 /* ---------- Вкладка «Смета» в нижней панели ---------- */
-export function EstimateTab({ r, user, onOpen }: { r: Request; user: Staff; onOpen: () => void }) {
+export function EstimateTab({ r, user, onOpen, readOnly }: { r: Request; user: Staff; onOpen: () => void; readOnly?: boolean }) {
   const e = r.estimate, m = minMargin();
-  const head = <div className={btnRow}><Button variant="primary" onClick={onOpen}>{e ? "Изменить смету" : "Составить автосмету"}</Button></div>;
+  const head = readOnly ? null : <div className={btnRow}><Button variant="primary" onClick={onOpen}>{e ? "Изменить смету" : "Составить автосмету"}</Button></div>;
   if (!e?.lines?.length) {
     return (
       <div className={sheetCols}>
