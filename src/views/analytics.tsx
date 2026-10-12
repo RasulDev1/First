@@ -182,7 +182,7 @@ function Analytics({ user }: { user: Staff }) {
 
         <Panel title="Менеджеры">
           <Table>
-            <thead><tr><th>Менеджер</th><th className="text-right">Взято</th><th className="text-right">Выполнено</th><th className="text-right">Продажи</th><th className="text-right">Премия за месяц</th></tr></thead>
+            <thead><tr><th>Менеджер</th><th className="text-right">Взято</th><th className="text-right">Выполнено</th><th className="text-right">Продажи</th><th className="text-right">Зарплата за месяц</th></tr></thead>
             <tbody>{managers.sort((a, b) => b.revenue - a.revenue).map((g) => (
               <tr key={g.key} className={rowClickable} tabIndex={0} onClick={() => openBonus(Number(g.key))}
                 onKeyDown={(e) => { if (e.key === "Enter") openBonus(Number(g.key)); }}>
@@ -191,7 +191,7 @@ function Analytics({ user }: { user: Staff }) {
               </tr>
             ))}</tbody>
           </Table>
-          <p className="m-0 text-muted text-[13px]">Нажмите на менеджера, чтобы увидеть премию по причинам.</p>
+          <p className="m-0 text-muted text-[13px]">Нажмите на менеджера, чтобы увидеть зарплату по причинам.</p>
         </Panel>
 
         {bought ? (

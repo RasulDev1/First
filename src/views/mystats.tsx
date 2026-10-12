@@ -1,5 +1,5 @@
 "use client";
-// «Моя статистика» (менеджер): оформленные им заказы и их сумма, плюс кнопка «Премия» с разбивкой по причинам.
+// «Моя статистика» (менеджер): оформленные им заказы и их сумма, плюс кнопка «Зарплата» с разбивкой по причинам.
 import { useState } from "react";
 import { money, num, dateShort } from "@/lib/core";
 import { db } from "@/lib/db";
@@ -19,7 +19,7 @@ function BonusCard({ managerId }: { managerId: number }) {
   const { rows, total } = bonusFor(managerId);
   return (
     <>
-      <DHead eyebrow={`Премия за ${MONTH()}`} title={m?.name || "Менеджер"} />
+      <DHead eyebrow={`Зарплата за ${MONTH()}`} title={m?.name || "Менеджер"} />
       <DSec>
         <Table>
           <thead><tr><th>Причина</th><th className="text-right">Сумма</th></tr></thead>
@@ -41,7 +41,7 @@ function BonusCard({ managerId }: { managerId: number }) {
   );
 }
 
-/** Окно «Премия»: из чего складывается выплата менеджеру за текущий месяц */
+/** Окно «Зарплата»: из чего складывается выплата менеджеру за текущий месяц */
 export function openBonus(managerId: number) {
   openDrawer(() => <BonusCard managerId={managerId} />);
 }
@@ -59,13 +59,13 @@ function MyStats({ user }: { user: Staff }) {
     <>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
         <Chips items={[[30, "30 дней"], [90, "90 дней"], [0, "Всё время"]]} active={period} onChange={(id) => setPeriod(Number(id))} />
-        <Button variant="primary" className="ml-auto" onClick={() => openBonus(user.id)}>Премия</Button>
+        <Button variant="primary" className="ml-auto" onClick={() => openBonus(user.id)}>Зарплата</Button>
       </div>
       <Kpis>
         <Kpi label="Оформлено заказов" value={num(list.length)} sub={`${num(done.length)} завершено`} />
         <Kpi label="Сумма оформленных" value={money(sum(placed))} sub="без отменённых" tone="accent" />
         <Kpi label="Сумма завершённых" value={money(sum(done))} sub={`${num(done.length)} заказов`} />
-        <Kpi label={`Премия за ${MONTH()}`} value={money(total)} sub="нажмите «Премия», чтобы увидеть из чего" />
+        <Kpi label={`Зарплата за ${MONTH()}`} value={money(total)} sub="нажмите «Зарплата», чтобы увидеть из чего" />
       </Kpis>
       {list.length ? (
         <Table>
