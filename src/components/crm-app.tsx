@@ -13,6 +13,10 @@ import { DrawerHost, closeDrawer } from "./drawer";
 import { ToastHost, toast } from "./toast";
 import { Mark } from "./mark";
 import { go } from "./nav";
+import RequestForm from "@/app/zayavka/request-form";
+
+// В демо-сборке (одна страница) форма заявки открывается по #zayavka, в обычной — отдельной страницей /zayavka/
+const FORM_HREF = process.env.NEXT_PUBLIC_DEMO ? "#zayavka" : "zayavka/";
 
 const NAV: [string, string, string][] = [
   ["home", "Главная", "M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],
@@ -48,6 +52,13 @@ export default function CrmApp() {
   const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [section, setSection] = useState("home");
+  const [formOpen, setFormOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setFormOpen(window.location.hash === "#zayavka");
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, []);
 
   useEffect(() => {
     const u = currentUser();
@@ -75,6 +86,7 @@ export default function CrmApp() {
   });
 
   if (!ready) return null;
+  if (formOpen) return <RequestForm crmHref="#requests" />;
 
   const signIn = (u: Staff) => {
     setUserId(u.id);
@@ -207,7 +219,7 @@ function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
           </div>
           <p className="m-0 text-muted text-[13px]">Пароль у всех демо-аккаунтов: <b className="tabular-nums">{DEMO_PASSWORD}</b></p>
         </div>
-        <p className="m-0 text-center text-[13px]"><a href="zayavka/">Форма заявки для сайта →</a></p>
+        <p className="m-0 text-center text-[13px]"><a href={FORM_HREF}>Форма заявки для сайта →</a></p>
       </div>
     </main>
   );

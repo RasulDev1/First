@@ -8,7 +8,8 @@ import { ensureClient } from "@/lib/clients";
 import { Button, Field, FormError, Note, Options, card, cx, formCol } from "@/components/ui";
 import { Mark } from "@/components/mark";
 
-export default function RequestForm() {
+/** crmHref — ссылка обратно в CRM: со страницы /zayavka/ это «../», внутри демо-страницы — «#requests» */
+export default function RequestForm({ crmHref = "../#requests" }: { crmHref?: string }) {
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,7 @@ export default function RequestForm() {
               <Button block onClick={() => { setSent(null); requestAnimationFrame(() => nameRef.current?.focus()); }}>Оставить ещё одну заявку</Button>
             </div>
           ) : null}
-          <p className="m-0 text-center text-[13px]"><a href="../#requests">Открыть CRM для сотрудников →</a></p>
+          <p className="m-0 text-center text-[13px]"><a href={crmHref}>Открыть CRM для сотрудников →</a></p>
         </div>
       </main>
     </>
