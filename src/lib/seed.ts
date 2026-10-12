@@ -151,7 +151,7 @@ export function seed(): Data {
       const qty = low ? Math.max(0, Math.floor(p.min_qty * 0.5)) : base;
       if (!qty) continue;
       stock.push({ id: stock.length + 1, product_id: p.id, loc, qty });
-      moves.push({ id: moves.length + 1, at: iso(now - (20 + rand() * 60) * DAY), by: DEMO_ACCOUNTS[3].name, kind: "in", product_id: p.id, to: loc, qty, note: "Начальная приёмка" });
+      moves.push({ id: moves.length + 1, at: iso(now - (20 + rand() * 60) * DAY), by: DEMO_ACCOUNTS[3].name, kind: "in", product_id: p.id, to: loc, qty, cost: p.cost, note: "Начальная приёмка" });
     }
   });
 

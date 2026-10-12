@@ -51,7 +51,7 @@ export interface StockRow { id: number; product_id: number; loc: string; qty: nu
 export type MoveKind = "in" | "move" | "out" | "fix" | "issue";
 export interface Move {
   id: number; at: string; by: string; kind: MoveKind; product_id: number;
-  from?: string; to?: string; qty: number; note?: string; delta?: number; request_id?: number;
+  from?: string; to?: string; qty: number; cost?: number; note?: string; delta?: number; request_id?: number;
 }
 
 export interface Task {

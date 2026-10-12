@@ -59,7 +59,7 @@ export function receive({ productId, loc, qty, cost, note }: { productId: unknow
     changeQty(productId, loc, q);
     const p = product(productId);
     if (p && Number(cost) > 0) p.cost = Number(cost);
-    logMove({ kind: "in", product_id: Number(productId), to: loc, qty: q, note }, user);
+    logMove({ kind: "in", product_id: Number(productId), to: loc, qty: q, cost: p?.cost || 0, note }, user);
   });
 }
 
@@ -125,6 +125,21 @@ export function expense({ requestId, productId, from, qty, note }: { requestId: 
     logMove({ kind: "issue", product_id: p.id, from, qty: q, request_id: request.id, note: clean }, user);
     (request.history ||= []).push({ at, by: user?.name || "", text: `Склад выписал: ${p.name}, ${q} ${p.unit}${clean ? ` · ${clean}` : ""}` });
   });
+}
+
+/** Закупки за период: что принято на склад (движения «Приёмка»), сколько штук и на какую сумму по закупочной цене */
+export function purchases(since = 0) {
+  const rows = new Map<number, { product_id: number; qty: number; sum: number; last: string }>();
+  for (const m of db.list("moves")) {
+    if (m.kind !== "in" || Date.parse(m.at) < since) continue;
+    const row = rows.get(m.product_id) ?? { product_id: m.product_id, qty: 0, sum: 0, last: m.at };
+    row.qty += m.qty;
+    row.sum += m.qty * (m.cost ?? product(m.product_id)?.cost ?? 0);
+    if (m.at > row.last) row.last = m.at;
+    rows.set(m.product_id, row);
+  }
+  const list = [...rows.values()].sort((a, b) => b.sum - a.sum);
+  return { list, qty: list.reduce((n, r) => n + r.qty, 0), sum: list.reduce((n, r) => n + r.sum, 0) };
 }
 
 /** Стоимость склада по закупочным и по продажным ценам */

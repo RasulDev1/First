@@ -2,11 +2,11 @@
 // «Аналитика» (руководитель): заказы, конверсия и выручка за период, источники, услуги,
 // загрузка мастеров и результаты менеджеров. Руководитель дополнительно видит стоимость склада.
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { money, num, pluralize } from "@/lib/core";
+import { money, num, pluralize, dateShort } from "@/lib/core";
 import { STATUSES } from "@/lib/config";
 import { db } from "@/lib/db";
 import { isDirector } from "@/lib/auth";
-import { stockValue, isLow } from "@/lib/stock";
+import { stockValue, isLow, purchases, product } from "@/lib/stock";
 import { payOf, materialsOf, netOf } from "@/lib/pay";
 import { bonusFor } from "@/lib/bonus";
 import type { Request, Staff } from "@/lib/types";
@@ -127,6 +127,7 @@ function Analytics({ user }: { user: Staff }) {
   if (!list.length) return <>{periodChips}<Empty title="За этот период заказов нет">Выберите период побольше.</Empty></>;
 
   const sv = director ? stockValue() : null;
+  const bought = director ? purchases(period ? Date.now() - period * DAY : 0) : null;
   const low = db.list("products").filter(isLow).length;
   return (
     <>
@@ -139,7 +140,8 @@ function Analytics({ user }: { user: Staff }) {
       </Kpis>
       {director ? (
         <Kpis>
-          <Kpi label="Материалы со склада" value={money(materials)} sub="по закупочным ценам" />
+          <Kpi label="Расход на материалы" value={money(materials)} sub="по закупочным ценам" />
+          <Kpi label="Закуплено товара" value={money(bought?.sum ?? 0)} sub={`${num(bought?.list.length ?? 0)} ${pluralize(bought?.list.length ?? 0, "позиция", "позиции", "позиций")}`} />
           <Kpi label="Зарплаты мастеров" value={money(salaries)} sub="процент от заказов" />
           <Kpi label="Чистая выручка" value={money(net)} sub={`продажи − материалы − зарплаты (${pct(net, revenue)}%)`} tone="accent" />
         </Kpis>
@@ -191,6 +193,22 @@ function Analytics({ user }: { user: Staff }) {
           </Table>
           <p className="m-0 text-muted text-[13px]">Нажмите на менеджера, чтобы увидеть премию по причинам.</p>
         </Panel>
+
+        {bought ? (
+          <Panel title="Закупленный товар" className={wide}>
+            {bought.list.length ? (
+              <Table>
+                <thead><tr><th>Товар</th><th className="text-right">Принято</th><th className="text-right">Сумма закупки</th><th>Последняя приёмка</th></tr></thead>
+                <tbody>{bought.list.slice(0, 15).map((b) => {
+                  const p = product(b.product_id);
+                  return <tr key={b.product_id}><td>{p?.name || "Удалённый товар"}<small>{p?.sku}</small></td><td className="text-right tabular-nums">{num(b.qty)} {p?.unit}</td>
+                    <td className="text-right tabular-nums">{money(b.sum)}</td><td className="whitespace-nowrap">{dateShort(b.last)}</td></tr>;
+                })}</tbody>
+                <tfoot><tr><td>Итого закуплено{bought.list.length > 15 ? ` (все ${bought.list.length} позиций, выше — 15 крупнейших)` : ""}</td><td /><td className="text-right tabular-nums"><b>{money(bought.sum)}</b></td><td /></tr></tfoot>
+              </Table>
+            ) : <p className="m-0 text-muted">За этот период товар не принимали.</p>}
+          </Panel>
+        ) : null}
 
         {sv ? (
           <Panel title="Склад сейчас" className={wide}>

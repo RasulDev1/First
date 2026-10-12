@@ -12,12 +12,11 @@ import { toast } from "@/components/toast";
 import type { View } from "./types";
 
 const ACCESS: Record<Role, string> = {
-  director: "Все разделы, включая клиентов. Распределяет роли и ставит задачи менеджерам.",
-  manager: "Заказы (мастера выбирает в самом заказе), клиенты, свои задачи и «Моя статистика»: свои заказы, их сумма и премия. Общей аналитики у менеджера нет.",
-  master: "Только «Мои заказы»: статус своих заказов и сколько мастер заработает в этом месяце. Аккаунты мастеров создаёт руководитель в разделе «Мастера».",
-  warehouse: "Склад: остатки, приём, расход, перемещение, списание и закупка. В заказах только выписывает материал в «Расходы».",
+  director: "Все разделы. Назначает роли и ставит задачи.",
+  manager: "Заказы, клиенты, задачи, своя статистика и премия.",
+  master: "Только свои заказы и заработок.",
+  warehouse: "Склад и выдача материалов под заказ. Заказы только смотрит.",
 };
-const SECTION_NAMES: Record<string, string> = { home: "Главная", requests: "Заказы", clients: "Клиенты", calc: "Калькулятор", masters: "Мастера", tasks: "Задачи", warehouse: "Склад", analytics: "Аналитика", staff: "Сотрудники", myorders: "Мои заказы", mystats: "Моя статистика" };
 const loginLink = () => window.location.href.split(/[?#]/)[0];
 const activeDirectors = () => db.list("staff").filter((s) => s.active && s.role === "director");
 const positionIndex = (s: Staff) => POSITIONS.findIndex((p) => p.id === s.position);
@@ -55,7 +54,6 @@ function StaffView({ user }: { user: Staff }) {
           <div key={id} className="px-3.5 py-3 rounded-card border border-line bg-surface flex flex-col gap-1">
             <b>{id === "warehouse" ? "Закупщик и складовщик" : id === "master" ? "Мастер и стажёр" : r.title}</b>
             <p className="m-0 text-sm text-ink-2">{ACCESS[id]}</p>
-            <small className="text-brand-deep font-bold text-xs">{r.sections.map((s) => SECTION_NAMES[s]).join(" · ")}</small>
           </div>
         ))}
       </div>
