@@ -10,7 +10,7 @@ import { stockValue, isLow, purchases, product } from "@/lib/stock";
 import { payOf, materialsOf, netOf } from "@/lib/pay";
 import { bonusFor } from "@/lib/bonus";
 import type { Request, Staff } from "@/lib/types";
-import { Chips, Empty, Kpi, Kpis, Panel, STATUS_FILL, Table, cx, rowClickable } from "@/components/ui";
+import { Chips, Segmented, Empty, Kpi, Kpis, Panel, STATUS_FILL, Table, cx, rowClickable } from "@/components/ui";
 import { openBonus } from "./mystats";
 import type { View } from "./types";
 
@@ -44,16 +44,16 @@ function Columns({ list, period, value, format, label }: { list: Request[]; peri
   const max = Math.max(1, ...weeks.map((w) => w.v));
   const step = Math.ceil(weeks.length / 7);
   const n = { "--n": weeks.length } as CSSProperties;
-  const grid = "grid grid-cols-[repeat(var(--n),minmax(0,1fr))] gap-[3px]";
+  const grid = "grid grid-cols-[repeat(var(--n),minmax(0,1fr))] gap-2";
   return (
     <figure aria-label={label} className="m-0 flex flex-col gap-1.5">
-      <div style={n} className={cx(grid, "relative h-40 items-end border-b border-line bg-bottom bg-[repeating-linear-gradient(to_top,var(--color-line)_0_1px,transparent_1px_40px)]")}>
+      <div style={n} className={cx(grid, "relative h-40 items-end border-b border-line bg-bottom bg-[repeating-linear-gradient(to_top,rgb(100_116_139/.2)_0_1px,transparent_1px_40px)]")}>
         {weeks.map((w, i) => {
           const first = i === 0, last = i === weeks.length - 1;
           return (
             <div key={i} tabIndex={0} className="group relative h-full flex items-end outline-offset-0">
               <span style={{ height: `${(w.v / max) * 100}%` }}
-                className={cx("w-full min-h-[2px] rounded-t-[4px] transition-colors duration-150", last ? "bg-brand" : "bg-brand-light group-hover:bg-brand group-focus:bg-brand")} />
+                className={cx("w-[58%] max-w-9 mx-auto min-h-[2px] rounded-t-md transition-colors duration-150", last ? "bg-brand" : "bg-brand-light/80 group-hover:bg-brand group-focus:bg-brand")} />
               <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-ink text-page text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
                 last ? "right-0" : first ? "left-0" : "left-1/2 -translate-x-1/2")}>
                 Неделя с {dayMonth(w.from)}: <b>{format(w.v)}</b>
@@ -67,6 +67,67 @@ function Columns({ list, period, value, format, label }: { list: Request[]; peri
       </div>
       <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted">
         <span>Последняя неделя: <b className="text-ink">{format(weeks[weeks.length - 1]?.v ?? 0)}</b></span>
+        <span>Максимум: {format(max)}</span>
+      </div>
+    </figure>
+  );
+}
+
+/** Линейный график по неделям с плавной линией и градиентной заливкой; подпись значения при наведении */
+function Area({ list, period, value, format, label }: { list: Request[]; period: number; value: (r: Request) => number; format: (v: number) => string; label: string }) {
+  const firstAt = period ? Date.now() - period * DAY : list.length ? Math.min(...list.map((r) => Date.parse(r.created_at))) : Date.now();
+  const first = weekStart(firstAt);
+  const weeks: { from: Date; v: number }[] = [];
+  for (const w = new Date(first); w <= new Date(); w.setDate(w.getDate() + 7)) weeks.push({ from: new Date(w), v: 0 });
+  for (const r of list) {
+    const i = Math.floor((weekStart(r.created_at).getTime() - first.getTime()) / (7 * DAY));
+    if (weeks[i]) weeks[i].v += value(r);
+  }
+  const max = Math.max(1, ...weeks.map((w) => w.v));
+  const n = weeks.length;
+  const W = 1000, H = 100, pad = 6;
+  const pts = weeks.map((w, i) => [n > 1 ? ((i + 0.5) / n) * W : W / 2, H - pad - (w.v / max) * (H - pad * 2)] as const);
+  // Плавная кривая через середины между точками (монотонная по x)
+  let line = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], cx1 = (x0 + x1) / 2;
+    line += ` C${cx1},${y0} ${cx1},${y1} ${x1},${y1}`;
+  }
+  const fill = `${line} L${pts[n - 1][0]},${H} L${pts[0][0]},${H} Z`;
+  const step = Math.ceil(n / 7);
+  const cols = { "--n": n } as CSSProperties;
+  const grid = "grid grid-cols-[repeat(var(--n),minmax(0,1fr))] gap-2";
+  const gid = `area-${label.length}-${n}`;
+  return (
+    <figure aria-label={label} className="m-0 flex flex-col gap-1.5">
+      <div className="relative h-40 border-b border-[rgb(100_116_139/.2)] bg-bottom bg-[repeating-linear-gradient(to_top,rgb(100_116_139/.2)_0_1px,transparent_1px_40px)]">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full overflow-visible">
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="var(--color-brand)" stopOpacity=".28" /><stop offset="1" stopColor="var(--color-brand)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={fill} fill={`url(#${gid})`} />
+          <path d={line} fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <div style={cols} className={cx(grid, "absolute inset-0")}>
+          {weeks.map((w, i) => (
+            <div key={i} tabIndex={0} className="group relative h-full outline-offset-0">
+              <span style={{ bottom: `${((H - pts[i][1]) / H) * 100}%` }}
+                className="absolute left-1/2 -translate-x-1/2 translate-y-1/2 size-2.5 rounded-full bg-surface border-2 border-brand opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100" />
+              <span className={cx("absolute bottom-[calc(100%+6px)] z-[3] whitespace-nowrap px-2 py-1 rounded-md bg-ink text-page text-xs pointer-events-none opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 group-focus:opacity-100",
+                i === n - 1 ? "right-0" : i === 0 ? "left-0" : "left-1/2 -translate-x-1/2")}>
+                Неделя с {dayMonth(w.from)}: <b>{format(w.v)}</b>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={cols} className={cx(grid, "text-[11px] text-muted")}>
+        {weeks.map((w, i) => <span key={i} className="whitespace-nowrap overflow-visible">{i % step === 0 ? dayMonth(w.from) : ""}</span>)}
+      </div>
+      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted">
+        <span>Последняя неделя: <b className="text-ink">{format(weeks[n - 1]?.v ?? 0)}</b></span>
         <span>Максимум: {format(max)}</span>
       </div>
     </figure>
@@ -120,12 +181,12 @@ function stats(period: number) {
 }
 
 const TABS: readonly (readonly [Tab, string])[] = [["orders", "Заказы"], ["revenue", "Выручка"], ["traffic", "Трафик"], ["services", "Услуги"], ["buy", "Закуп"]];
-const kpiGrid = "grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-5 gap-3";
+const kpiGrid = "grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-5 gap-4";
 const cell = "text-right tabular-nums";
 
 /** Кнопки периода: у каждой вкладки свой период */
 function Period({ tab, period, set }: { tab: Tab; period: number; set: (p: number) => void }) {
-  return <Chips items={[[30, "30 дней"], [90, "90 дней"], [365, "Год"], [0, "Всё время"]]} active={period} onChange={(id) => { savedPeriod[tab] = Number(id); set(Number(id)); }} />;
+  return <Segmented items={[[30, "30 дней"], [90, "90 дней"], [365, "Год"], [0, "Всё время"]]} active={period} onChange={(id) => { savedPeriod[tab] = Number(id); set(Number(id)); }} />;
 }
 
 function Revenue({ director }: { director: boolean }) {
@@ -148,8 +209,8 @@ function Revenue({ director }: { director: boolean }) {
         ) : null}
       </div>
       <div className="grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5">
-        <Panel title="Продажи по неделям создания заказа"><Columns list={done} period={period} value={(r) => r.amount || 0} format={money} label="Продажи по неделям" /></Panel>
-        {director ? <Panel title="Чистая выручка по неделям создания заказа"><Columns list={done} period={period} value={netOf} format={money} label="Чистая выручка по неделям" /></Panel> : null}
+        <Panel title="Продажи по неделям создания заказа"><Area list={done} period={period} value={(r) => r.amount || 0} format={money} label="Продажи по неделям" /></Panel>
+        {director ? <Panel title="Чистая выручка по неделям создания заказа"><Area list={done} period={period} value={netOf} format={money} label="Чистая выручка по неделям" /></Panel> : null}
         <Panel title="Мастера" className={wide}>
           <Table>
             <thead><tr><th>Мастер</th><th className="text-right!">В работе</th><th className="text-right!">Выполнено</th><th className="text-right!">Продажи</th>{director ? <th className="text-right!">Зарплата</th> : null}</tr></thead>
@@ -185,7 +246,7 @@ function Orders() {
   return (
     <>
       <Period tab="orders" period={period} set={set} />
-      <div className="grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-3 gap-4">
         <Kpi label="Заказов" value={num(list.length)} sub="всего за период" />
         <Kpi label="Ждут менеджера" value={num(waiting)} sub={`${pct(waiting, list.length)}% от заказов`} subTone="warn" />
         <Kpi label="В работе" value={num(working)} sub={`${pct(working, list.length)}% от заказов`} />

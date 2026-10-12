@@ -149,14 +149,15 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
           CRM<b className="text-sm bg-linear-135 from-brand-light via-brand to-brand-deep bg-clip-text text-transparent">Вентиляция</b>
         </span>
       </a>
-      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col">
+      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
         {NAV.filter(([id]) => can(user, id)).map(([id, label, path]) => {
           const n = badge(id, user), current = id === section;
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
-              className={cx("flex-none flex items-center gap-1.5 px-2.5 py-[7px] text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-bold transition-colors duration-150",
-                current ? "bg-brand/14 text-brand" : "text-muted hover:bg-brand/9 hover:text-brand-deep active:bg-brand/18")}>
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
+              className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+                "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
+                current ? "text-brand font-semibold min-[901px]:before:bg-brand" : "text-muted hover:text-heading min-[901px]:before:bg-transparent")}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-bold leading-normal text-center",
                 id === "requests" && !isWarehouse(user) ? "bg-brand text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
