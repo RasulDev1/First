@@ -176,7 +176,7 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
       small ? "px-3 py-2.5 rounded-card bg-surface-2" : "px-4 py-3.5 rounded-card bg-surface border border-line shadow-card",
       onClick && "cursor-pointer hover:border-brand")}>
       <small className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{label}</small>
-      <b className={cx("font-display font-medium leading-tight wrap-anywhere tabular-nums text-heading", small ? "text-lg" : "text-[28px] sm:text-[32px]", tone === "bad" && "text-bad")}>{value}</b>
+      <b className={cx("font-display font-medium leading-tight whitespace-nowrap tabular-nums text-heading", small ? "text-lg" : "text-[22px] sm:text-[26px]", tone === "bad" && "text-bad")}>{value}</b>
       {sub ? (
         <span className={cx("text-[11px] leading-snug",
           subTone === "ok" ? "self-start px-2 py-0.5 rounded-full bg-ok-soft text-ok font-medium"
