@@ -14,9 +14,9 @@ import { Chips, Empty, Kpi, Kpis, Panel, STATUS_FILL, Table, cx, rowClickable } 
 import { openBonus } from "./mystats";
 import type { View } from "./types";
 
-type Tab = "revenue" | "traffic" | "services" | "buy";
-const savedPeriod: Record<Tab, number> = { revenue: 90, traffic: 90, services: 90, buy: 90 }; // дней; 0 — всё время (помним между переходами по разделам)
-let savedTab: Tab = "revenue";
+type Tab = "orders" | "revenue" | "traffic" | "services" | "buy";
+const savedPeriod: Record<Tab, number> = { orders: 90, revenue: 90, traffic: 90, services: 90, buy: 90 }; // дней; 0 — всё время (помним между переходами по разделам)
+let savedTab: Tab = "orders";
 
 const DAY = 864e5;
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
@@ -119,7 +119,7 @@ function stats(period: number) {
   return { list, done, cancelled, closed: done.length + cancelled.length, revenue, materials, salaries, net: revenue - materials - salaries, group };
 }
 
-const TABS: readonly (readonly [Tab, string])[] = [["revenue", "Выручка"], ["traffic", "Трафик"], ["services", "Услуги"], ["buy", "Закуп"]];
+const TABS: readonly (readonly [Tab, string])[] = [["orders", "Заказы"], ["revenue", "Выручка"], ["traffic", "Трафик"], ["services", "Услуги"], ["buy", "Закуп"]];
 const kpiGrid = "grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-5 gap-3";
 const cell = "text-right tabular-nums";
 
@@ -152,7 +152,7 @@ function Revenue({ director }: { director: boolean }) {
         {director ? <Panel title="Чистая выручка по неделям создания заказа"><Columns list={done} period={period} value={netOf} format={money} label="Чистая выручка по неделям" /></Panel> : null}
         <Panel title="Мастера" className={wide}>
           <Table>
-            <thead><tr><th>Мастер</th><th className="text-right">В работе</th><th className="text-right">Выполнено</th><th className="text-right">Продажи</th>{director ? <th className="text-right">Зарплата</th> : null}</tr></thead>
+            <thead><tr><th>Мастер</th><th className="text-right!">В работе</th><th className="text-right!">Выполнено</th><th className="text-right!">Продажи</th>{director ? <th className="text-right!">Зарплата</th> : null}</tr></thead>
             <tbody>{masters.sort((a, b) => b.revenue - a.revenue).map((g) => (
               <tr key={g.key}><td>{g.label}</td><td className={cell}>{g.active}</td><td className={cell}>{g.done}</td>
                 <td className={cell}>{money(g.revenue)}</td>{director ? <td className={cell}>{money(g.pay)}</td> : null}</tr>
@@ -161,7 +161,7 @@ function Revenue({ director }: { director: boolean }) {
         </Panel>
         <Panel title="Менеджеры" className={wide}>
           <Table>
-            <thead><tr><th>Менеджер</th><th className="text-right">Взято</th><th className="text-right">Выполнено</th><th className="text-right">Продажи</th><th className="text-right">Зарплата за месяц</th></tr></thead>
+            <thead><tr><th>Менеджер</th><th className="text-right!">Взято</th><th className="text-right!">Выполнено</th><th className="text-right!">Продажи</th><th className="text-right!">Зарплата за месяц</th></tr></thead>
             <tbody>{managers.sort((a, b) => b.revenue - a.revenue).map((g) => (
               <tr key={g.key} className={rowClickable} tabIndex={0} onClick={() => openBonus(Number(g.key))}
                 onKeyDown={(e) => { if (e.key === "Enter") openBonus(Number(g.key)); }}>
@@ -178,28 +178,42 @@ function Revenue({ director }: { director: boolean }) {
   );
 }
 
+function Orders() {
+  const [period, set] = useState(savedPeriod.orders);
+  const { list, done, cancelled, revenue } = stats(period);
+  const waiting = list.filter((r) => r.status === "new").length, working = list.filter((r) => ACTIVE.includes(r.status)).length;
+  return (
+    <>
+      <Period tab="orders" period={period} set={set} />
+      <div className="grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-6 gap-3">
+        <Kpi label="Заказов" value={num(list.length)} sub="всего за период" />
+        <Kpi label="Ждут менеджера" value={num(waiting)} sub={`${pct(waiting, list.length)}% от заказов`} subTone="warn" />
+        <Kpi label="В работе" value={num(working)} sub={`${pct(working, list.length)}% от заказов`} />
+        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, list.length)}% от заказов`} subTone="ok" />
+        <Kpi label="Отказы" value={num(cancelled.length)} sub={`${pct(cancelled.length, list.length)}% от заказов`} />
+        <Kpi label="Средний чек" value={money(done.length ? revenue / done.length : 0)} sub="по выполненным заказам" />
+      </div>
+      <div className="grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5">
+        <Panel title="Новые заказы по неделям" className={wide}><Columns list={list} period={period} value={() => 1} format={(v) => num(v)} label="Заказы по неделям" /></Panel>
+        <Panel title="Где сейчас заказы" className={wide}>
+          <Bars rows={STATUSES.map((s) => ({ label: s.title, v: list.filter((r) => r.status === s.id).length, fill: STATUS_FILL[s.id] }))} />
+        </Panel>
+      </div>
+      {list.length ? null : <Empty title="За этот период заказов нет">Выберите период побольше.</Empty>}
+    </>
+  );
+}
+
 function Traffic() {
   const [period, set] = useState(savedPeriod.traffic);
-  const { list, done, cancelled, group } = stats(period);
+  const { list, group } = stats(period);
   const sources = group("source");
   return (
     <>
       <Period tab="traffic" period={period} set={set} />
-      <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-3">
-        <Kpi label="Заказов" value={num(list.length)} sub="всего за период" />
-        <Kpi label="Ждут менеджера" value={num(list.filter((r) => r.status === "new").length)} sub={`${pct(list.filter((r) => r.status === "new").length, list.length)}% от заказов`} subTone="warn" />
-        <Kpi label="Выполнено" value={num(done.length)} sub={`${pct(done.length, list.length)}% от заказов`} subTone="ok" />
-        <Kpi label="Отказы" value={num(cancelled.length)} sub={`${pct(cancelled.length, list.length)}% от заказов`} />
-      </div>
-      <div className="grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5">
-        <Panel title="Новые заказы по неделям" className={wide}><Columns list={list} period={period} value={() => 1} format={(v) => num(v)} label="Заказы по неделям" /></Panel>
-        <Panel title="Где сейчас заказы">
-          <Bars rows={STATUSES.map((s) => ({ label: s.title, v: list.filter((r) => r.status === s.id).length, fill: STATUS_FILL[s.id] }))} />
-        </Panel>
-        <Panel title="Откуда приходят клиенты">
-          <Bars rows={sources.map((g) => ({ label: g.label, v: g.all, extra: `${pct(g.done, g.all)}% выполнено` }))} />
-        </Panel>
-      </div>
+      <Panel title="Откуда приходят клиенты">
+        <Bars rows={sources.map((g) => ({ label: g.label, v: g.all, extra: `${pct(g.done, g.all)}% выполнено` }))} />
+      </Panel>
       {list.length ? null : <Empty title="За этот период заказов нет">Выберите период побольше.</Empty>}
     </>
   );
@@ -215,7 +229,7 @@ function Services() {
       {services.length ? (
         <Panel title="Услуги">
           <Table>
-            <thead><tr><th>Услуга</th><th className="text-right">Заказов</th><th className="text-right">Выполнено</th><th className="text-right">Продажи</th><th className="text-right">Средний чек</th></tr></thead>
+            <thead><tr><th>Услуга</th><th className="text-right!">Заказов</th><th className="text-right!">Выполнено</th><th className="text-right!">Продажи</th><th className="text-right!">Средний чек</th></tr></thead>
             <tbody>{services.map((g) => (
               <tr key={g.key}><td>{g.label}</td><td className={cell}>{g.all}</td><td className={cell}>{g.done}</td>
                 <td className={cell}>{money(g.revenue)}</td><td className={cell}>{money(g.done ? g.revenue / g.done : 0)}</td></tr>
@@ -245,7 +259,7 @@ function Buy() {
       <Panel title="Закупленный товар">
         {bought.list.length ? (
           <Table>
-            <thead><tr><th>Товар</th><th className="text-right">Принято</th><th className="text-right">Сумма закупки</th><th>Последняя приёмка</th></tr></thead>
+            <thead><tr><th>Товар</th><th className="text-right!">Принято</th><th className="text-right!">Сумма закупки</th><th>Последняя приёмка</th></tr></thead>
             <tbody>{bought.list.slice(0, 15).map((b) => {
               const p = product(b.product_id);
               return <tr key={b.product_id}><td>{p?.name || "Удалённый товар"}<small>{p?.sku}</small></td><td className={cell}>{num(b.qty)} {p?.unit}</td>
@@ -262,12 +276,12 @@ function Buy() {
 function Analytics({ user }: { user: Staff }) {
   const director = isDirector(user);
   const tabs = director ? TABS : TABS.filter(([id]) => id !== "buy");
-  const [tab, setTabState] = useState<Tab>(tabs.some(([id]) => id === savedTab) ? savedTab : "revenue");
+  const [tab, setTabState] = useState<Tab>(tabs.some(([id]) => id === savedTab) ? savedTab : "orders");
   const setTab = (t: string) => { savedTab = t as Tab; setTabState(t as Tab); };
   return (
     <>
       <Chips tabs items={tabs.map(([id, label]) => [id, label] as const)} active={tab} onChange={setTab} />
-      {tab === "revenue" ? <Revenue director={director} /> : tab === "traffic" ? <Traffic /> : tab === "services" ? <Services /> : <Buy />}
+      {tab === "orders" ? <Orders /> : tab === "revenue" ? <Revenue director={director} /> : tab === "traffic" ? <Traffic /> : tab === "services" ? <Services /> : <Buy />}
     </>
   );
 }
