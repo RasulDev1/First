@@ -109,12 +109,12 @@ function Detail({ id }: { id: number }) {
 function MyOrders({ user }: { user: Staff }) {
   const master = db.find("masters", user.master_id);
   const orders = mine(user).filter(visible).sort((a, b) => Date.parse(statusAt(b)) - Date.parse(statusAt(a)));
-  const earned = orders.filter((r) => r.status === "done").reduce((n, r) => n + payOf(r), 0);
+  const earned = orders.reduce((n, r) => n + payOf(r), 0);
   const total = orders.reduce((n, r) => n + (r.amount || 0), 0);
   return (
     <>
       <Kpis>
-        <Kpi tone="accent" label="Заработано в этом месяце" value={money(earned)} sub="по завершённым заказам" />
+        <Kpi tone="accent" label="Заработано в этом месяце" value={money(earned)} sub={`${rateOf(master)}% от суммы заказов`} />
         <Kpi label="Сумма заказов" value={money(total)} sub="по всем вашим заказам за месяц" />
         <Kpi label="Заказы" value={String(orders.length)} sub="в работе и завершённые" />
         <Kpi label="Ваша ставка" value={`${rateOf(master)}%`} sub="от суммы заказа" />
