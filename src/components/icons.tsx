@@ -18,4 +18,24 @@ export const IconUser = ic(<><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.
 export const IconRuler = ic(<><rect x="3" y="8" width="18" height="8" rx="1.5" transform="rotate(-35 12 12)" /><path d="M8.5 14l1.2-1M11 11.8l1.2-1M13.5 9.6l1.2-1" /></>);
 export const IconReceipt = ic(<path d="M6 3.5h12v17l-2.5-1.6-2 1.6-1.5-1.6-1.5 1.6-2-1.6L6 20.5zM9 8.5h6M9 12h6" />);
 export const IconCog = ic(<><circle cx="12" cy="12" r="3" /><path d="M12 3.5v2.3M12 18.2v2.3M3.5 12h2.3M18.2 12h2.3M6 6l1.6 1.6M16.4 16.4L18 18M18 6l-1.6 1.6M7.6 16.4L6 18" /></>);
-export const IconCheck = ic(<path d="M5 12.5l4.5 4.5L19 7.5" />);
+export const IconCheck = ic(<path pathLength={1} d="M5 12.5l4.5 4.5L19 7.5" />);
+
+/** Круг прогресса: доля заполнения 0…1 (1 — закрашенный круг с галочкой) */
+export function IconProgress({ f, className = "" }: { f: number; className?: string }) {
+  const a = f * Math.PI * 2, x = 12 + 5.5 * Math.sin(a), y = 12 - 5.5 * Math.cos(a);
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`${base} ${className}`}>
+      {f >= 1 ? <><circle cx="12" cy="12" r="9.25" className="fill-current" /><path d="M7.8 12.4l3 3 5.4-6" className="stroke-white" /></> : <>
+        <circle cx="12" cy="12" r="9" />
+        {f > 0 ? <path className="fill-current stroke-none" d={`M12 12V6.5A5.5 5.5 0 ${f > .5 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}z`} /> : null}
+      </>}
+    </svg>
+  );
+}
+/** Мигающая точка «ждёт внимания» */
+export const IconPing = ({ className = "" }: { className?: string }) => (
+  <span aria-hidden="true" className={`relative inline-flex size-3.5 items-center justify-center ${className}`}>
+    <span className="absolute inline-flex size-2.5 rounded-full bg-current opacity-40 animate-ping" />
+    <span className="relative inline-flex size-1.5 rounded-full bg-current" />
+  </span>
+);

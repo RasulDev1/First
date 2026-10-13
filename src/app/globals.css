@@ -49,3 +49,10 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Галочка «Завершён» прорисовывается */
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.draw-check path { stroke-dasharray: 1; animation: draw .7s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .draw-check path, .animate-ping, .animate-spin-slow { animation: none; } }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 4s linear infinite; }
