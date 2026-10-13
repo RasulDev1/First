@@ -218,7 +218,7 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
     <section className={cx(card, "p-5 sm:p-6 flex flex-col gap-4 min-w-0", className)}>
       {title || actions ? (
         <div className="flex items-center justify-between gap-2.5">
-          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-brand">{title}</h3> : <span />}
+          {title ? <h3 className="font-display text-sm font-semibold leading-tight">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
@@ -237,7 +237,7 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
     <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-1 min-w-0 text-left",
       small ? "px-3 py-2.5 rounded-card bg-surface-2" : "p-6 gap-1.5 rounded-card bg-surface border border-black/[.04] shadow-card",
       onClick && "cursor-pointer hover:border-brand")}>
-      <small className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{label}</small>
+      <small className="text-[11px] font-medium tracking-[.05em] uppercase text-brand">{label}</small>
       <b className={cx("font-display font-medium leading-tight whitespace-nowrap tabular-nums text-heading", small ? "text-lg" : "text-[22px] sm:text-[26px]", tone === "bad" && "text-bad")}>{value}</b>
       {sub ? (
         <span className={cx("text-[11px] leading-snug",
