@@ -218,8 +218,8 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
   return (
     <section className={cx(card, "flex flex-col min-w-0 overflow-hidden", className)}>
       {head ? (
-        <div className="flex items-center justify-between gap-2.5 px-5 sm:px-6 py-3.5 bg-page border-b border-black/[.04]">
-          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-black">{title}</h3> : <span />}
+        <div className="flex items-center justify-between gap-2.5 px-5 sm:px-6 py-3.5 bg-[#374151] [&_i]:!bg-white [&_i]:!text-black">
+          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-white">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
