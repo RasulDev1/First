@@ -199,15 +199,14 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
                 if (drag.over !== id || drag.below !== below) setDrag({ ...drag, over: id, below });
               }}
               onDrop={(e) => { e.preventDefault(); drop(); }} onDragEnd={() => setDrag(null)}
-              className={cx("relative flex-1 min-[901px]:flex-none flex flex-col items-center justify-center text-center gap-1 px-2 py-3 rounded-xl text-[15px] min-[901px]:flex-row min-[901px]:justify-start min-[901px]:text-left min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:rounded-lg min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+              className={cx("relative flex-1 min-[901px]:flex-none flex flex-col items-center justify-center text-center gap-1 px-2 py-3 rounded-xl text-[15px] min-[901px]:flex-row min-[901px]:justify-start min-[901px]:text-left min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:rounded-xl min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
                 drag?.id === id && "opacity-40",
                 drag?.over === id && drag.id !== id && (drag.below ? "shadow-[0_2px_0_0_#7ba4ff]" : "shadow-[0_-2px_0_0_#7ba4ff]"),
-                "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
-                current ? "text-[#7ba4ff] font-semibold min-[901px]:before:bg-[#60a5fa]" : "text-white hover:bg-white/10 min-[901px]:before:bg-transparent")}>
+                current ? "text-white font-semibold bg-white/10 min-[901px]:shadow-[inset_3px_0_0_#60a5fa]" : "text-white/65 hover:text-white hover:bg-white/10")}>
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7 min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("absolute top-1 right-2 min-[901px]:static min-[901px]:ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                current ? "bg-white/15 text-[#7ba4ff]" : id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                current ? "bg-white/15 text-white" : id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
