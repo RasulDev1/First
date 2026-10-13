@@ -5,7 +5,7 @@ import { useState, type CSSProperties, type FormEvent, type ReactNode } from "re
 import { money, num, dateTime, formValue } from "@/lib/core";
 import { LINES, RACKS, SHELVES, CATEGORIES, UNITS } from "@/lib/config";
 import { db } from "@/lib/db";
-import { currentUser, isDirector } from "@/lib/auth";
+import { currentUser } from "@/lib/auth";
 import {
   LOCATIONS, describeLocation, categoryTitle, product, placesOf, qtyOf, qtyAt, contentsOf, isLow, toBuy,
   receive, move, writeOff, recount, expense, ACTIVE_REQUESTS,
@@ -287,7 +287,6 @@ function ProductDetail({ id }: { id: number }) {
   const [tab, setTab] = useState("main");
   if (!p) return <Empty title="Товар удалён" />;
   const places = placesOf(id);
-  const director = isDirector(currentUser());
   // в журнал товара входят и движения: приём, расход, перемещение, пересчёт
   const moves = db.list("moves").filter((m) => m.product_id === id).map((m) => ({
     id: -m.id, at: m.at, user: m.by || "", action: "update" as const,
@@ -298,8 +297,8 @@ function ProductDetail({ id }: { id: number }) {
       <DHead eyebrow={`${categoryTitle(p.category)} · ${p.sku}`} title={p.name}>
         <p className="m-0 text-muted">{p.specs}</p>
       </DHead>
-      {director ? <Chips tabs items={[["main", "Основное"], ["log", "Журнал изменений"]]} active={tab} onChange={setTab} /> : null}
-      {tab === "log" && director ? <DSec><AuditLog tables={["products"]} rec={id} extra={moves} note="Все изменения этого товара: цена, минимум, а также приём, расход и перемещения." /></DSec> : <>
+      <Chips tabs items={[["main", "Основное"], ["log", "Журнал изменений"]]} active={tab} onChange={setTab} />
+      {tab === "log" ? <DSec><AuditLog tables={["products"]} rec={id} extra={moves} note="Все изменения этого товара: цена, минимум, а также приём, расход и перемещения." /></DSec> : <>
       <DSec>
         <Kpis small>
           <Kpi small label="Остаток" value={amount(p, qtyOf(id))} tone={isLow(p) ? "bad" : undefined} />

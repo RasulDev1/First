@@ -189,7 +189,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
   const sheetRef = useRef<HTMLElement>(null);
   const warehouse = isWarehouse(user);
   // Склад (складовщик и закупщик) видит все вкладки, но замеры, смету и оплату — только для просмотра
-  const tabs: [string, string][] = isDirector(user) ? [...TABS, ["log", "Журнал изменений"]] : TABS;
+  const tabs: [string, string][] = [...TABS, ["log", "Журнал изменений"]];
   if (!tabs.some(([id]) => id === ui.tab)) ui.tab = "main";
   const tab = ui.tab;
   const h = ui.sheetH ?? 40;

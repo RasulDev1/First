@@ -4,7 +4,6 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { money, num, dateShort, formValue } from "@/lib/core";
 import { db } from "@/lib/db";
 import { digits, ordersOf, findByPhone } from "@/lib/clients";
-import { currentUser, isDirector } from "@/lib/auth";
 import type { Client, Staff } from "@/lib/types";
 import { AuditLog } from "@/components/audit-log";
 import { Button, Chips, DHead, DSec, Empty, Field, FormError, Kpi, Kpis, StatusPill, Table, btnRow, rowClickable } from "@/components/ui";
@@ -85,14 +84,13 @@ function Detail({ id }: { id: number }) {
   const [tab, setTab] = useState("main");
   if (!c) return <Empty title="Клиент удалён" />;
   const orders = ordersOf(c);
-  const director = isDirector(currentUser());
   return (
     <>
       <DHead eyebrow={`Клиент · с ${dateShort(c.created_at)}`} title={c.name}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"><span className="tabular-nums">{c.phone}</span></div>
       </DHead>
-      {director ? <Chips tabs items={[["main", "Основное"], ["log", "Журнал изменений"]]} active={tab} onChange={setTab} /> : null}
-      {tab === "log" && director ? <DSec><AuditLog tables={["clients"]} rec={id} note="Все изменения этого клиента: кто, когда и что поменял." /></DSec> : <>
+      <Chips tabs items={[["main", "Основное"], ["log", "Журнал изменений"]]} active={tab} onChange={setTab} />
+      {tab === "log" ? <DSec><AuditLog tables={["clients"]} rec={id} note="Все изменения этого клиента: кто, когда и что поменял." /></DSec> : <>
       <DSec>
         <Kpis small>
           <Kpi small label="Заказов" value={num(orders.length)} />
