@@ -4,12 +4,12 @@
 import { useState } from "react";
 import { money, num } from "@/lib/core";
 import { MIN_MARKUP } from "@/lib/config";
-import { clampMarkup, estimateSums, lineSum, markupFor, syncEstimate } from "@/lib/estimate";
+import { clampMarkup, estimateSums, markupFor } from "@/lib/estimate";
 import { expenseTotal } from "@/lib/stock";
 import type { EstimateLine, Request, Staff } from "@/lib/types";
-import { Button, Kv, Table, cx } from "@/components/ui";
+import { Kv, cx } from "@/components/ui";
 import { toast } from "@/components/toast";
-import { P, allowed, inlineForm, logBy, muted, save, small, thR } from "./shared";
+import { P, muted, small } from "./shared";
 
 const pct = (n: number) => `${num(Math.round(n * 10) / 10)}%`;
 
@@ -31,56 +31,31 @@ export function MarkupInput({ value, onChange, disabled }: { value: number; onCh
   );
 }
 
-/** Таблица сметы: строки (материалы по закупке, работы по прайсу) + расходы заказа = сумма, на неё накидывается наценка */
+/** Смета: только суммы — материалы и работы по замерам, расходы заказа, сумма, наценка, итог. Списки позиций не показываются. */
 export function EstimateTable({ lines, markup, expenses }: { lines: EstimateLine[]; markup: number; expenses: number }) {
-  const t = estimateSums(lines, expenses, markup), mats = lines.filter((l) => l.kind === "mat"), works = lines.filter((l) => l.kind === "work");
-  const rows = (ls: EstimateLine[], title: string) => ls.length ? (
-    <>
-      <tr><th colSpan={4} className="text-left! pt-3">{title}</th></tr>
-      {ls.map((l) => (
-        <tr key={l.id}><td>{l.name}</td><td className="text-right tabular-nums">{num(l.qty)} {l.unit}</td>
-          <td className="text-right tabular-nums">{money(l.price)}</td><td className="text-right tabular-nums">{money(lineSum(l))}</td></tr>
-      ))}
-    </>
-  ) : null;
+  const t = estimateSums(lines, expenses, markup);
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Table>
-          <thead><tr><th>Позиция</th><th className={thR}>Кол-во</th><th className={thR}>Цена</th><th className={thR}>Сумма</th></tr></thead>
-          <tbody>{rows(mats, "Материалы (по закупке)")}{rows(works, "Работы (по прайсу)")}</tbody>
-        </Table>
-      </div>
-      <Kv wide items={[
-        ["Материалы", money(t.mats), "tabular-nums"],
-        ["Работы", money(t.works), "tabular-nums"],
-        ["Расходы заказа", money(t.expenses), "tabular-nums"],
-        ["Сумма", <b key="b">{money(t.base)}</b>, "tabular-nums"],
-        [`Наценка ${t.markup}%`, `+ ${money(t.extra)}`, "tabular-nums"],
-        ["Итого для клиента", <b key="t">{money(t.total)}</b>, "tabular-nums"],
-      ]} />
-    </div>
+    <Kv wide items={[
+      ["Материалы", money(t.mats), "tabular-nums"],
+      ["Работы", money(t.works), "tabular-nums"],
+      ["Расходы заказа", money(t.expenses), "tabular-nums"],
+      ["Сумма", <b key="b">{money(t.base)}</b>, "tabular-nums"],
+      [`Наценка ${t.markup}%`, `+ ${money(t.extra)}`, "tabular-nums"],
+      ["Итого для клиента", <b key="t">{money(t.total)}</b>, "tabular-nums"],
+    ]} />
   );
 }
 
-/* ---------- Вкладка «Смета» в нижней панели ---------- */
-export function EstimateTab({ r, user, readOnly }: { r: Request; user: Staff; readOnly?: boolean }) {
+/* ---------- Вкладка «Смета» в нижней панели: только просмотр, наценка меняется в карточке заказа ---------- */
+export function EstimateTab({ r }: { r: Request; user: Staff; readOnly?: boolean }) {
   const e = r.estimate;
   if (!e?.lines?.length) {
     return <p className={cx(P, muted)}>Сметы пока нет. Она появится сама, когда в заказе сохранены замеры.</p>;
   }
-  const m = markupFor(r);
-  const setMarkup = (v: number) => {
-    if (v === m || !allowed(r, user)) return;
-    if (!syncEstimate(r, user.name, v)) return;
-    logBy(r, `Наценка: ${v}%, смета ${money(r.amount || 0)}`, user);
-    save(`Наценка ${v}%, стоимость работы ${money(r.amount || 0)}`);
-  };
   return (
     <div className="flex flex-col gap-3">
-      <EstimateTable lines={e.lines} markup={m} expenses={expenseTotal(r)} />
-      {readOnly ? null : <div className={inlineForm}><MarkupInput key={m} value={m} onChange={setMarkup} /></div>}
-      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Сумма от замеров и расходов заказа плюс наценка (не ниже {MIN_MARKUP}%); считается сама.</p>
+      <EstimateTable lines={e.lines} markup={markupFor(r)} expenses={expenseTotal(r)} />
+      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Сумма от замеров и расходов заказа плюс наценка (не ниже {MIN_MARKUP}%). Наценку меняют в карточке заказа.</p>
     </div>
   );
 }

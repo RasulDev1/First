@@ -253,7 +253,7 @@ function OrderCard({ id }: { id: number }) {
 
         {pricing && estimateLines.length ? (
           <DSec title="Смета">
-            <p className={cx(P, muted, small)}>Сумма от замеров и расходов заказа, на неё накидывается наценка. Считается сама и меняется вместе с замерами; менеджер задаёт только наценку.</p>
+            <p className={cx(P, muted, small)}>Сумма от замеров и расходов заказа, на неё накидывается наценка. Новая наценка применяется кнопкой «Сохранить».</p>
             <EstimateTable lines={estimateLines} markup={markup} expenses={expenseTotal(r)} />
             {closed ? null : <div className={inlineForm}><MarkupInput key={markupKey} value={markup} onChange={setMarkup} /></div>}
           </DSec>
