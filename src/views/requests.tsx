@@ -283,7 +283,7 @@ function Requests({ user }: { user: Staff }) {
       </form>
 
       <StatusStyleSwitch />
-      <Table>
+      <Table center>
         <thead>
           <tr>{COLS.map(([key, title]) => (
             <th key={key}>

@@ -274,10 +274,10 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
 
 /* ---------- Таблица ---------- */
 // <Table> оборачивает <table>: заголовки, строки, итоговая строка в <tfoot>. Числа справа — className="text-right tabular-nums".
-export function Table({ className, children }: { className?: string; children: ReactNode }) {
+export function Table({ className, center, children }: { className?: string; center?: boolean; children: ReactNode }) {
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
-      <table className={cx("w-full border-collapse text-sm",
+      <table className={cx("w-full border-collapse text-sm", center && "[&_th]:!text-center [&_td]:text-center",
         "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-[#94a3b8] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
