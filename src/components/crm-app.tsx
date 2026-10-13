@@ -54,6 +54,8 @@ const sectionOf = (user: Staff) => {
   return VIEWS[id] && can(user, id) ? id : ROLES[user.role].sections[0];
 };
 
+const PHONE_ROLES = ["director", "manager", "master"];
+
 export default function CrmApp() {
   useDb();
   const [ready, setReady] = useState(false);
@@ -117,14 +119,14 @@ export default function CrmApp() {
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
   };
 
-  // Телефонная версия — только для мастеров и стажёров; остальным на телефоне предлагаем открыть CRM на компьютере
-  if (user && phone && user.role !== "master") {
+  // Телефонная версия есть у мастеров, стажёров, менеджеров и руководителя; остальным на телефоне предлагаем открыть CRM на компьютере
+  if (user && phone && !PHONE_ROLES.includes(user.role)) {
     return (
       <main className="min-h-[100vh] grid place-items-center px-5 py-8">
         <div className={cx(card, "w-full max-w-[420px] p-7 flex flex-col gap-4 items-center text-center")}>
           <div className="size-[72px] p-3 rounded-3xl bg-brand-soft"><Mark className="size-full block" /></div>
           <h1 className="font-display font-semibold text-[20px] leading-tight">Откройте CRM на компьютере</h1>
-          <p className="m-0 text-ink-2">Для вашей должности «{positionTitle(user)}» CRM работает на компьютере или планшете. Телефонная версия есть у мастеров и стажёров.</p>
+          <p className="m-0 text-ink-2">Для вашей должности «{positionTitle(user)}» CRM работает на компьютере или планшете. Телефонная версия есть у руководителя, менеджеров, мастеров и стажёров.</p>
           <Button onClick={logoutNow}>Выйти</Button>
         </div>
         <ToastHost />
@@ -223,7 +225,7 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
 
 function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () => void }) {
   const [persistent, setPersistent] = useState(true);
-  const [phone, setPhone] = useState(false); // на телефоне входят только мастера и стажёры
+  const [phone, setPhone] = useState(false); // на телефоне входят руководитель, менеджеры, мастера и стажёры
   useEffect(() => {
     setPersistent(db.persistent);
     const mq = window.matchMedia("(max-width: 900px)");
@@ -263,7 +265,7 @@ function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () 
         <div className="border-t border-dashed border-line pt-3.5 flex flex-col gap-2">
           <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted">Войти в демо как</p>
           <div className="grid grid-cols-1 min-[561px]:grid-cols-2 gap-2">
-            {DEMO_ACCOUNTS.filter((a) => !phone || a.master_id).map((a) => {
+            {DEMO_ACCOUNTS.filter((a) => !phone || a.master_id || a.position === "director" || a.position === "manager").map((a) => {
               const s = db.list("staff").find((x) => x.login === a.login);
               return s ? (
                 <button key={a.login} type="button" onClick={() => { setName(a.login); submit(a.login, DEMO_PASSWORD); }}

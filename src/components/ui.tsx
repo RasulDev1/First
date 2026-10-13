@@ -88,7 +88,7 @@ const PILL: Record<string, string> = {
   new: "bg-[#eff6ff] text-[#1e40af]",
   assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
   in_work: "bg-[#f5f3ff] text-[#5b21b6]",
-  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f9fafb] text-[#6b7280]",
+  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f3f4f6] text-[#4b5563]",
 };
 const PILL_ICON: Record<string, ReactNode> = {
   new: <IconSpark />, assigned: <IconUser />, measure: <IconRuler />, pricing: <IconReceipt />,
@@ -142,7 +142,7 @@ function statusIcon(id: string): ReactNode {
 }
 export function StatusPill({ id }: { id: StatusId | string }) {
   return (
-    <span className={cx("group inline-flex items-center justify-center gap-1.5 self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, id === "cancelled" && "live-fade")}>
+    <span className={cx("group inline-flex items-center justify-center gap-1.5 self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled)}>
       <span className="inline-flex items-center [&_svg]:block [&_svg]:size-3.5 [&_svg]:stroke-[1.75]">{statusIcon(id)}</span>{id === "pricing" ? <span className="text-center leading-tight">Согласование<br />стоимости</span> : statusTitle(id)}
     </span>
   );
