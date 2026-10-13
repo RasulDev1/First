@@ -104,7 +104,7 @@ function LineRows({ lines, kind, onLine, onDel }: {
       <tbody>{own.map((l) => {
         const low = l.cost > 0 && l.price < floorOf(l.cost);
         return (
-          <tr key={l.id} className={low ? "[&>td]:bg-bad-soft [&>td:first-child]:shadow-[inset_3px_0_0_var(--color-bad)]" : undefined}>
+          <tr key={l.id} className={low ? "[&>td]:bg-bad-soft/60" : undefined}>
             <td>{l.name}<small>{l.unit}</small></td>
             <td className="text-right"><NumIn value={l.qty} step="0.1" inputMode="decimal" label="Количество" onCommit={(v) => onLine(l.id, "qty", v)} /></td>
             {kind === "mat" ? <td className="text-right tabular-nums">{money(l.cost)}</td> : null}

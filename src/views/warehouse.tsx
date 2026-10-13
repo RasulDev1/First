@@ -52,13 +52,13 @@ function StockRows({ wf }: { wf: WhFilter }) {
         const places = placesOf(p.id).map((s) => s.loc).join(", ");
         return (
           <tr key={p.id} tabIndex={0} onClick={() => openProduct(p.id)}
-            className={cx(rowClickable, low && "[&>td:first-child]:shadow-[inset_3px_0_0_var(--color-bad)]")}>
+            className={cx(rowClickable, low && "[&>td]:bg-bad-soft/40")}>
             <td><b>{p.name}</b><small>{p.sku} · {p.specs}</small></td>
             <td>{categoryTitle(p.category)}</td>
             <td className="whitespace-nowrap">{places || <span className="text-muted">нет на складе</span>}</td>
             <td className={R}><b>{amount(p, total)}</b>{low ? <small className="text-bad! font-bold!">мало</small> : null}</td>
             <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
-            <td className={R}>{money(p.cost)}</td>
+            <td className={cx(R, "whitespace-nowrap")}>{money(p.cost)}</td>
           </tr>
         );
       })}</tbody>
@@ -67,7 +67,7 @@ function StockRows({ wf }: { wf: WhFilter }) {
 }
 
 // Панель фильтров: поля и кнопки одной высоты, без скруглений
-const fbar = cx("grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-4 min-[1200px]:grid-cols-8",
+const fbar = cx("grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-4 min-[1200px]:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_repeat(4,minmax(0,.9fr))]",
   "[&_input]:h-[42px] [&_input]:min-h-[42px] [&_input]:px-2.5 [&_input]:py-0 [&_input]:text-sm [&_input]:rounded-lg",
   "[&_select]:h-[42px] [&_select]:min-h-[42px] [&_select]:px-2.5 [&_select]:py-0 [&_select]:text-sm [&_select]:rounded-lg",
   "[&_button]:w-full [&_button]:h-[42px] [&_button]:min-h-[42px] [&_button]:px-1.5 [&_button]:py-0 [&_button]:text-sm");
@@ -95,7 +95,7 @@ function StockTab() {
         <Flt label="Название"><input type="search" name="name" defaultValue={wf.name} placeholder="Название, артикул" /></Flt>
         <Flt label="Тип"><select name="type" defaultValue={wf.type}><Options list={CATEGORIES} empty="Все типы" /></select></Flt>
         <Flt label="Цена"><input type="number" name="price" min={0} step={1} inputMode="numeric" defaultValue={wf.price} /></Flt>
-        <Flt label="Место на складе"><input type="search" name="place" defaultValue={wf.place} placeholder="Б-2-1" /></Flt>
+        <Flt label="Место"><input type="search" name="place" defaultValue={wf.place} placeholder="Б-2-1" /></Flt>
         <Button type="submit">Найти</Button>
         <Button onClick={() => { setWf({ ...WF0 }); setFormKey((k) => k + 1); }}>Сброс</Button>
         <Button variant="primary" onClick={() => openOperation("in")}>Приём</Button>
