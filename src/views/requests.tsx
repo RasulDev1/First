@@ -291,7 +291,7 @@ function Requests({ user }: { user: Staff }) {
         </div>
       </form>
 
-      <Table center>
+      <Table center widths={[7, 14, 14, 19, 11, 17, 18]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
             <th key={key} style={key === "city" || key === "street" ? { textAlign: "left" } : undefined}>

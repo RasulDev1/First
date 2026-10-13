@@ -250,15 +250,16 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
 
 /* ---------- Таблица ---------- */
 // <Table> оборачивает <table>: заголовки, строки, итоговая строка в <tfoot>. Числа справа — className="text-right tabular-nums".
-export function Table({ className, center, children }: { className?: string; center?: boolean; children: ReactNode }) {
+export function Table({ className, center, widths, children }: { className?: string; center?: boolean; widths?: number[]; children: ReactNode }) {
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
-      <table className={cx("w-full border-collapse text-sm", center && "[&_th]:!text-center [&_td]:text-center",
+      <table className={cx("w-full border-collapse text-sm", center && "[&_th]:!text-center [&_td]:text-center", widths && "table-fixed min-w-[900px] [&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
         "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-[#94a3b8] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
         "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",
         "[&_td_small]:block [&_td_small]:text-xs [&_td_small]:text-muted [&_td_small]:font-medium [&_td_small]:mt-0.5")}>
+        {widths ? <colgroup>{widths.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}</colgroup> : null}
         {children}
       </table>
     </div>
