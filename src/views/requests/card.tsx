@@ -80,7 +80,7 @@ function CopyPhone({ phone }: { phone: string }) {
 
 const bareCity = (r: Request) => cityOf(r).replace(/^г\.\s*/, "");
 const joinAddress = (city: string, street: string) => (city ? `г. ${city.replace(/^г\.\s*/, "")}, ${street}` : street);
-const big = "[&_input]:text-lg [&_input]:min-h-12 [&_input]:font-semibold [&_input]:text-heading";
+const big = "[&_input]:text-[15px] [&_input]:min-h-11 [&_input]:font-medium [&_input]:text-heading";
 /** Замеры и стоимость работы появляются, когда мастер сделал замеры (стадия согласования стоимости) */
 const pricingStage = (r: Request) => ["pricing", "in_work", "done"].includes(r.status) || (r.status === "measure" && Boolean(r.measured_at));
 
