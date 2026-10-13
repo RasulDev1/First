@@ -27,3 +27,4 @@ export const IconXCircle = ic(<><circle cx="12" cy="12" r="9" /><path d="M9 9l6 
 export const IconPencil = ({ className = "" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={`absolute left-0 top-0 !size-3 fill-none stroke-current stroke-[2] [stroke-linecap:round] [stroke-linejoin:round] ${className}`}><path d="M4 20l1-4L16 5l3 3L8 19z" /></svg>
 );
+export const IconSearch = ic(<><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.2-4.2" /></>);

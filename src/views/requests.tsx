@@ -19,7 +19,7 @@ import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
 } from "./requests/shared";
-import { IconArrow, IconCalendar, IconPhone, IconPlus } from "@/components/icons";
+import { IconArrow, IconCalendar, IconPhone, IconPin, IconPlus, IconSearch } from "@/components/icons";
 import { OrderNo } from "./requests/order-no";
 import type { View } from "./types";
 
@@ -34,7 +34,7 @@ const isoFromRu = (v: string) => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(
 /** Подставляет точки при наборе: 13102026 → 13.10.2026 */
 const maskDate = (v: string) => { const d = v.replace(/\D/g, "").slice(0, 8); return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("."); };
 const DateField = ({ name, value }: { name: string; value: string }) => (
-  <input type="text" inputMode="numeric" name={name} defaultValue={value} placeholder="дд.мм.гггг" maxLength={10} autoComplete="off" className={`${fltCtl} !px-2.5 !text-[13px]`}
+  <input type="text" inputMode="numeric" name={name} defaultValue={value} placeholder="дд.мм.гггг" maxLength={10} autoComplete="off" className={`${fltIn} !text-[13px]`}
     onChange={(e) => { e.currentTarget.value = maskDate(e.currentTarget.value); }} />
 );
 const ui = {
@@ -82,16 +82,23 @@ function sorted(list: Request[]) {
   });
 }
 
+const LEFT: SortKey[] = ["phone", "city", "street"];
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
 /* ---------- Фильтры ---------- */
 const fltBtn = "!h-[42px] !min-h-[42px] !px-5 !py-0 !text-sm";
 const fltCtl = "!h-[42px] !min-h-[42px] !px-3 !py-0 !text-sm";
-function Flt({ label, span, children }: { label: string; span: string; children: ReactNode }) {
+const fltIn = `${fltCtl} !pl-9`;
+function Flt({ label, span, icon, children }: { label: string; span: string; icon?: ReactNode; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
       <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#94a3b8] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
-      {children}
+      {icon ? (
+        <span className="relative block">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] [&_svg]:size-4">{icon}</span>
+          {children}
+        </span>
+      ) : children}
     </label>
   );
 }
@@ -272,15 +279,15 @@ function Requests({ user }: { user: Staff }) {
     <>
       <form key={ui.formKey} onSubmit={find}
         className="grid grid-cols-2 min-[1000px]:grid-cols-12 items-end gap-x-3 gap-y-4 mb-5">
-        <Flt span="min-[1000px]:col-span-4" label="Поиск"><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltCtl} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления"><DateField name="created" value={ui.F.created} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения"><DateField name="done" value={ui.F.done} /></Flt>
-        <Flt span="min-[1000px]:col-span-3" label="Номер клиента"><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltCtl} /></Flt>
-        <Flt span="min-[1000px]:col-span-2" label="Город">
-          <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltCtl} />
+        <Flt span="min-[1000px]:col-span-4" label="Поиск" icon={<IconSearch />}><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltIn} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления" icon={<IconCalendar />}><DateField name="created" value={ui.F.created} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения" icon={<IconCalendar />}><DateField name="done" value={ui.F.done} /></Flt>
+        <Flt span="min-[1000px]:col-span-3" label="Номер клиента" icon={<IconPhone />}><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltIn} /></Flt>
+        <Flt span="min-[1000px]:col-span-2" label="Город" icon={<IconPin />}>
+          <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltIn} />
           <datalist id="cityList">{cities.map((c) => <option key={c} value={c} />)}</datalist>
         </Flt>
-        <Flt span="min-[1000px]:col-span-3 order-6" label="Улица"><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-3 order-6" label="Улица" icon={<IconPin />}><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltIn} /></Flt>
         <Flt span="min-[1000px]:col-span-3" label="Статус заказа">
           <select name="status" defaultValue={ui.F.status} className={fltCtl}><Options list={STATUSES} empty="Все статусы" /></select>
         </Flt>
@@ -294,7 +301,7 @@ function Requests({ user }: { user: Staff }) {
       <Table center widths={[7, 14, 14, 18, 10, 19, 18]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
-            <th key={key} style={key === "city" ? { textAlign: "left" } : undefined}>
+            <th key={key} style={LEFT.includes(key) ? { textAlign: "left" } : undefined}>
               <button type="button" onClick={() => sortBy(key)}
                 className="bg-transparent border-0 p-0 cursor-pointer uppercase hover:text-ink">
                 {title}{ui.sort.key === key ? <IconArrow up={ui.sort.dir > 0} className="inline size-3 ml-1 -mt-0.5" /> : null}
@@ -311,9 +318,9 @@ function Requests({ user }: { user: Staff }) {
               </td>
               <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
               <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
-              <td><b className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small>{r.client}</small></td>
+              <td style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small className="pl-5">{r.client}</small></td>
               <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
-              <td><span className="inline-block w-[9.5rem] max-w-full text-left">{streetOf(r)}</span></td>
+              <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
