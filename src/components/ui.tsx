@@ -309,7 +309,7 @@ export function Table({ className, center, widths, resize, children }: { classNa
         className={cx(cols ? "max-w-none" : "w-full", "border-collapse text-sm", center && "[&_td]:text-center", widths && !cols && "table-fixed min-w-[900px]", widths && "[&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
         cols && "[&_td]:overflow-hidden [&_td]:text-ellipsis [&_th]:overflow-hidden [&_th]:text-ellipsis",
         resize && "[&_th]:relative",
-        (center ? "[&_th]:text-center" : "[&_th]:text-left"), "[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:!text-black [&_th_*]:!text-black [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
+        "[&_th]:!text-center","[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:!text-black [&_th_*]:!text-black [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-middle",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
         "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",
