@@ -13,7 +13,7 @@ export const IconPhone = ({ className = "" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={`${base} ${className}`}><path d="M5 4.5h3.2l1.6 4-2 1.3a11 11 0 0 0 5.4 5.4l1.3-2 4 1.6V18a1.5 1.5 0 0 1-1.6 1.5A14.5 14.5 0 0 1 3.5 6.1 1.5 1.5 0 0 1 5 4.5z" /></svg>
 );
 const ic = (d: ReactNode) => ({ className = "" }: { className?: string }) => <svg viewBox="0 0 24 24" aria-hidden="true" className={`${base} ${className}`}>{d}</svg>;
-export const IconSpark = ic(<path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8zM18.5 3.5v3M17 5h3" />);
+export const IconSpark = ic(<path d="M12 2.5l2.5 7 7 2.5-7 2.5-2.5 7-2.5-7-7-2.5 7-2.5z" />);
 export const IconUser = ic(<><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.6-3.6 3.4-5.5 7-5.5s6.4 1.9 7 5.5" /></>);
 export const IconRuler = ic(<><rect x="3" y="8" width="18" height="8" rx="1.5" transform="rotate(-35 12 12)" /><path d="M8.5 14l1.2-1M11 11.8l1.2-1M13.5 9.6l1.2-1" /></>);
 export const IconReceipt = ic(<path d="M6 3.5h12v17l-2.5-1.6-2 1.6-1.5-1.6-1.5 1.6-2-1.6L6 20.5zM9 8.5h6M9 12h6" />);

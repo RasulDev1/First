@@ -109,8 +109,8 @@ export function Pill({ className, children }: { className?: string; children: Re
 }
 export function StatusPill({ id }: { id: StatusId | string }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled)}>
-      <span className="[&>svg]:size-3.5">{PILL_ICON[id] ?? PILL_ICON.cancelled}</span>{statusTitle(id)}
+    <span className={cx("inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled)}>
+      <span className="[&>svg]:size-3.5 [&>svg]:stroke-[1.75]">{PILL_ICON[id] ?? PILL_ICON.cancelled}</span>{statusTitle(id)}
     </span>
   );
 }
