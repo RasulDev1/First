@@ -249,7 +249,8 @@ function OrderCard({ id }: { id: number }) {
         ) : null}
       </form>
 
-        {showSurvey ? <DSec title="Замеры"><SurveyView survey={draft} edit={editSurvey} /></DSec> : null}
+        {showSurvey ? <DSec title="Замеры"><SurveyView survey={draft} edit={editSurvey} /></DSec>
+          : pricing || r.survey?.saved ? <DSec title="Замеры"><SurveyView survey={r.survey || emptySurvey()} /></DSec> : null}
 
         {pricing && estimateLines.length ? (
           <DSec title="Смета">
