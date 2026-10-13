@@ -4,7 +4,7 @@ import { LOCATIONS } from "./stock";
 import { SERVICES, OBJECTS, SOURCES } from "./config";
 import { hashPassword } from "./db";
 import { buildEstimate, totals } from "./estimate";
-import type { Data, Master, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
+import type { Data, Master, Message, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
 function rng(seedValue: number) {
@@ -281,5 +281,19 @@ export function seed(): Data {
   masters[1].comments!.push({ at: past(now - 9 * DAY), by: managers[0].name, text: "Просил не назначать выезды раньше десяти." });
   tasks[0].comments = [{ at: past(now - DAY), by: staff[0].name, text: "Начни с тех, кто оставил заявку в выходные." }];
 
-  return { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], seq: {} };
+  // Живая переписка в общем чате и пара личных сообщений
+  const byLogin = (login: string) => staff.find((x) => x.login === login)!;
+  const chat: [string, string | null, number, string][] = [
+    ["director", null, 26, "Коллеги, доброе утро. На этой неделе приоритет — заказы, где клиент ждёт замер."],
+    ["manager", null, 25, "Принято. Три заявки с выходных уже обзвонила, договорилась о выездах."],
+    ["buyer", null, 22, "По складу: воздуховоды Ø250 заканчиваются, заказал, привезут завтра."],
+    ["master", null, 20, "Выезд на Ленина завтра в 10:00 подтверждаю."],
+    ["director", "manager", 5, "Мадина, проверь, пожалуйста, смету по ресторану до обеда."],
+    ["manager", "director", 4, "Хорошо, посмотрю и отпишусь."],
+  ];
+  const messages: Message[] = chat.map(([from, to, hoursAgo, text], i) => ({
+    id: i + 1, created_at: iso(now - hoursAgo * 3600e3), from_id: byLogin(from).id, to_id: to ? byLogin(to).id : null, text,
+  }));
+
+  return { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], messages, seq: {} };
 }

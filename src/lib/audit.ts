@@ -22,7 +22,7 @@ const LABELS: Record<string, string> = {
   min_qty: "минимум", category: "категория", title: "заголовок", assignee_id: "исполнитель", due: "срок", level: "уровень",
   rate: "ставка", active: "доступ", position: "должность", login: "логин", role: "роль", min_margin: "порог маржи",
 };
-const BLOCKS: Record<string, string> = { survey: "замеры", estimate: "смета", payments: "оплата", expenses: "расход материалов", items: "позиции", auto: "автоматизации" };
+const BLOCKS: Record<string, string> = { survey: "замеры", estimate: "смета", payments: "оплата", expenses: "расход материалов", items: "позиции", rules: "правила автоматизаций" };
 const SKIP = new Set(["id", "created_at", "history", "comments", "done_at", "declined_by", "client_id", "salt", "request_id", "created_by"]);
 const DATES = new Set(["visit_at", "measured_at", "due"]);
 const MONEY = new Set(["amount", "cost", "price", "rate"]);

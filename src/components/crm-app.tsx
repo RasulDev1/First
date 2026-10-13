@@ -8,6 +8,7 @@ import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/seed";
 import { isLow } from "@/lib/stock";
 import type { Staff } from "@/lib/types";
 import { VIEWS } from "@/views";
+import { unreadCount } from "@/views/chat";
 import { ArmedButton, Button, FormError, Field, cx, card } from "./ui";
 import { DrawerHost, closeDrawer } from "./drawer";
 import { ToastHost, toast } from "./toast";
@@ -27,6 +28,7 @@ const NAV: [string, string, string][] = [
   ["tasks", "Задачи", "M4 6l2 2 3-3M4 13l2 2 3-3M12 7h8M12 14h8M12 20h8"],
   ["warehouse", "Склад", "M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10"],
   ["analytics", "Аналитика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
+  ["chat", "Чат", "M4 5h16v11H10l-5 4v-4H4z"],
   ["automations", "Автоматизации", "M13 2 4 14h7l-1 8 9-12h-7z"],
   ["mystats", "Моя статистика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["myorders", "Мои заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
@@ -39,6 +41,7 @@ function badge(id: string, user: Staff) {
     const now = Date.now();
     return db.list("tasks").filter((t) => !t.done_at && (user.role === "director" || t.assignee_id === user.id) && Date.parse(t.due) <= now).length;
   }
+  if (id === "chat") return unreadCount(user);
   if (id === "warehouse") return db.list("products").filter(isLow).length;
   return 0;
 }
@@ -54,6 +57,14 @@ export default function CrmApp() {
   const [userId, setUserId] = useState<number | null>(null);
   const [section, setSection] = useState("home");
   const [formOpen, setFormOpen] = useState(false);
+  const [phone, setPhone] = useState(false); // экран уже 900px: телефонная версия
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const on = () => setPhone(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   useEffect(() => {
     const check = () => setFormOpen(window.location.hash === "#zayavka");
     check();
@@ -96,16 +107,33 @@ export default function CrmApp() {
     setSection(sectionOf(u));
   };
 
+  const logoutNow = () => {
+    logout();
+    setUserId(null);
+    closeDrawer();
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  };
+
+  // Телефонная версия — только для мастеров и стажёров; остальным на телефоне предлагаем открыть CRM на компьютере
+  if (user && phone && user.role !== "master") {
+    return (
+      <main className="min-h-[100vh] grid place-items-center px-5 py-8">
+        <div className={cx(card, "w-full max-w-[420px] p-7 flex flex-col gap-4 items-center text-center")}>
+          <div className="size-[72px] p-3 rounded-3xl bg-brand-soft"><Mark className="size-full block" /></div>
+          <h1 className="font-display font-semibold text-[20px] leading-tight">Откройте CRM на компьютере</h1>
+          <p className="m-0 text-ink-2">Для вашей должности «{positionTitle(user)}» CRM работает на компьютере или планшете. Телефонная версия есть у мастеров и стажёров.</p>
+          <Button onClick={logoutNow}>Выйти</Button>
+        </div>
+        <ToastHost />
+      </main>
+    );
+  }
+
   return (
     <>
       {user && view ? (
         <div className="grid min-h-[100vh] grid-cols-1 min-[901px]:grid-cols-[252px_minmax(0,1fr)]">
-          <Sidebar user={user} section={section} onLogout={() => {
-            logout();
-            setUserId(null);
-            closeDrawer();
-            window.history.replaceState(null, "", window.location.pathname + window.location.search);
-          }} />
+          <Sidebar user={user} section={section} onLogout={logoutNow} />
           <div className="min-w-0 px-4 pt-4.5 pb-10 min-[901px]:px-[clamp(16px,3vw,36px)] min-[901px]:pt-6 min-[901px]:pb-12 flex flex-col gap-4.5">
             <header><h1 className="font-display font-semibold text-[clamp(20px,2.4vw,26px)] leading-tight tracking-tight">{view.title(user)}</h1></header>
             <div className="flex flex-col gap-4 min-w-0"><view.Component user={user} /></div>
@@ -134,7 +162,7 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
         </span>
       </a>
       <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
-        {NAV.filter(([id]) => can(user, id)).map(([id, label, path]) => {
+        {ROLES[user.role].sections.map((sid) => NAV.find(([id]) => id === sid)).filter((x): x is [string, string, string] => Boolean(x)).map(([id, label, path]) => {
           const n = badge(id, user), current = id === section;
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
@@ -144,7 +172,7 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                current ? "bg-white/15 text-[#7ba4ff]" : id === "requests" && !isWarehouse(user) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                current ? "bg-white/15 text-[#7ba4ff]" : id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}

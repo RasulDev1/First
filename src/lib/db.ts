@@ -26,6 +26,7 @@ function load(): Data {
     } catch { broken = true; }
   }
   if (!data || !TABLES.every((t) => Array.isArray(data![t]))) { data = seed(); persist(); }
+  data.messages ||= []; // чат появился позже остальных таблиц
   snap ||= snapshot(data);
   return data;
 }
@@ -117,6 +118,8 @@ export const db = {
     broken = false;
     commit();
   },
+  /** Перерисовать экраны без записи в базу (например, после «прочитано» в чате) */
+  touch() { notify(); },
   exportAudit: () => load().audit || [],
   /** Вся база одним JSON-файлом: резервная копия */
   exportJson: () => JSON.stringify(load(), null, 1),

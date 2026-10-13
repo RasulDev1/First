@@ -12,10 +12,10 @@ export const SHELVES = 3;
 
 // Роли. «Закупщик» и «Складовщик» — одна роль с разными должностями: оба управляют складом.
 export const ROLES: Record<Role, { title: string; sections: string[] }> = {
-  director: { title: "Руководитель", sections: ["home", "requests", "clients", "calc", "masters", "tasks", "warehouse", "analytics", "automations", "staff"] },
-  manager: { title: "Менеджер по продажам", sections: ["home", "requests", "clients", "calc", "tasks", "mystats"] },
-  warehouse: { title: "Склад", sections: ["home", "requests", "warehouse"] },
-  master: { title: "Мастер", sections: ["myorders"] },
+  director: { title: "Руководитель", sections: ["home", "requests", "clients", "calc", "masters", "tasks", "chat", "warehouse", "analytics", "automations", "staff"] },
+  manager: { title: "Менеджер по продажам", sections: ["home", "requests", "clients", "calc", "tasks", "chat", "mystats"] },
+  warehouse: { title: "Склад", sections: ["home", "requests", "chat", "warehouse"] },
+  master: { title: "Мастер", sections: ["myorders", "chat"] },
 };
 export const POSITIONS: { id: string; role: Role; title: string }[] = [
   { id: "director", role: "director", title: "Руководитель" },

@@ -60,14 +60,22 @@ export interface Task {
 }
 
 export interface Client { id: number; created_at: string; name: string; phone: string; note: string }
-export interface Settings { id: number; min_margin: number; auto?: Record<string, boolean> }
+/** Правило автоматизации: когда случилось событие в заказе — кому и какую задачу поставить */
+export interface AutoRule {
+  id: string; name: string; on: boolean; trigger: "new" | StatusId; assignee: "manager" | "master" | "director";
+  title: string; note: string; after_h: number;
+}
+export interface Settings { id: number; min_margin: number; rules?: AutoRule[] }
+
+/** Сообщение внутреннего чата: to_id пустой — общий чат, иначе личное сообщение */
+export interface Message { id: number; created_at: string; from_id: number; to_id: number | null; text: string }
 
 /** Запись журнала изменений: кто, когда и что поменял */
 export interface AuditEntry { id: number; at: string; user: string; table?: TableName; action: "create" | "update" | "delete" | "system"; text: string }
 
 export interface Tables {
   staff: Staff[]; masters: Master[]; requests: Request[]; products: Product[]; stock: StockRow[];
-  moves: Move[]; tasks: Task[]; clients: Client[]; settings: Settings[];
+  moves: Move[]; tasks: Task[]; clients: Client[]; settings: Settings[]; messages: Message[];
 }
 export type TableName = keyof Tables;
 export type Row<T extends TableName> = Tables[T][number];
