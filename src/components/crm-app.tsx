@@ -14,6 +14,7 @@ import { DrawerHost, closeDrawer } from "./drawer";
 import { ToastHost, toast } from "./toast";
 import { Mark } from "./mark";
 import { go } from "./nav";
+import { TaskPopups } from "./task-popups";
 import RequestForm from "@/app/zayavka/request-form";
 
 // В демо-сборке (одна страница) форма заявки открывается по #zayavka, в обычной — отдельной страницей /zayavka/
@@ -145,6 +146,7 @@ export default function CrmApp() {
           toast("Демо-данные восстановлены");
         }} />
       )}
+      {user && can(user, "tasks") ? <TaskPopups user={user} /> : null}
       <DrawerHost />
       <ToastHost />
     </>

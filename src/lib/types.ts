@@ -63,7 +63,7 @@ export interface Client { id: number; created_at: string; name: string; phone: s
 /** Правило автоматизации: когда случилось событие в заказе — кому и какую задачу поставить */
 export interface AutoRule {
   id: string; name: string; on: boolean; trigger: "new" | StatusId; assignee: "manager" | "master" | "director";
-  title: string; note: string; after_h: number;
+  title: string; note: string; after_min: number;
 }
 export interface Settings { id: number; min_margin: number; rules?: AutoRule[] }
 
