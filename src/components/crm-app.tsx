@@ -97,15 +97,8 @@ export default function CrmApp() {
 
   return (
     <>
-      <DemoBar onReset={() => {
-        db.reset();
-        toast("Демо-данные восстановлены");
-        const u = currentUser();
-        setUserId(u?.id ?? null);
-        if (u) go("home");
-      }} />
       {user && view ? (
-        <div className="grid min-h-[calc(100vh-34px)] grid-cols-1 min-[901px]:grid-cols-[252px_minmax(0,1fr)]">
+        <div className="grid min-h-[100vh] grid-cols-1 min-[901px]:grid-cols-[252px_minmax(0,1fr)]">
           <Sidebar user={user} section={section} onLogout={() => {
             logout();
             setUserId(null);
@@ -118,7 +111,10 @@ export default function CrmApp() {
           </div>
         </div>
       ) : (
-        <Login onLogin={signIn} />
+        <Login onLogin={signIn} onReset={() => {
+          db.reset();
+          toast("Демо-данные восстановлены");
+        }} />
       )}
       <DrawerHost />
       <ToastHost />
@@ -126,23 +122,10 @@ export default function CrmApp() {
   );
 }
 
-function DemoBar({ onReset }: { onReset: () => void }) {
-  const [persistent, setPersistent] = useState(true);
-  useEffect(() => setPersistent(db.persistent), []);
-  return (
-    <div role="note" className="flex flex-wrap gap-x-3.5 gap-y-1.5 items-center justify-center px-4 py-1.5 bg-surface text-muted border-b border-line text-[13px]">
-      <span><b>Демо-версия.</b> Данные хранятся только в этом браузере.</span>
-      {!persistent ? <span>Браузер не даёт сохранять данные: после перезагрузки всё вернётся к началу.</span> : null}
-      <ArmedButton question="Сбросить все данные?" onConfirm={onReset}
-        className="!min-h-0 !px-3 !py-0.5 !text-xs !bg-transparent !border-current text-ink-2 data-[armed]:!bg-bad data-[armed]:!border-bad data-[armed]:!text-white">Сбросить демо</ArmedButton>
-    </div>
-  );
-}
-
 function Sidebar({ user, section, onLogout }: { user: Staff; section: string; onLogout: () => void }) {
   return (
     <aside className="sticky top-0 z-30 flex flex-row flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 bg-[#374151] text-white
-      min-[901px]:h-[calc(100vh-34px)] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5">
+      min-[901px]:h-[100vh] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5">
       <a href="#home" aria-label={`${COMPANY} — главная`} className="flex items-center gap-2.5 no-underline text-white px-1.5">
         <Mark light className="size-[34px] min-[901px]:size-[42px] flex-none" />
         <span className="font-display font-semibold text-base leading-[1.05] tracking-wide flex flex-col">
@@ -176,7 +159,9 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
   );
 }
 
-function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
+function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () => void }) {
+  const [persistent, setPersistent] = useState(true);
+  useEffect(() => setPersistent(db.persistent), []);
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
@@ -192,7 +177,7 @@ function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
     }
   };
   return (
-    <main className="min-h-[calc(100vh-34px)] grid place-items-center px-4 py-8">
+    <main className="min-h-[100vh] grid place-items-center px-4 py-8">
       <div className={cx(card, "w-full max-w-[420px] rounded-[20px] p-7 flex flex-col gap-4")}>
         <div className="size-[84px] -mt-1 mx-auto p-3 rounded-3xl bg-brand-soft"><Mark className="size-full block" /></div>
         <h1 className="font-display font-semibold text-[22px] leading-tight text-center">Вход в CRM</h1>
@@ -219,6 +204,9 @@ function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
             })}
           </div>
           <p className="m-0 text-muted text-[13px]">Пароль у всех демо-аккаунтов: <b className="tabular-nums">{DEMO_PASSWORD}</b></p>
+          {!persistent ? <p className="m-0 text-muted text-[13px]">Браузер не даёт сохранять данные: после перезагрузки всё вернётся к началу.</p> : null}
+          <p className="m-0 text-muted text-[13px]">Данные хранятся только в этом браузере.</p>
+          <ArmedButton size="sm" question="Сбросить все данные?" onConfirm={onReset} className="self-start data-[armed]:!bg-bad data-[armed]:!border-bad data-[armed]:!text-white">Сбросить демо</ArmedButton>
         </div>
         <p className="m-0 text-center text-[13px]"><a href={FORM_HREF}>Форма заявки для сайта →</a></p>
       </div>
