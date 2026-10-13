@@ -13,6 +13,7 @@ import { DrawerHost, closeDrawer } from "./drawer";
 import { ToastHost, toast } from "./toast";
 import { Mark } from "./mark";
 import { go } from "./nav";
+import { FontSwitch } from "./font-switch";
 import RequestForm from "@/app/zayavka/request-form";
 
 // В демо-сборке (одна страница) форма заявки открывается по #zayavka, в обычной — отдельной страницей /zayavka/
@@ -149,6 +150,7 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
         })}
       </nav>
       <div className="ml-auto flex flex-row items-center gap-2.5 min-[901px]:mt-auto min-[901px]:ml-0 min-[901px]:flex-col min-[901px]:items-stretch min-[901px]:p-3 min-[901px]:rounded-card">
+        <FontSwitch dark className="hidden min-[901px]:flex" />
         <div className="hidden min-[561px]:flex flex-col min-w-0">
           <span className="font-semibold text-white wrap-anywhere text-[13px] min-[901px]:text-[15px]">{user.name}</span>
           <span className="self-start mt-0.5 px-2.5 py-px rounded-full bg-white/15 text-white text-xs font-medium">{positionTitle(user)}</span>
@@ -206,6 +208,7 @@ function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () 
           <p className="m-0 text-muted text-[13px]">Пароль у всех демо-аккаунтов: <b className="tabular-nums">{DEMO_PASSWORD}</b></p>
           {!persistent ? <p className="m-0 text-muted text-[13px]">Браузер не даёт сохранять данные: после перезагрузки всё вернётся к началу.</p> : null}
           <p className="m-0 text-muted text-[13px]">Данные хранятся только в этом браузере.</p>
+          <FontSwitch className="mt-1" />
           <ArmedButton size="sm" question="Сбросить все данные?" onConfirm={onReset} className="self-start data-[armed]:!bg-bad data-[armed]:!border-bad data-[armed]:!text-white">Сбросить демо</ArmedButton>
         </div>
         <p className="m-0 text-center text-[13px]"><a href={FORM_HREF}>Форма заявки для сайта →</a></p>
