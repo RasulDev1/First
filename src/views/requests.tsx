@@ -93,7 +93,7 @@ const fltIn = `${fltCtl} !pl-9`;
 function Flt({ label, span, icon, children }: { label: string; span: string; icon?: ReactNode; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
-      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#64748b] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#2C3E5C] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {icon ? (
         <span className="relative block">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] [&_svg]:size-4">{icon}</span>
@@ -316,11 +316,11 @@ function RequestsList({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap text-[#2C3E5C]"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.created_at)}</span></td>
-              <td className="tabular-nums whitespace-nowrap text-[#2C3E5C]">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.done_at)}</span> : <span className="text-[#2C3E5C]">—</span>}</td>
-              <td className="text-[#2C3E5C]" style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium "><IconPhone className="size-3.5 " />{r.phone}</b><small className="pl-5 !text-[#2C3E5C]">{r.client}</small></td>
-              <td className="whitespace-nowrap text-[#2C3E5C]" style={{ textAlign: "left" }}>{cityOf(r)}</td>
-              <td className="text-[#2C3E5C]" style={{ textAlign: "left" }}>{streetOf(r)}</td>
+              <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
+              <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
+              <td style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small className="pl-5">{r.client}</small></td>
+              <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
+              <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
