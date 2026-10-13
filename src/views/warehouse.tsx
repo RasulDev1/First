@@ -262,7 +262,7 @@ function LogTable({ productId }: { productId?: number }) {
 
 /* ---------- Раздел ---------- */
 function Warehouse({ user }: { user: Staff }) {
-  const tabsList = isDirector(user) ? TABS : TABS.filter(([id]) => id !== "changes");
+  const tabsList = TABS.filter(([id]) => id !== "changes"); // журнал изменений теперь внутри карточки товара
   const [tab, setTabState] = useState<Tab>(saved.tab);
   const setTab = (id: string) => {
     const next = tabsList.find(([t]) => t === id)?.[0] ?? "stock";

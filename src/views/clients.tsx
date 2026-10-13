@@ -175,16 +175,8 @@ function openForm(c: Client | null) {
   openDrawer(() => <ClientForm c={c} />);
 }
 
-let clientsTab = "list";
-function Clients({ user }: { user: Staff }) {
-  const [tab, setTab] = useState(clientsTab);
-  if (!isDirector(user)) return <ClientsList />;
-  return (
-    <>
-      <Chips tabs items={[["list", "Клиенты"], ["log", "Журнал изменений"]] as const} active={tab} onChange={(t) => { clientsTab = t; setTab(t); }} />
-      {tab === "log" ? <AuditLog tables={["clients"]} note="Кто и когда менял клиентов." /> : <ClientsList />}
-    </>
-  );
+function Clients() {
+  return <ClientsList />;
 }
 
 const view: View = { title: () => "Клиенты", Component: Clients };

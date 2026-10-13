@@ -93,7 +93,7 @@ const fltIn = `${fltCtl} !pl-9`;
 function Flt({ label, span, icon, children }: { label: string; span: string; icon?: ReactNode; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
-      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#2C3E5C] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#051C42] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {icon ? (
         <span className="relative block">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] [&_svg]:size-4">{icon}</span>
@@ -302,7 +302,7 @@ function RequestsList({ user }: { user: Staff }) {
       <Table resize center widths={[7, 14, 14, 18, 10, 19, 18]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
-            <th key={key} style={LEFT.includes(key) ? { textAlign: "left" } : undefined}>
+            <th key={key}>
               <button type="button" onClick={() => sortBy(key)}
                 className="bg-transparent border-0 p-0 cursor-pointer uppercase hover:text-ink">
                 {title}{ui.sort.key === key ? <IconArrow up={ui.sort.dir > 0} className="inline size-3 ml-1 -mt-0.5" /> : null}
@@ -343,16 +343,8 @@ function RequestsList({ user }: { user: Staff }) {
   );
 }
 
-let requestsTab = "list";
 function Requests({ user }: { user: Staff }) {
-  const [tab, setTab] = useState(requestsTab);
-  if (!isDirector(user)) return <RequestsList user={user} />;
-  return (
-    <>
-      <Chips tabs items={[["list", "Заказы"], ["log", "Журнал изменений"]] as const} active={tab} onChange={(t) => { requestsTab = t; setTab(t); }} />
-      {tab === "log" ? <AuditLog tables={["requests"]} note="Кто, когда и что менял в заказах: статусы, мастера, суммы, данные клиента." /> : <RequestsList user={user} />}
-    </>
-  );
+  return <RequestsList user={user} />;
 }
 
 const view: View = { title: () => "Заказы", Component: Requests };
