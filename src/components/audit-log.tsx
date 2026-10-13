@@ -24,6 +24,20 @@ export function AuditLog({ tables, note, rec, extra }: { tables: TableName[]; no
       </div>
       {list.length ? (
         <>
+          {rec != null ? (
+            // В карточке места мало: запись списком, время и автор сверху, что изменено ниже
+            <ul className="m-0 p-0 list-none flex flex-col">
+              {list.slice(0, shown).map((e) => (
+                <li key={e.id} className="flex flex-col gap-1 py-3 border-b border-line/70 last:border-b-0">
+                  <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted">
+                    <span className={cx("px-2 py-0.5 rounded-[5px] text-xs font-medium", ACTION[e.action])}>{ACTION_TITLE[e.action]}</span>
+                    <span className="tabular-nums">{dateTime(e.at)}</span><span>{e.user}</span>
+                  </span>
+                  <span className="wrap-anywhere text-heading">{e.text}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
           <Table>
             <thead><tr><th style={{ width: 150 }}>Когда</th><th style={{ width: 170 }}>Кто</th><th style={{ width: 120 }}>Действие</th><th>Что изменено</th></tr></thead>
             <tbody>{list.slice(0, shown).map((e) => (
@@ -35,6 +49,7 @@ export function AuditLog({ tables, note, rec, extra }: { tables: TableName[]; no
               </tr>
             ))}</tbody>
           </Table>
+          )}
           {list.length > shown ? <Button onClick={() => setShown(shown + 60)}>Показать ещё ({list.length - shown})</Button> : null}
         </>
       ) : <Empty title="Записей нет">{q ? "Измените поиск." : "Изменения появятся, как только кто-то что-то поменяет."}</Empty>}

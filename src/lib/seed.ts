@@ -2,9 +2,10 @@
 // Даты считаются от сегодняшнего дня, поэтому демо всегда выглядит «живым». Кнопка «Сбросить демо» возвращает эти данные.
 import { LOCATIONS } from "./stock";
 import { SERVICES, OBJECTS, SOURCES } from "./config";
+import { addEntries } from "./audit";
 import { hashPassword } from "./db";
 import { buildEstimate, estimateSums } from "./estimate";
-import type { Data, Master, Message, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
+import type { AuditEntry, Data, Master, Message, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
 function rng(seedValue: number) {
@@ -296,5 +297,31 @@ export function seed(): Data {
     id: i + 1, created_at: iso(now - hoursAgo * 3600e3), from_id: byLogin(from).id, to_id: to ? byLogin(to).id : null, text,
   }));
 
-  return { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], messages, seq: {} };
+  // Журнал изменений: по ходу каждого заказа, а также создание клиентов и товаров, чтобы журнал в карточках не был пустым
+  const log: Omit<AuditEntry, "id">[] = [];
+  const reqTitle = (r: Request) => `Заказ №${r.id} (${r.client.length > 40 ? r.client.slice(0, 40) + "…" : r.client})`;
+  for (const r of requests) {
+    let prev = "Создана";
+    for (const h of r.history) {
+      const mk = (text: string, action: "create" | "update" = "update") => log.push({ at: h.at, user: h.by || "Система", table: "requests", rec: r.id, action, text: `${reqTitle(r)}: ${text}` });
+      if (h.text === "Заказ создан") mk("создан", "create");
+      else if (h.text === "Менеджер взял заказ") mk(`менеджер: пусто → ${h.by}`);
+      else if (h.text.startsWith("Назначен мастер: ")) mk(`мастер: пусто → ${h.text.slice(17)}`);
+      else if (h.text.startsWith("Статус: ")) { const next = h.text.slice(8); mk(`статус: ${prev} → ${next}`); prev = next; }
+      else if (h.text === "Замеры сохранены") mk("замеры изменены");
+      else if (h.text.startsWith("Смета: ")) mk("смета изменена");
+    }
+    for (const pay of r.payments || []) if (pay.at) log.push({ at: pay.at, user: pay.by || "Система", table: "requests", rec: r.id, action: "update", text: `${reqTitle(r)}: оплата изменена` });
+  }
+  for (const c of clients) log.push({ at: c.created_at, user: "Система", table: "clients", rec: c.id, action: "create", text: `Клиент «${c.name}»: создан` });
+  products.forEach((p, i) => {
+    const t = now - (120 + (i % 30)) * DAY;
+    log.push({ at: iso(t), user: DEMO_ACCOUNTS[3].name, table: "products", rec: p.id, action: "create", text: `Товар «${p.name.length > 40 ? p.name.slice(0, 40) + "…" : p.name}»: добавлен` });
+    if (i % 3 === 0) log.push({ at: iso(t + 20 * DAY), user: DEMO_ACCOUNTS[3].name, table: "products", rec: p.id, action: "update",
+      text: `Товар «${p.name.length > 40 ? p.name.slice(0, 40) + "…" : p.name}»: минимум: ${Math.max(1, (p.min_qty || 1) - 1)} → ${p.min_qty}` });
+  });
+  log.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const data: Data = { version: 1, staff, masters, products, stock, moves, requests, tasks, clients, settings: [{ id: 1, min_margin: 25 }], messages, seq: {} };
+  addEntries(data, log);
+  return data;
 }

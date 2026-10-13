@@ -22,7 +22,7 @@ const LABELS: Record<string, string> = {
   min_qty: "минимум", category: "категория", title: "заголовок", assignee_id: "исполнитель", due: "срок", level: "уровень",
   rate: "ставка", active: "доступ", position: "должность", login: "логин", role: "роль", min_margin: "наценка",
 };
-const BLOCKS: Record<string, string> = { survey: "замеры", estimate: "смета", payments: "оплата", expenses: "расход материалов", items: "позиции", rules: "правила автоматизаций" };
+const BLOCKS: Record<string, string> = { survey: "замеры изменены", estimate: "смета изменена", payments: "оплата изменена", expenses: "расход материалов изменён", items: "позиции изменены", rules: "правила автоматизаций изменены" };
 const SKIP = new Set(["id", "created_at", "history", "comments", "done_at", "declined_by", "client_id", "salt", "request_id", "created_by"]);
 const DATES = new Set(["visit_at", "measured_at", "due"]);
 const MONEY = new Set(["amount", "cost", "price", "rate"]);
@@ -60,7 +60,7 @@ function changes(d: Data, before: Rec, after: Rec): string[] {
     const a = JSON.stringify(before[k]), b = JSON.stringify(after[k]);
     if (a === b) continue;
     if (k === "password_hash") { out.push("пароль изменён"); continue; }
-    if (BLOCKS[k]) { out.push(`${BLOCKS[k]} изменены`); continue; }
+    if (BLOCKS[k]) { out.push(BLOCKS[k]); continue; }
     out.push(`${LABELS[k] || k}: ${show(d, k, before[k])} → ${show(d, k, after[k])}`);
   }
   return out;
