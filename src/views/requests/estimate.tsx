@@ -2,11 +2,11 @@
 // Автосмета: мастер из нескольких шагов в боковой панели и вкладка «Смета» в нижней панели заказа.
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { money, num } from "@/lib/core";
-import { MARKUP, WORKS } from "@/lib/config";
+import { MARKUP, MIN_MARKUP, WORKS } from "@/lib/config";
 import { db } from "@/lib/db";
 import { currentUser, isDirector } from "@/lib/auth";
 import { surveyOf } from "@/lib/survey";
-import { STEPS, buildEstimate, floorOf, lineSum, marginOf, materialLine, minMargin, setMinMargin, totals, workLine } from "@/lib/estimate";
+import { STEPS, buildEstimate, floorOf, lineSum, markupOf, materialLine, minMargin, setMinMargin, totals, workLine } from "@/lib/estimate";
 import type { EstimateLine, Request, Staff } from "@/lib/types";
 import { ArmedButton, Button, DHead, DSec, Empty, IconButton, Kv, Note, Table, btnRow, cx } from "@/components/ui";
 import { closeDrawer, openDrawer } from "@/components/drawer";
@@ -15,11 +15,11 @@ import { GuardButton, P, inlineForm, logBy, muted, save, sheetCols, small, thR, 
 
 const pct = (n: number) => `${num(Math.round(n * 10) / 10)}%`;
 
-/* ---------- Порог маржи (только руководитель) ---------- */
+/* ---------- Наценка, % (только руководитель, только в составлении автосметы) ---------- */
 export function saveMargin(value: unknown, user: Staff) {
   if (!isDirector(user)) return;
   const v = setMinMargin(value);
-  toast(`Нижний порог маржи: ${v}%`);
+  toast(`Наценка: ${v}%`);
 }
 
 export function MarginForm({ user, className }: { user: Staff; className?: string }) {
@@ -27,8 +27,8 @@ export function MarginForm({ user, className }: { user: Staff; className?: strin
   if (!isDirector(user)) return null;
   return (
     <form key={m} className={cx(inlineForm, className)} onSubmit={(e) => { e.preventDefault(); saveMargin(new FormData(e.currentTarget).get("m"), user); }}>
-      <label>Нижний порог маржи, %<input name="m" type="number" min="0" max="90" step="1" defaultValue={m} /></label>
-      <Button type="submit" className="self-end">Сохранить порог</Button>
+      <label>Наценка, %<input name="m" className="!flex-none !w-28" type="number" min={MIN_MARKUP} max="300" step="1" defaultValue={m} /></label>
+      <Button type="submit" className="self-end">Сохранить наценку</Button>
     </form>
   );
 }
@@ -41,7 +41,6 @@ export function EstimateTab({ r, user, onOpen, readOnly }: { r: Request; user: S
     return (
       <div className={sheetCols}>
         <div><p className={cx(P, muted)}>Сметы пока нет. Автосмета считает материалы и работы из вкладки «Замеры».</p>{head}</div>
-        <div><MarginForm user={user} className="mt-2.5" /></div>
       </div>
     );
   }
@@ -61,11 +60,10 @@ export function EstimateTab({ r, user, onOpen, readOnly }: { r: Request; user: S
         <Kv wide items={[
           ["Итого", <b key="t">{money(t.total)}</b>, "tabular-nums"],
           ["Прибыль", money(t.profit), "tabular-nums"],
-          ["Процент", pct(t.margin), cx("tabular-nums", t.margin < m && "text-bad")],
+          ["Наценка", pct(markupOf(t.total, t.cost)), cx("tabular-nums", markupOf(t.total, t.cost) < m && "text-bad")],
         ]} />
-        <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Нижний порог {num(m)}%.</p>
+        <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Наценка не ниже {num(m)}%.</p>
         {head}
-        <div><MarginForm user={user} className="mt-2.5" /></div>
       </div>
     </div>
   );
@@ -100,7 +98,7 @@ function LineRows({ lines, kind, onLine, onDel }: {
   return (
     <Table>
       <thead><tr><th>{kind === "mat" ? "Материал" : "Работа"}</th><th className={thR}>Кол-во</th>{kind === "mat" ? <th className={thR}>Закупка</th> : null}
-        <th className={thR}>Цена</th><th className={thR}>Сумма</th><th className={thR}>Маржа</th><th /></tr></thead>
+        <th className={thR}>Цена</th><th className={thR}>Сумма</th><th className={thR}>Наценка</th><th /></tr></thead>
       <tbody>{own.map((l) => {
         const low = l.cost > 0 && l.price < floorOf(l.cost);
         return (
@@ -110,7 +108,7 @@ function LineRows({ lines, kind, onLine, onDel }: {
             {kind === "mat" ? <td className="text-right tabular-nums">{money(l.cost)}</td> : null}
             <td className="text-right"><NumIn value={l.price} step="10" inputMode="numeric" label="Цена" onCommit={(v) => onLine(l.id, "price", v)} /></td>
             <td className="text-right tabular-nums">{money(lineSum(l))}</td>
-            <td className="text-right tabular-nums">{l.cost > 0 ? `${num(Math.round(marginOf(l.price, l.cost)))}%` : "—"}</td>
+            <td className="text-right tabular-nums">{l.cost > 0 ? `${num(Math.round(markupOf(l.price, l.cost)))}%` : "—"}</td>
             <td className="text-right"><IconButton aria-label="Убрать строку" onClick={() => onDel(l.id)} /></td>
           </tr>
         );
@@ -120,14 +118,14 @@ function LineRows({ lines, kind, onLine, onDel }: {
 }
 
 function Bar({ lines, user }: { lines: EstimateLine[]; user: Staff }) {
-  const t = totals(lines), m = minMargin(), low = t.total > 0 && t.margin < m;
+  const t = totals(lines), m = minMargin(), low = t.cost > 0 && markupOf(t.total, t.cost) < m;
   const item = "flex flex-col text-xs opacity-95 [&>b]:text-lg [&>b]:tabular-nums";
   return (
     <div className={cx("sticky bottom-0 flex flex-wrap gap-x-6 gap-y-2 items-center px-4 py-3 text-white mt-4", low ? "bg-bad-deep" : "bg-brand-deep")}>
       <span className={item}>Итого<b>{money(t.total)}</b></span>
       <span className={item}>Прибыль<b>{money(t.profit)}</b></span>
-      <span className={item}>Процент<b>{pct(t.margin)}</b></span>
-      <small className="ml-auto">Нижний порог {num(m)}%{low ? (user.role === "director" ? ": цена ниже порога" : ": поднимите цены") : ""}</small>
+      <span className={item}>Наценка<b>{pct(markupOf(t.total, t.cost))}</b></span>
+      <small className="ml-auto">Наценка не ниже {num(m)}%{low ? (user.role === "director" ? ": цена ниже" : ": поднимите цены") : ""}</small>
     </div>
   );
 }
@@ -152,7 +150,7 @@ function EstimateWizard({ id }: { id: number }) {
     const min = floorOf(changed.cost);
     if (field === "price" && changed.cost > 0 && v < min && !isDirector(user)) {
       changed.price = min;
-      toast(`Ниже порога маржи ${minMargin()}%: цена не меньше ${money(min)}`, "bad");
+      toast(`Наценка не ниже ${minMargin()}%: цена не меньше ${money(min)}`, "bad");
     }
     setLines(lines.map((x) => (x.id === lineId ? changed : x)));
     return changed[field];
@@ -169,7 +167,7 @@ function EstimateWizard({ id }: { id: number }) {
   const onSave = () => {
     if (!g.check(r)) return;
     const kept = lines.filter((l) => l.qty > 0);
-    if (!isDirector(user) && kept.some((l) => l.cost > 0 && l.price < floorOf(l.cost))) { toast("Есть цены ниже порога маржи", "bad"); return; }
+    if (!isDirector(user) && kept.some((l) => l.cost > 0 && l.price < floorOf(l.cost))) { toast("Есть цены с наценкой ниже минимальной", "bad"); return; }
     const t = totals(kept);
     r.estimate = { lines: kept, at: new Date().toISOString(), by: user.name };
     r.amount = Math.round(t.total);
@@ -211,8 +209,8 @@ function EstimateWizard({ id }: { id: number }) {
     body = (
       <DSec title={kind === "mat" ? "Материалы" : "Работы"}>
         {kind === "work"
-          ? <Note>Прайс работ ориентировочный: себестоимость работ пока не оценена, поэтому порог маржи на них не действует.</Note>
-          : <p className={cx(P, muted, small)}>Цена не ниже закупки плюс порог {num(minMargin())}%. Наценка по умолчанию {MARKUP}%.</p>}
+          ? <Note>Прайс работ ориентировочный: себестоимость работ пока не оценена, поэтому минимальная наценка на них не действует.</Note>
+          : <p className={cx(P, muted, small)}>Цена не ниже закупки плюс {num(minMargin())}%. Наценка по умолчанию {MARKUP}%.</p>}
         <LineRows lines={lines} kind={kind} onLine={onLine} onDel={onDel} />
         <form key={step} className={inlineForm} onSubmit={onAdd}>
           {kind === "mat" ? (
@@ -237,7 +235,7 @@ function EstimateWizard({ id }: { id: number }) {
           ["Закупка материалов", money(t.cost), "tabular-nums"],
           ["Стоимость работы сейчас", money(r.amount || 0), "tabular-nums"],
         ]} />
-        {bad.length ? <Note tone="warn">Ниже порога {num(minMargin())}%: {bad.map((l) => l.name).join(", ")}.{user.role === "director" ? " Руководитель может сохранить так." : " Поднимите цены, чтобы сохранить."}</Note> : null}
+        {bad.length ? <Note tone="warn">Наценка ниже {num(minMargin())}%: {bad.map((l) => l.name).join(", ")}.{user.role === "director" ? " Руководитель может сохранить так." : " Поднимите цены, чтобы сохранить."}</Note> : null}
         <MarginForm user={user} />
         <div className={btnRow}>
           <Button onClick={() => setStep(1)}>Назад</Button>

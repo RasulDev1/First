@@ -20,7 +20,7 @@ const LABELS: Record<string, string> = {
   status: "статус", manager_id: "менеджер", master_id: "мастер", visit_at: "выезд", measured_at: "замеры", amount: "сумма",
   comment: "комментарий", name: "название", sku: "артикул", specs: "характеристики", unit: "ед.", cost: "закупка", price: "цена",
   min_qty: "минимум", category: "категория", title: "заголовок", assignee_id: "исполнитель", due: "срок", level: "уровень",
-  rate: "ставка", active: "доступ", position: "должность", login: "логин", role: "роль", min_margin: "порог маржи",
+  rate: "ставка", active: "доступ", position: "должность", login: "логин", role: "роль", min_margin: "наценка",
 };
 const BLOCKS: Record<string, string> = { survey: "замеры", estimate: "смета", payments: "оплата", expenses: "расход материалов", items: "позиции", rules: "правила автоматизаций" };
 const SKIP = new Set(["id", "created_at", "history", "comments", "done_at", "declined_by", "client_id", "salt", "request_id", "created_by"]);

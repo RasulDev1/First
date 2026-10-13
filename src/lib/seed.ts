@@ -275,7 +275,7 @@ export function seed(): Data {
   const some = requests.filter((r) => r.manager_id && r.status !== "cancelled").slice(-3);
   if (some[0]) some[0].comments.push({ at: past(now - 2 * DAY), by: managers[0].name, text: "Клиент просит приехать после 15:00, по утрам никого нет." });
   if (some[1]) some[1].comments.push({ at: past(now - DAY), by: managers[1].name, text: "Договорились о замере, клиент попросил позвонить за час." },
-    { at: past(now - 20 * 3600e3), by: staff[0].name, text: "Проверь смету: цены не ниже порога, потом согласуй с клиентом." });
+    { at: past(now - 20 * 3600e3), by: staff[0].name, text: "Проверь смету: наценка не ниже минимальной, потом согласуй с клиентом." });
   masters[0].comments!.push({ at: past(now - 5 * DAY), by: staff[0].name, text: "Аккуратно работает, клиенты довольны. Можно ставить на сложные объекты." });
   masters[1].comments!.push({ at: past(now - 9 * DAY), by: managers[0].name, text: "Просил не назначать выезды раньше десяти." });
   tasks[0].comments = [{ at: past(now - DAY), by: staff[0].name, text: "Начни с тех, кто оставил заявку в выходные." }];

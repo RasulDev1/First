@@ -8,7 +8,7 @@ import { seed, DEMO_PASSWORD } from "../src/lib/seed";
 import { rateOf, payOf, netOf } from "../src/lib/pay";
 import { DEFAULT_RULES, normalizeRule, rulesOf, automationTasks } from "../src/lib/automations";
 import { snapshot, recordChanges } from "../src/lib/audit";
-import { marginOf, floorOf, totals } from "../src/lib/estimate";
+import { marginOf, markupOf, floorOf, totals, minMargin, setMinMargin } from "../src/lib/estimate";
 import { isLow, toBuy, qtyOf } from "../src/lib/stock";
 import { stageOf } from "../src/lib/orders";
 
@@ -50,7 +50,10 @@ test("смета: маржа, нижняя граница цены и итоги
   assert.equal(marginOf(0, 100), 0);
   assert.equal(Math.round(marginOf(200, 100)), 50);
   assert.equal(floorOf(0), 0);
-  assert.equal(floorOf(100, 20), 125);
+  assert.equal(floorOf(100, 25), 125);
+  assert.equal(floorOf(100), 125, "по умолчанию наценка 25%");
+  assert.equal(markupOf(125, 100), 25);
+  assert.equal(markupOf(100, 0), 0);
   const t = totals([{ qty: 2, price: 100, cost: 60 } as any, { qty: 1, price: 50, cost: 20 } as any]);
   assert.equal(t.total, 250);
   assert.equal(t.cost, 140);
@@ -143,4 +146,14 @@ test("чат: сообщения хранятся в базе", () => {
   const n = db.list("messages").length;
   db.insert("messages", { from_id: 1, to_id: null, text: "привет" } as any);
   assert.equal(db.list("messages").length, n + 1);
+});
+
+test("наценка: меньше 25% не сохраняется, больше можно", () => {
+  assert.equal(setMinMargin(10), 25);
+  assert.equal(minMargin(), 25);
+  assert.equal(setMinMargin("abc"), 25);
+  assert.equal(setMinMargin(40), 40);
+  assert.equal(minMargin(), 40);
+  assert.equal(floorOf(100), 140);
+  assert.equal(setMinMargin(9999), 300);
 });

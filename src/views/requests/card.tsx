@@ -21,12 +21,12 @@ import { openClient } from "../clients";
 import { SurveyView } from "./survey";
 import { Expenses, GuardButton, P, allowed, inlineForm, logBy, masterName, muted, orderNo, save, cityOf, streetOf, small, staffName, useGuard } from "./shared";
 
-/** Менеджер не может поставить сумму ниже порога маржи (закупка / (1 − порог)); руководитель может */
+/** Менеджер не может поставить сумму ниже закупки плюс минимальная наценка; руководитель может */
 export function amountAllowed(r: Request, amount: number, user: Staff) {
   if (isDirector(user) || !(amount > 0)) return true;
   const min = minAmount(r);
   if (amount >= min) return true;
-  toast(`Ниже порога маржи ${minMargin()}%: сумма не меньше ${money(min)}`, "bad");
+  toast(`Наценка не ниже ${minMargin()}%: сумма не меньше ${money(min)}`, "bad");
   return false;
 }
 

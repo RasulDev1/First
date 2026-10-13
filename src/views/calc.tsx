@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { money, num } from "@/lib/core";
 import { db } from "@/lib/db";
-import { buildEstimate, totals, minMargin } from "@/lib/estimate";
+import { buildEstimate, totals, minMargin, markupOf } from "@/lib/estimate";
 import type { EstimateLine, Survey } from "@/lib/types";
 import { Field, Kpi, Kpis, Table } from "@/components/ui";
 import type { View } from "./types";
@@ -86,13 +86,13 @@ function LinesTable({ title, list }: { title: string; list: EstimateLine[] }) {
 function Result({ state }: { state: CalcInput }) {
   const r = calculate(state);
   const mats = r.lines.filter((l) => l.kind === "mat"), works = r.lines.filter((l) => l.kind === "work");
-  const low = r.margin < minMargin();
+  const markup = markupOf(r.total, r.total - r.profit), low = markup < minMargin();
   return (
     <div className="flex flex-col gap-3.5 min-w-0">
       <Kpis>
         <Kpi tone="accent" label="Ориентировочная стоимость" value={money(r.total)} sub={`вилка ${money(r.total * 0.9)} — ${money(r.total * 1.1)}`} />
         <Kpi label="Прибыль" value={money(r.profit)} sub="без учёта зарплат" />
-        <Kpi label="Процент" value={`${num(Math.round(r.margin * 10) / 10)}%`} sub={`порог ${num(minMargin())}%`} tone={low ? "bad" : undefined} />
+        <Kpi label="Наценка" value={`${num(Math.round(markup * 10) / 10)}%`} sub={`не ниже ${num(minMargin())}%`} tone={low ? "bad" : undefined} />
         {state.system === "ac" ? null : <Kpi label="Расход воздуха" value={`${num(r.flow)} м³/ч`} sub={`кратность ${state.rate}`} />}
       </Kpis>
       <LinesTable title="Материалы" list={mats} />
