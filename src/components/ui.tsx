@@ -84,9 +84,9 @@ export const formCol = "flex flex-col gap-3.5";
 
 /* ---------- Статусы и метки ---------- */
 const PILL: Record<string, string> = {
-  new: "text-st-new bg-st-new/10", assigned: "text-st-assigned bg-st-assigned/10", measure: "text-st-measure bg-st-measure/10",
-  pricing: "text-st-pricing bg-st-pricing/10", in_work: "text-st-in_work bg-st-in_work/10", done: "text-st-done bg-st-done/10",
-  cancelled: "text-st-cancelled bg-st-cancelled/10",
+  new: "bg-[#eff6ff] text-[#1e40af]", assigned: "bg-[#f5f3ff] text-[#5b21b6]", measure: "bg-[#fff7ed] text-[#9a3412]",
+  pricing: "bg-[#fdf2f8] text-[#9d174d]", in_work: "bg-[#fefce8] text-[#854d0e]", done: "bg-[#ecfdf5] text-[#065f46]",
+  cancelled: "bg-[#f1f5f9] text-[#475569]",
 };
 /** Цвет заливки статуса — для полос графиков */
 export const STATUS_FILL: Record<string, string> = {
@@ -101,7 +101,9 @@ export function Pill({ className, children }: { className?: string; children: Re
     </span>
   );
 }
-export const StatusPill = ({ id }: { id: StatusId | string }) => <Pill className={PILL[id] ?? PILL.cancelled}>{statusTitle(id)}</Pill>;
+export const StatusPill = ({ id }: { id: StatusId | string }) => (
+  <span className={cx("inline-flex items-center self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled)}>{statusTitle(id)}</span>
+);
 
 /** Место на складе «А-1-2» */
 export function Loc({ code, children, big, className }: { code: string; children?: ReactNode; big?: boolean; className?: string }) {
