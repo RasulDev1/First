@@ -65,7 +65,7 @@ function TasksPanel({ list, title, user }: { list: Task[]; title: string; user: 
 function NewPanel({ requests }: { requests: Request[] }) {
   const fresh = requests.filter((r) => r.status === "new").sort(byTime("created_at"));
   return (
-    <Panel title={<>Новые заказы {fresh.length ? <Count n={fresh.length} /> : null}</>}>
+    <Panel title={<>Новые заказы {fresh.length ? <Count n={fresh.length} warn /> : null}</>}>
       {fresh.length ? <MiniList>{fresh.slice(0, 6).map((r) => (
         <ReqRow key={r.id} r={r} side={<><small className="text-[12.5px] text-muted">{dateTime(r.created_at)}</small><small className="text-[12.5px] text-muted">{r.source}</small></>} />
       ))}</MiniList> : <Muted>Все заказы разобраны.</Muted>}
