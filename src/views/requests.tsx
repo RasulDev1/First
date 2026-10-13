@@ -84,7 +84,7 @@ function sorted(list: Request[]) {
 }
 
 /** Дата, номер клиента, имя, город, улица — один цвет, включая вложенный текст и иконки (у них свои цвета, их перебиваем) */
-const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)]:!font-medium [&>td:nth-child(n+2):nth-child(-n+6)_*]:!font-medium";
+const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)]:!font-semibold [&>td:nth-child(n+2):nth-child(-n+6)_*]:!font-semibold [&>td:nth-child(n+2):nth-child(-n+6)]:!text-[15px] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[15px] [&>td:nth-child(n+2):nth-child(-n+6)_small]:!text-[13px]";
 const LEFT: SortKey[] = ["phone", "city", "street"];
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
