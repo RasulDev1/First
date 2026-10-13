@@ -18,6 +18,7 @@ import {
 import { closeDrawer, openDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
 import { openClient } from "../clients";
+import { expenseTotal } from "@/lib/stock";
 import { SurveyView } from "./survey";
 import { EstimateTable, MarkupInput } from "./estimate";
 import { Expenses, GuardButton, P, allowed, inlineForm, logBy, masterName, muted, orderNo, save, cityOf, streetOf, small, staffName, useGuard } from "./shared";
@@ -104,7 +105,7 @@ function OrderCard({ id }: { id: number }) {
   const showSurvey = pricing && surveyOpen(r);
   const surveyDirty = surveyKey(draft) !== surveyKey(r.survey);
   // смета в карточке: пока замеры открыты — по черновику замеров (меняется сразу), потом — сохранённая
-  const estimateLines = showSurvey ? buildEstimate({ survey: draft }, db.list("products"), markup) : (r.estimate?.lines || []);
+  const estimateLines = showSurvey ? buildEstimate({ survey: draft }, db.list("products")) : (r.estimate?.lines || []);
   const markupKey = r.estimate?.at ?? "";
 
   const editSurvey = (fn: (s: Survey) => void) => {
@@ -252,8 +253,8 @@ function OrderCard({ id }: { id: number }) {
 
         {pricing && estimateLines.length ? (
           <DSec title="Смета">
-            <p className={cx(P, muted, small)}>Считается сама из замеров и меняется вместе с ними. Менеджер задаёт только наценку на материалы.</p>
-            <EstimateTable lines={estimateLines} markup={markup} />
+            <p className={cx(P, muted, small)}>Сумма от замеров и расходов заказа, на неё накидывается наценка. Считается сама и меняется вместе с замерами; менеджер задаёт только наценку.</p>
+            <EstimateTable lines={estimateLines} markup={markup} expenses={expenseTotal(r)} />
             {closed ? null : <div className={inlineForm}><MarkupInput key={markupKey} value={markup} onChange={setMarkup} /></div>}
           </DSec>
         ) : null}

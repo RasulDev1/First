@@ -4,7 +4,8 @@
 import { useState } from "react";
 import { money, num } from "@/lib/core";
 import { MIN_MARKUP } from "@/lib/config";
-import { clampMarkup, lineSum, markupFor, markupOf, syncEstimate, totals } from "@/lib/estimate";
+import { clampMarkup, estimateSums, lineSum, markupFor, syncEstimate } from "@/lib/estimate";
+import { expenseTotal } from "@/lib/stock";
 import type { EstimateLine, Request, Staff } from "@/lib/types";
 import { Button, Kv, Table, cx } from "@/components/ui";
 import { toast } from "@/components/toast";
@@ -23,17 +24,16 @@ export function MarkupInput({ value, onChange, disabled }: { value: number; onCh
     onChange(v);
   };
   return (
-    <label className="flex flex-col gap-1 text-[13px]">Наценка на материалы, %
+    <label className="flex flex-col gap-1 text-[13px]">Наценка, %
       <input type="number" min={MIN_MARKUP} max="300" step="1" inputMode="numeric" value={text} disabled={disabled} className="!flex-none !w-28"
         onChange={(e) => setText(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }} />
     </label>
   );
 }
 
-/** Таблица сметы с итогами; строки только для чтения */
-export function EstimateTable({ lines, markup }: { lines: EstimateLine[]; markup: number }) {
-  const t = totals(lines), mats = lines.filter((l) => l.kind === "mat"), works = lines.filter((l) => l.kind === "work");
-  const sum = (ls: EstimateLine[]) => ls.reduce((n, l) => n + lineSum(l), 0);
+/** Таблица сметы: строки (материалы по закупке, работы по прайсу) + расходы заказа = сумма, на неё накидывается наценка */
+export function EstimateTable({ lines, markup, expenses }: { lines: EstimateLine[]; markup: number; expenses: number }) {
+  const t = estimateSums(lines, expenses, markup), mats = lines.filter((l) => l.kind === "mat"), works = lines.filter((l) => l.kind === "work");
   const rows = (ls: EstimateLine[], title: string) => ls.length ? (
     <>
       <tr><th colSpan={4} className="text-left! pt-3">{title}</th></tr>
@@ -48,19 +48,17 @@ export function EstimateTable({ lines, markup }: { lines: EstimateLine[]; markup
       <div>
         <Table>
           <thead><tr><th>Позиция</th><th className={thR}>Кол-во</th><th className={thR}>Цена</th><th className={thR}>Сумма</th></tr></thead>
-          <tbody>{rows(mats, "Материалы")}{rows(works, "Работы")}</tbody>
+          <tbody>{rows(mats, "Материалы (по закупке)")}{rows(works, "Работы (по прайсу)")}</tbody>
         </Table>
       </div>
-      <div>
-        <Kv wide items={[
-          ["Материалы", money(sum(mats)), "tabular-nums"],
-          ["Работы", money(sum(works)), "tabular-nums"],
-          ["Итого", <b key="t">{money(t.total)}</b>, "tabular-nums"],
-          ["Закупка материалов", money(t.cost), "tabular-nums"],
-          ["Прибыль", money(t.profit), "tabular-nums"],
-          ["Наценка на материалы", pct(markupOf(sum(mats), t.cost)), cx("tabular-nums", markup < MIN_MARKUP && "text-bad")],
-        ]} />
-      </div>
+      <Kv wide items={[
+        ["Материалы", money(t.mats), "tabular-nums"],
+        ["Работы", money(t.works), "tabular-nums"],
+        ["Расходы заказа", money(t.expenses), "tabular-nums"],
+        ["Сумма", <b key="b">{money(t.base)}</b>, "tabular-nums"],
+        [`Наценка ${t.markup}%`, `+ ${money(t.extra)}`, "tabular-nums"],
+        ["Итого для клиента", <b key="t">{money(t.total)}</b>, "tabular-nums"],
+      ]} />
     </div>
   );
 }
@@ -80,9 +78,9 @@ export function EstimateTab({ r, user, readOnly }: { r: Request; user: Staff; re
   };
   return (
     <div className="flex flex-col gap-3">
-      <EstimateTable lines={e.lines} markup={m} />
+      <EstimateTable lines={e.lines} markup={m} expenses={expenseTotal(r)} />
       {readOnly ? null : <div className={inlineForm}><MarkupInput key={m} value={m} onChange={setMarkup} /></div>}
-      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Считается из замеров сама, цена материалов — закупка плюс наценка (не ниже {MIN_MARKUP}%).</p>
+      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Сумма от замеров и расходов заказа плюс наценка (не ниже {MIN_MARKUP}%); считается сама.</p>
     </div>
   );
 }

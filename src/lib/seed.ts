@@ -3,7 +3,7 @@
 import { LOCATIONS } from "./stock";
 import { SERVICES, OBJECTS, SOURCES } from "./config";
 import { hashPassword } from "./db";
-import { buildEstimate, totals } from "./estimate";
+import { buildEstimate, estimateSums } from "./estimate";
 import type { Data, Master, Message, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
 
 // Детерминированный генератор: при каждом сбросе одинаковые данные
@@ -220,7 +220,7 @@ export function seed(): Data {
     r.history.push({ at: past(at), by: r.survey.by ?? "", text: "Замеры сохранены" });
     const lines = buildEstimate(r, products);
     if (!lines.length) continue;
-    const sum = totals(lines);
+    const sum = estimateSums(lines, 0, 40);
     r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by ?? "", markup: 40 };
     r.amount = Math.round(sum.total / 100) * 100;
     r.history.push({ at: past(at + 3600e3), by: r.survey.by ?? "", text: `Смета: ${Math.round(sum.total).toLocaleString("ru-RU")} ₽` });

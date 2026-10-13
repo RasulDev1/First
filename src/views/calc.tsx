@@ -3,8 +3,9 @@
 // Считает тем же способом, что автосмета: материалы по складу (закупка + наценка), работы по прайсу.
 import { useState } from "react";
 import { money, num } from "@/lib/core";
+import { MARKUP } from "@/lib/config";
 import { db } from "@/lib/db";
-import { buildEstimate, totals, minMargin, markupOf } from "@/lib/estimate";
+import { buildEstimate, totals, minMargin, markupOf, withMarkup } from "@/lib/estimate";
 import type { EstimateLine, Survey } from "@/lib/types";
 import { Field, Kpi, Kpis, Table } from "@/components/ui";
 import type { View } from "./types";
@@ -44,11 +45,12 @@ export function calculate({ system, area, rooms, height, rate }: CalcInput) {
     const works = lines.filter((l) => l.kind === "work");
     if (unit) {
       const qty = Math.max(1, Math.ceil((volume * rate) / 350));
-      lines.unshift({ id: "unit", kind: "mat", product_id: unit.id, name: unit.name, unit: unit.unit, qty, cost: unit.cost, price: Math.round((unit.cost * 1.4) / 10) * 10 });
+      lines.unshift({ id: "unit", kind: "mat", product_id: unit.id, name: unit.name, unit: unit.unit, qty, cost: unit.cost, price: unit.cost });
       const fan = works.find((w) => w.work === "fan");
       if (fan) fan.qty = qty;
     }
   }
+  lines = withMarkup(lines, MARKUP); // основа × (1 + наценка по умолчанию)
   return { lines, flow: Math.round(flow * n), ...totals(lines) };
 }
 
