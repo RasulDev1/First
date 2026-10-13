@@ -203,10 +203,10 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
                 drag?.id === id && "opacity-40",
                 drag?.over === id && drag.id !== id && (drag.below ? "shadow-[0_2px_0_0_#7ba4ff]" : "shadow-[0_-2px_0_0_#7ba4ff]"),
                 current ? "text-white font-semibold bg-white/10 min-[901px]:shadow-[inset_3px_0_0_#60a5fa]" : "text-white/65 hover:text-white hover:bg-white/10")}>
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7 min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className={cx("size-7 min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]", current && "text-[#60a5fa]")}><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("absolute top-1 right-2 min-[901px]:static min-[901px]:ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                current ? "bg-white/15 text-white" : id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
