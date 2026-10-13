@@ -81,12 +81,12 @@ export function recordChanges(d: Data, snap: Snap, user: string): AuditEvents {
       const now = JSON.stringify(r), was = snap.get(key);
       if (was === now) continue;
       if (was == null) {
-        entries.push({ at, user, table: t, action: "create", text: `${title(d, t, r)}: ${CREATED[t] || "создан"}` });
+        entries.push({ at, user, table: t, rec: r.id, action: "create", text: `${title(d, t, r)}: ${CREATED[t] || "создан"}` });
         if (t === "requests") events.created.push(r as unknown as Request);
       } else {
         const before = JSON.parse(was) as Rec;
         const list = changes(d, before, r);
-        if (list.length) entries.push({ at, user, table: t, action: "update", text: `${title(d, t, r)}: ${list.join("; ")}` });
+        if (list.length) entries.push({ at, user, table: t, rec: r.id, action: "update", text: `${title(d, t, r)}: ${list.join("; ")}` });
         if (t === "requests" && before.status !== r.status) events.statusChanged.push(r as unknown as Request);
       }
       snap.set(key, now);
@@ -96,7 +96,7 @@ export function recordChanges(d: Data, snap: Snap, user: string): AuditEvents {
     if (seen.has(key)) continue;
     const [t, id] = key.split(":");
     const old = JSON.parse(snap.get(key)!) as Rec;
-    entries.push({ at, user, table: t as TableName, action: "delete", text: `${title(d, t as TableName, { ...old, id: Number(id) })}: удалён` });
+    entries.push({ at, user, table: t as TableName, rec: Number(id), action: "delete", text: `${title(d, t as TableName, { ...old, id: Number(id) })}: удалён` });
     snap.delete(key);
   }
   if (entries.length) addEntries(d, entries);

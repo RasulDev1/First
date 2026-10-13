@@ -284,13 +284,22 @@ function Warehouse({ user }: { user: Staff }) {
 /* ---------- Карточка товара ---------- */
 function ProductDetail({ id }: { id: number }) {
   const p = product(id);
+  const [tab, setTab] = useState("main");
   if (!p) return <Empty title="Товар удалён" />;
   const places = placesOf(id);
+  const director = isDirector(currentUser());
+  // в журнал товара входят и движения: приём, расход, перемещение, пересчёт
+  const moves = db.list("moves").filter((m) => m.product_id === id).map((m) => ({
+    id: -m.id, at: m.at, user: m.by || "", action: "update" as const,
+    text: `${KIND[m.kind]}: ${amount(p, m.qty)}${m.kind === "move" ? `, ${m.from} → ${m.to}` : m.to || m.from ? `, ${m.to || m.from}` : ""}${m.request_id ? `, заказ №${m.request_id}` : m.note ? `, ${m.note}` : ""}`,
+  }));
   return (
     <>
       <DHead eyebrow={`${categoryTitle(p.category)} · ${p.sku}`} title={p.name}>
         <p className="m-0 text-muted">{p.specs}</p>
       </DHead>
+      {director ? <Chips tabs items={[["main", "Основное"], ["log", "Журнал изменений"]]} active={tab} onChange={setTab} /> : null}
+      {tab === "log" && director ? <DSec><AuditLog tables={["products"]} rec={id} extra={moves} note="Все изменения этого товара: цена, минимум, а также приём, расход и перемещения." /></DSec> : <>
       <DSec>
         <Kpis small>
           <Kpi small label="Остаток" value={amount(p, qtyOf(id))} tone={isLow(p) ? "bad" : undefined} />
@@ -310,6 +319,7 @@ function ProductDetail({ id }: { id: number }) {
         <p className="m-0 text-muted text-[13px]">Количество меняется только кнопками «Приём» и «Расход» в разделе «Склад».</p>
       </DSec>
       <DSec title="История приёма и расхода"><LogTable productId={id} /></DSec>
+      </>}
     </>
   );
 }

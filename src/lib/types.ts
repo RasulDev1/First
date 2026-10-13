@@ -72,7 +72,7 @@ export interface Attachment { name: string; type: string; size: number; data: st
 export interface Message { id: number; created_at: string; from_id: number; to_id: number | null; text: string; files?: Attachment[] }
 
 /** Запись журнала изменений: кто, когда и что поменял */
-export interface AuditEntry { id: number; at: string; user: string; table?: TableName; action: "create" | "update" | "delete" | "system"; text: string }
+export interface AuditEntry { id: number; at: string; user: string; table?: TableName; rec?: number; action: "create" | "update" | "delete" | "system"; text: string }
 
 export interface Tables {
   staff: Staff[]; masters: Master[]; requests: Request[]; products: Product[]; stock: StockRow[];

@@ -185,7 +185,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
   const sheetRef = useRef<HTMLElement>(null);
   const warehouse = isWarehouse(user);
   // Склад (складовщик и закупщик) видит все вкладки, но замеры, смету и оплату — только для просмотра
-  const tabs = TABS;
+  const tabs: [string, string][] = isDirector(user) ? [...TABS, ["log", "Журнал изменений"]] : TABS;
   if (!tabs.some(([id]) => id === ui.tab)) ui.tab = "main";
   const tab = ui.tab;
   const h = ui.sheetH ?? 40;
@@ -216,6 +216,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
     : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />
     : tab === "hist" ? <OrderHistory r={r} />
+    : tab === "log" ? <AuditLog tables={["requests"]} rec={r.id} note="Все изменения этого заказа: кто, когда и что поменял." />
     : <SheetMain r={r} user={user} />;
 
   return (
