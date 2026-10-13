@@ -60,7 +60,10 @@ export interface Task {
 }
 
 export interface Client { id: number; created_at: string; name: string; phone: string; note: string }
-export interface Settings { id: number; min_margin: number }
+export interface Settings { id: number; min_margin: number; auto?: Record<string, boolean> }
+
+/** Запись журнала изменений: кто, когда и что поменял */
+export interface AuditEntry { id: number; at: string; user: string; action: "create" | "update" | "delete" | "system"; text: string }
 
 export interface Tables {
   staff: Staff[]; masters: Master[]; requests: Request[]; products: Product[]; stock: StockRow[];
@@ -68,4 +71,4 @@ export interface Tables {
 }
 export type TableName = keyof Tables;
 export type Row<T extends TableName> = Tables[T][number];
-export interface Data extends Tables { version?: number; seq: Partial<Record<TableName, number>> }
+export interface Data extends Tables { version?: number; audit?: AuditEntry[]; seq: Partial<Record<TableName, number>> }

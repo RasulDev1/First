@@ -2,7 +2,9 @@
 // движения склада, задачи, клиенты). Данные лежат в localStorage — общие для всех вкладок этого браузера (CRM и форма заявки);
 // изменения из другой вкладки приходят через событие storage и перерисовывают экран.
 import { useSyncExternalStore } from "react";
-import { STORAGE_PREFIX } from "./core";
+import { STORAGE_PREFIX, storage } from "./core";
+import { addEntries, recordChanges, snapshot, type Snap } from "./audit";
+import { automationTasks } from "./automations";
 import { seed } from "./seed";
 import type { Data, Row, TableName } from "./types";
 
@@ -12,6 +14,7 @@ const TABLES: TableName[] = ["staff", "masters", "requests", "products", "stock"
 let data: Data | null = null;
 let broken = false; // localStorage недоступен или переполнен — работаем в памяти вкладки
 let version = 0;
+let snap: Snap | null = null; // снимок базы для журнала изменений
 const listeners = new Set<() => void>();
 
 function load(): Data {
@@ -23,6 +26,7 @@ function load(): Data {
     } catch { broken = true; }
   }
   if (!data || !TABLES.every((t) => Array.isArray(data![t]))) { data = seed(); persist(); }
+  snap ||= snapshot(data);
   return data;
 }
 
@@ -36,7 +40,23 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
+/** Кто сейчас работает: берём из сессии, чтобы журнал не зависел от экранов */
+function actorName(d: Data) {
+  const session = storage.get<{ id: number } | null>("session", null);
+  return d.staff.find((s) => s.id === session?.id)?.name || "Форма заявки";
+}
+
+function audit() {
+  const d = load();
+  const events = recordChanges(d, snap!, actorName(d));
+  const tasks = automationTasks(d, events);
+  if (!tasks.length) return;
+  for (const t of tasks) db.insertQuiet("tasks", t);
+  recordChanges(d, snap!, "Автоматизация");
+}
+
 function commit() {
+  audit();
   persist();
   notify();
 }
@@ -44,7 +64,7 @@ function commit() {
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (e) => {
     if (e.key !== DB_KEY || !e.newValue) return;
-    try { data = JSON.parse(e.newValue) as Data; notify(); } catch {}
+    try { data = JSON.parse(e.newValue) as Data; snap = snapshot(data); notify(); } catch {}
   });
 }
 
@@ -93,7 +113,21 @@ export const db = {
   save() { commit(); },
   reset() {
     data = seed();
+    snap = snapshot(data);
     broken = false;
+    commit();
+  },
+  exportAudit: () => load().audit || [],
+  /** Вся база одним JSON-файлом: резервная копия */
+  exportJson: () => JSON.stringify(load(), null, 1),
+  /** Восстановление из резервной копии; бросает ошибку, если файл не похож на копию */
+  restore(json: string) {
+    let next: Data;
+    try { next = JSON.parse(json) as Data; } catch { throw new Error("Файл не читается: это не резервная копия CRM."); }
+    if (!next || typeof next !== "object" || !TABLES.every((t) => Array.isArray(next[t]))) throw new Error("В файле нет данных CRM.");
+    data = next;
+    snap = snapshot(data);
+    addEntries(data, [{ at: new Date().toISOString(), user: actorName(data), action: "system", text: "Данные восстановлены из резервной копии" }]);
     commit();
   },
   get persistent() { load(); return !broken; },

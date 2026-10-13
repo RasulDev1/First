@@ -18,7 +18,7 @@ import type { View } from "./types";
 let who = "all"; // руководитель: all или id менеджера (помним между переходами по разделам)
 
 const managers = () => db.list("staff").filter((s) => s.active && s.role === "manager");
-const staffName = (id: unknown) => db.find("staff", id)?.name || "—";
+const staffName = (id: unknown) => (id === 0 ? "Автоматизация" : db.find("staff", id)?.name || "—");
 const isLate = (t: Task) => !t.done_at && Date.parse(t.due) < Date.now();
 
 function groups(list: Task[]) {

@@ -4,9 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CRM Вентиляция",
   description: "CRM для компании по монтажу вентиляции и кондиционеров",
-  icons: { icon: "img/mark.svg" },
+  icons: { icon: "img/mark.svg", apple: "img/icon-192.png" },
+  manifest: "manifest.webmanifest",
+  appleWebApp: { capable: true, title: "CRM", statusBarStyle: "default" },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f8f9fa" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1e3a8a" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
