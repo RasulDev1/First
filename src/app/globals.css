@@ -30,11 +30,6 @@
   --radius-card: 12px;
 }
 
-html[data-font="geist"] {
-  --font-display: "Geist", system-ui, sans-serif;
-  --font-body: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-page text-ink font-body text-[15px] leading-normal font-medium; }
