@@ -218,7 +218,7 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
     <section className={cx(card, "p-5 sm:p-6 flex flex-col gap-4 min-w-0", className)}>
       {title || actions ? (
         <div className="flex items-center justify-between gap-2.5">
-          {title ? <h3 className="font-display text-sm font-semibold leading-tight">{title}</h3> : <span />}
+          {title ? <h3 className="font-display text-sm font-bold leading-tight text-brand">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
