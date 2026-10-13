@@ -84,7 +84,7 @@ function sorted(list: Request[]) {
 }
 
 /** Дата, номер клиента, имя, город, улица — один цвет, включая вложенный текст и иконки (у них свои цвета, их перебиваем) */
-const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#26334F] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#26334F]";
+const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#000612]";
 const LEFT: SortKey[] = ["phone", "city", "street"];
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
