@@ -270,12 +270,12 @@ function Warehouse({ user }: { user: Staff }) {
     setTabState(next);
   };
   const low = db.list("products").filter(isLow).length;
-  const counts: Partial<Record<Tab, number>> = { buy: low, low };
+  const counts: Partial<Record<Tab, number>> = { low };
   return (
     <>
       <Chips tabs items={tabsList.map(([id, label]) => [id, label, counts[id] || undefined] as const)} active={tabsList.some(([t]) => t === tab) ? tab : "stock"} onChange={setTab} />
       <div className="flex flex-col gap-3.5">
-        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? <BuyTab /> : tab === "low" ? <LowTab /> : tab === "changes" ? <AuditLog tables={["products"]} note="Кто, когда и что менял в карточках товаров: цены, минимум, названия." /> : <LogTable />}
+        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? null /* «Закупка» пока пустая, над ней не работаем */ : tab === "low" ? <LowTab /> : tab === "changes" ? <AuditLog tables={["products"]} note="Кто, когда и что менял в карточках товаров: цены, минимум, названия." /> : <LogTable />}
       </div>
     </>
   );
