@@ -1,10 +1,10 @@
 "use client";
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
-import { useEffect, useRef, useState, useSyncExternalStore, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
-import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPencil, IconPin, IconProgress, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
+import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPencil, IconPin, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
-import { dateTime, storage } from "@/lib/core";
+import { dateTime } from "@/lib/core";
 
 export const cx = (...list: (string | false | null | undefined)[]) => list.filter(Boolean).join(" ");
 
@@ -107,19 +107,7 @@ export function Pill({ className, children }: { className?: string; children: Re
     </span>
   );
 }
-/** Вид значка статуса: иконки, «живые» (анимация) или круг прогресса */
-export type StatusStyle = "icons" | "live" | "progress";
-const STYLES: StatusStyle[] = ["icons", "live", "progress"];
-const styleListeners = new Set<() => void>();
-const statusStyle = (): StatusStyle => { const v = storage.get<string>("status_style", "icons") as StatusStyle; return STYLES.includes(v) ? v : "icons"; };
-function setStatusStyle(v: StatusStyle) { storage.set("status_style", v); styleListeners.forEach((f) => f()); }
-function useStatusStyle(): StatusStyle {
-  return useSyncExternalStore((cb) => { styleListeners.add(cb); return () => { styleListeners.delete(cb); }; }, statusStyle, () => "icons");
-}
-const PROGRESS: Record<string, number> = { new: 0, assigned: .125, measure: .25, pricing: .5, in_work: .75, done: 1 };
-function statusIcon(id: string, mode: StatusStyle): ReactNode {
-  if (mode === "progress" && id in PROGRESS) return <IconProgress f={PROGRESS[id]} />;
-  if (mode === "live") {
+function statusIcon(id: string): ReactNode {
     if (id === "new") return <IconSpark className="live-twinkle" />;
     if (id === "assigned") return (
       <span className="relative inline-flex size-3.5 items-center justify-center">
@@ -150,25 +138,13 @@ function statusIcon(id: string, mode: StatusStyle): ReactNode {
       </span>
     );
     if (id === "cancelled") return <IconXCircle className="live-shake" />;
-  }
   return PILL_ICON[id] ?? PILL_ICON.cancelled;
 }
 export function StatusPill({ id }: { id: StatusId | string }) {
-  const mode = useStatusStyle();
   return (
-    <span className={cx("group inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, mode === "live" && id === "cancelled" && "live-fade")}>
-      <span className="inline-flex [&_svg]:size-3.5 [&_svg]:stroke-[1.75]">{statusIcon(id, mode)}</span>{statusTitle(id)}
+    <span className={cx("group inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, id === "cancelled" && "live-fade")}>
+      <span className="inline-flex [&_svg]:size-3.5 [&_svg]:stroke-[1.75]">{statusIcon(id)}</span>{statusTitle(id)}
     </span>
-  );
-}
-/** Переключатель вида значков статусов */
-export function StatusStyleSwitch() {
-  const mode = useStatusStyle();
-  return (
-    <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs text-muted">Значки статусов</span>
-      <Segmented items={[["icons", "Иконки"], ["live", "Живые"], ["progress", "Прогресс"]]} active={mode} onChange={(v) => setStatusStyle(v as StatusStyle)} />
-    </div>
   );
 }
 

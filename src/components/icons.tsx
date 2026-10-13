@@ -20,25 +20,6 @@ export const IconReceipt = ic(<path d="M6 3.5h12v17l-2.5-1.6-2 1.6-1.5-1.6-1.5 1
 export const IconCog = ic(<><path d="M10.23 4.61 L10.64 1.89 L13.36 1.89 L13.77 4.61 L15.97 5.52 L18.19 3.89 L20.11 5.81 L18.48 8.03 L19.39 10.23 L22.11 10.64 L22.11 13.36 L19.39 13.77 L18.48 15.97 L20.11 18.19 L18.19 20.11 L15.97 18.48 L13.77 19.39 L13.36 22.11 L10.64 22.11 L10.23 19.39 L8.03 18.48 L5.81 20.11 L3.89 18.19 L5.52 15.97 L4.61 13.77 L1.89 13.36 L1.89 10.64 L4.61 10.23 L5.52 8.03 L3.89 5.81 L5.81 3.89 L8.03 5.52z" /><circle cx="12" cy="12" r="3" /></>);
 export const IconCheck = ic(<path pathLength={1} d="M5 12.5l4.5 4.5L19 7.5" />);
 
-/** Круг прогресса: доля заполнения 0…1 (1 — закрашенный круг с галочкой) */
-export function IconProgress({ f, className = "" }: { f: number; className?: string }) {
-  const a = f * Math.PI * 2, x = 12 + 5.5 * Math.sin(a), y = 12 - 5.5 * Math.cos(a);
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={`${base} ${className}`}>
-      {f >= 1 ? <><circle cx="12" cy="12" r="9.25" className="fill-current" /><path d="M7.8 12.4l3 3 5.4-6" className="stroke-white" /></> : <>
-        <circle cx="12" cy="12" r="9" />
-        {f > 0 ? <path className="fill-current stroke-none" d={`M12 12V6.5A5.5 5.5 0 ${f > .5 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}z`} /> : null}
-      </>}
-    </svg>
-  );
-}
-/** Мигающая точка «ждёт внимания» */
-export const IconPing = ({ className = "" }: { className?: string }) => (
-  <span aria-hidden="true" className={`relative inline-flex size-3.5 items-center justify-center ${className}`}>
-    <span className="absolute inline-flex size-2.5 rounded-full bg-current opacity-40 animate-ping" />
-    <span className="relative inline-flex size-1.5 rounded-full bg-current" />
-  </span>
-);
 export const IconPin = ic(<><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>);
 export const IconDoc = ic(<><path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5z" /><path pathLength={1} className="l1" d="M9.5 11h5.5" /><path pathLength={1} className="l2" d="M9.5 14h5.5" /><path pathLength={1} className="l3" d="M9.5 17h3.5" /></>);
 export const IconCheckCircle = ic(<><circle cx="12" cy="12" r="9" /><path d="M8 12.4l2.8 2.8 5.2-5.8" /></>);
