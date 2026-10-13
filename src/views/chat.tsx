@@ -14,8 +14,9 @@ const MAX_FILES = 4;
 const MAX_FILE_KB = 700; // файлы хранятся в браузере, поэтому большие не берём; фотографии сжимаются сами
 const kb = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} МБ` : `${Math.max(1, Math.round(n / 1024))} КБ`);
 
-/** Руководителю и мастерам (и стажёрам) могут писать только менеджеры; остальным — любой сотрудник */
-export const canWrite = (from: Staff, to: Staff) => (to.role === "director" || to.role === "master" ? from.role === "manager" : true);
+/** Мастерам и стажёрам могут писать только менеджеры, руководителю — менеджеры и склад (закупщик, складовщик); остальным — любой сотрудник */
+export const canWrite = (from: Staff, to: Staff) =>
+  to.role === "master" ? from.role === "manager" : to.role === "director" ? from.role === "manager" || from.role === "warehouse" : true;
 
 const readFile = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const r = new FileReader();
@@ -214,7 +215,7 @@ function Chat({ user }: { user: Staff }) {
         <button type="submit" disabled={!text.trim() && !files.length} className="px-4 min-h-[42px] rounded-lg border-0 bg-brand text-white font-medium cursor-pointer disabled:opacity-40 disabled:cursor-default">Отправить</button>
       </form>
       </>
-      ) : <p className="m-0 px-4 py-3 border-t border-line text-sm text-muted">Руководителю и мастерам могут писать только менеджеры. Вы можете читать эту переписку.</p>}
+      ) : <p className="m-0 px-4 py-3 border-t border-line text-sm text-muted">Мастерам и стажёрам могут писать только менеджеры. Вы можете читать эту переписку.</p>}
     </div>
   );
 
