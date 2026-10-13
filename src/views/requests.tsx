@@ -286,7 +286,7 @@ function Requests({ user }: { user: Staff }) {
       <Table center>
         <thead>
           <tr>{COLS.map(([key, title]) => (
-            <th key={key}>
+            <th key={key} style={key === "city" || key === "street" ? { textAlign: "left" } : undefined}>
               <button type="button" onClick={() => sortBy(key)}
                 className="bg-transparent border-0 p-0 cursor-pointer uppercase hover:text-ink">
                 {title}{ui.sort.key === key ? <IconArrow up={ui.sort.dir > 0} className="inline size-3 ml-1 -mt-0.5" /> : null}
@@ -304,8 +304,8 @@ function Requests({ user }: { user: Staff }) {
               <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
               <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
               <td><b className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small>{r.client}</small></td>
-              <td className="whitespace-nowrap">{cityOf(r)}</td>
-              <td>{streetOf(r)}</td>
+              <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
+              <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
