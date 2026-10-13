@@ -154,13 +154,12 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
           const n = badge(id, user), current = id === section;
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
-              className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
-                "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
-                current ? "text-brand font-semibold min-[901px]:before:bg-brand" : "text-muted hover:text-heading min-[901px]:before:bg-transparent")}>
+              className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] rounded-lg text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+                current ? "bg-brand text-white font-semibold" : "text-muted hover:text-heading hover:bg-surface-2")}>
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                id === "requests" && !isWarehouse(user) ? "bg-brand text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                current ? "bg-white/20 text-white" : id === "requests" && !isWarehouse(user) ? "bg-brand text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
