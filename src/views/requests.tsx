@@ -12,7 +12,7 @@ import { levelTitle, statusAt } from "@/lib/orders";
 import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
 import { AuditLog } from "@/components/audit-log";
-import { Button, Chips, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
+import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
@@ -240,7 +240,14 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
       <header className="flex items-center gap-x-3.5 gap-y-2.5 flex-wrap px-[clamp(16px,3vw,36px)] py-2 border-b border-line">
         <OrderNo id={r.id} user={user} onOpen={() => openRequest(r.id)}>Заказ №{r.id}</OrderNo>
         <StatusPill id={r.status} />
-        <Chips tabs items={tabs.map(([id, title]) => [id, title] as const)} active={tab} onChange={onTab} />
+        <nav className="flex gap-0.5 flex-wrap">
+          {tabs.map(([id, title]) => (
+            <button key={id} type="button" aria-pressed={id === tab} onClick={() => onTab(id)}
+              className={cx("text-sm font-medium px-3 py-1.5 border-0 border-b-2 bg-transparent cursor-pointer", id === tab ? "text-brand-deep border-brand" : "text-muted border-transparent")}>
+              {title}
+            </button>
+          ))}
+        </nav>
         <span className="ml-auto flex gap-2 items-center"><IconButton aria-label="Закрыть" onClick={onClose} /></span>
       </header>
       <div className="flex-1 overflow-auto px-[clamp(16px,3vw,36px)] pt-3 pb-4 flex flex-col gap-3 [&>button]:self-start">{body}</div>

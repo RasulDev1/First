@@ -210,7 +210,7 @@ function OrderCard({ id }: { id: number }) {
       ) : null}
 
       {/* Разделы карточки: данные, замеры, смета. Скрытые разделы остаются в DOM, чтобы введённое не терялось */}
-      {sections.length > 1 ? <Chips tabs items={sections} active={section} onChange={setSection} /> : null}
+      {sections.length > 1 ? <Chips tabs line items={sections} active={section} onChange={setSection} /> : null}
 
       {/* Замеры и смета вне <form>: у замеров свои формы, вложенная форма отправляла страницу целиком */}
       <div key={`${r.id}-${r.status}-${r.master_id ?? 0}-${r.amount ?? 0}`} className="flex flex-col gap-0">

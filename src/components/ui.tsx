@@ -165,7 +165,24 @@ export function Count({ n, warn }: { n: number; warn?: boolean }) {
 
 /* ---------- Чипы-фильтры и вкладки ---------- */
 export type ChipItem = readonly [id: string | number, label: ReactNode, count?: number];
-export function Chips({ items, active, onChange, tabs }: { items: readonly ChipItem[]; active: string | number; onChange: (id: string) => void; tabs?: boolean }) {
+export function Chips({ items, active, onChange, tabs, line }: { items: readonly ChipItem[]; active: string | number; onChange: (id: string) => void; tabs?: boolean; line?: boolean }) {
+  if (tabs && line) {
+    // Вкладки с подчёркиванием: отдельные кнопки без общей подложки
+    return (
+      <div role="tablist" className="flex overflow-x-auto pb-0.5 gap-0 border-b border-line">
+        {items.map(([id, label, count]) => {
+          const on = String(id) === String(active);
+          return (
+            <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
+              className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-black font-semibold border-brand" : "text-black border-transparent")}>
+              {label}
+              {count != null ? <i className={cx("not-italic tabular-nums", on ? "text-brand-deep" : "text-muted")}>{count}</i> : null}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   if (tabs) {
     // Вкладки: серая подложка, у выбранной синяя плашка
     return (
