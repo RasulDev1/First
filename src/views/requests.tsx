@@ -12,7 +12,7 @@ import { levelTitle, statusAt } from "@/lib/orders";
 import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
 import { AuditLog } from "@/components/audit-log";
-import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
+import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx, phoneCard, usePhone } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
@@ -257,6 +257,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
 /* ---------- Раздел ---------- */
 function RequestsList({ user }: { user: Staff }) {
   const [, refresh] = useReducer((n: number) => n + 1, 0);
+  const phone = usePhone();
   const spaceRef = useRef<HTMLDivElement>(null);
   if (ui.sheetH == null) ui.sheetH = clampH(Number(storage.get("sheetH", 40)) || 40);
   if (ui.sel && !db.find("requests", ui.sel)) ui.sel = null;
@@ -313,6 +314,27 @@ function RequestsList({ user }: { user: Staff }) {
         </div>
       </form>
 
+      {phone ? (
+        list.length ? (
+          <div className="flex flex-col gap-2.5">
+            {list.map((r) => (
+              <div key={r.id} role="button" tabIndex={0} onClick={() => openRequest(r.id)} onKeyDown={(e) => { if (e.key === "Enter") openRequest(r.id); }}
+                className={cx(phoneCard, r.status === "new" && !r.manager_id && "bg-warn-soft/50 shadow-[inset_3px_0_0_var(--color-warn)]")}>
+                <span className="flex items-center justify-between gap-2">
+                  <b className="tabular-nums text-brand font-medium">№{r.id}</b><StatusPill id={r.status} />
+                </span>
+                <b className="tabular-nums font-medium text-heading">{r.phone}</b>
+                <span className="text-sm text-ink-2">{r.client}</span>
+                <span className="text-sm text-ink-2">{streetOf(r)}, {cityOf(r)}</span>
+                <span className="flex items-center justify-between gap-2 text-[13px] text-muted">
+                  <span>{r.manager_id ? staffName(r.manager_id) : "менеджер не назначен"}</span>
+                  <span className="tabular-nums">{dateShort(r.created_at)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : <Empty title="Заказов нет">{filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами."}</Empty>
+      ) : (
       <Table resize widths={[8, 14, 22, 22, 14, 20]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
@@ -344,6 +366,7 @@ function RequestsList({ user }: { user: Staff }) {
           )}
         </tbody>
       </Table>
+      )}
 
       {selected ? (
         <>

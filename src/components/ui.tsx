@@ -163,6 +163,21 @@ export function Count({ n, warn }: { n: number; warn?: boolean }) {
   return <i className={cx("not-italic font-body text-xs font-medium px-2 py-px rounded-full align-[2px]", warn ? "bg-warn-soft text-warn" : "bg-brand text-white")}>{n}</i>;
 }
 
+/* ---------- Телефон ---------- */
+/** Экран уже 900px: таблицы на телефоне заменяем карточками */
+export function usePhone() {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const on = () => setPhone(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
+}
+export const phoneCard = "w-full text-left flex flex-col gap-1.5 p-3.5 bg-surface rounded-card border border-black/[.04] shadow-card cursor-pointer";
+
 /* ---------- Чипы-фильтры и вкладки ---------- */
 export type ChipItem = readonly [id: string | number, label: ReactNode, count?: number];
 export function Chips({ items, active, onChange, tabs, line }: { items: readonly ChipItem[]; active: string | number; onChange: (id: string) => void; tabs?: boolean; line?: boolean }) {

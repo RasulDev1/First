@@ -14,7 +14,7 @@ import { AuditLog } from "@/components/audit-log";
 import type { Move, MoveKind, Product, Staff } from "@/lib/types";
 import {
   ArmedButton, Button, Chips, DHead, DSec, Empty, Field, FormError, Kpi, Kpis, Loc, Note, Options, Table,
-  btnRow, cx, formCol, grid2, rowClickable,
+  btnRow, cx, formCol, grid2, phoneCard, rowClickable, usePhone,
 } from "@/components/ui";
 import { openDrawer, closeDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
@@ -42,10 +42,34 @@ function matches(p: Product, wf: WhFilter) {
 }
 
 function StockRows({ wf }: { wf: WhFilter }) {
+  const phone = usePhone();
   const list = db.list("products").filter((p) => matches(p, wf));
   // Цена в фильтре не отсекает товары, а сортирует: сначала самые близкие к указанной
   if (wf.price) list.sort((a, b) => Math.abs((a.cost || 0) - Number(wf.price)) - Math.abs((b.cost || 0) - Number(wf.price)));
   if (!list.length) return <Empty title="Ничего не нашлось">Измените фильтры.</Empty>;
+  if (phone) return (
+    <div className="flex flex-col gap-2.5">
+      {list.map((p) => {
+        const total = qtyOf(p.id), low = isLow(p);
+        const places = placesOf(p.id).map((s) => s.loc).join(", ");
+        return (
+          <div key={p.id} role="button" tabIndex={0} onClick={() => openProduct(p.id)} onKeyDown={(e) => { if (e.key === "Enter") openProduct(p.id); }}
+            className={cx(phoneCard, low && "bg-bad-soft/40")}>
+            <span className="flex items-start justify-between gap-3">
+              <span className="flex flex-col min-w-0"><b className="text-heading">{p.name}</b><small className="text-[12.5px] text-muted">{p.sku} · {p.specs}</small></span>
+              <span className="flex flex-col items-end flex-none">
+                <b className={cx("tabular-nums", low && "text-bad")}>{amount(p, total)}</b>
+                {low ? <small className="text-[12px] font-bold text-bad">мало</small> : <small className="text-[12px] text-muted">мин. {num(p.min_qty)}</small>}
+              </span>
+            </span>
+            <span className="flex items-center justify-between gap-2 text-[13px] text-muted">
+              <span>{places || "нет на складе"}</span><span className="tabular-nums">{money(p.cost)}</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
   return (
     <Table resize>
       <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th><th className="text-center!">Цена</th></tr></thead>

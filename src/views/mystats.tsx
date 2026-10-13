@@ -5,7 +5,7 @@ import { money, num, dateShort } from "@/lib/core";
 import { db } from "@/lib/db";
 import { bonusFor } from "@/lib/bonus";
 import type { Request, Staff } from "@/lib/types";
-import { Button, Chips, DHead, DSec, Empty, Kpi, Kpis, StatusPill, Table, rowClickable } from "@/components/ui";
+import { Button, Chips, DHead, DSec, Empty, Kpi, Kpis, StatusPill, Table, phoneCard, rowClickable, usePhone } from "@/components/ui";
 import { openDrawer } from "@/components/drawer";
 import { openRequest } from "./requests";
 import type { View } from "./types";
@@ -47,6 +47,7 @@ export function openBonus(managerId: number) {
 }
 
 function MyStats({ user }: { user: Staff }) {
+  const phone = usePhone();
   const [period, setPeriodState] = useState(savedPeriod);
   const setPeriod = (p: number) => { savedPeriod = p; setPeriodState(p); };
   const since = period ? Date.now() - period * 864e5 : 0;
@@ -67,7 +68,20 @@ function MyStats({ user }: { user: Staff }) {
         <Kpi label="Сумма завершённых" value={money(sum(done))} sub={`${num(done.length)} заказов`} />
         <Kpi label={`Зарплата за ${MONTH()}`} value={money(total)} sub="нажмите «Премия», чтобы увидеть из чего" />
       </Kpis>
-      {list.length ? (
+      {list.length && phone ? (
+        <div className="flex flex-col gap-2.5">
+          {list.map((r) => (
+            <div key={r.id} role="button" tabIndex={0} onClick={() => openRequest(r.id)} onKeyDown={(e) => { if (e.key === "Enter") openRequest(r.id); }} className={phoneCard}>
+              <span className="flex items-center justify-between gap-2"><b className="tabular-nums">№{r.id}</b><StatusPill id={r.status} /></span>
+              <span className="text-heading">{r.client}<small className="block text-[12.5px] text-muted">{r.service}</small></span>
+              <span className="flex items-center justify-between gap-2 text-[13px] text-muted">
+                <span className="tabular-nums">{dateShort(r.created_at)}</span>
+                <b className="tabular-nums text-heading">{r.amount ? money(r.amount) : "—"}</b>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : list.length ? (
         <Table resize center widths={[10, 18, 32, 24, 16]}>
           <thead><tr><th>№</th><th>Оформлен</th><th>Клиент</th><th>Статус заказа</th><th>Сумма</th></tr></thead>
           <tbody>
