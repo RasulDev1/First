@@ -53,7 +53,7 @@ function Clients() {
         <Button variant="primary" onClick={() => openForm(null)}>Новый клиент</Button>
       </form>
       <Table resize>
-        <thead><tr><th>Клиент</th><th>Телефон</th><th className="text-right!">Заказов</th><th className="text-right!">Сумма завершённых</th><th>Последний заказ</th></tr></thead>
+        <thead><tr><th>Клиент</th><th>Телефон</th><th className="text-center!">Заказов</th><th className="text-center!">Сумма завершённых</th><th className="text-center!">Последний заказ</th></tr></thead>
         <tbody>
           {list.length ? list.map((c) => {
             const orders = ordersOf(c);
@@ -61,9 +61,9 @@ function Clients() {
               <tr key={c.id} className={rowClickable} tabIndex={0} onClick={() => openClient(c.id)}>
                 <td><b>{c.name}</b></td>
                 <td className="tabular-nums whitespace-nowrap">{c.phone}</td>
-                <td className="text-right tabular-nums">{orders.length}</td>
-                <td className="text-right tabular-nums">{money(doneSum(c))}</td>
-                <td className="tabular-nums whitespace-nowrap">{orders[0] ? dateShort(orders[0].created_at) : "—"}</td>
+                <td className="text-center tabular-nums">{orders.length}</td>
+                <td className="text-center tabular-nums">{money(doneSum(c))}</td>
+                <td className="text-center tabular-nums whitespace-nowrap">{orders[0] ? dateShort(orders[0].created_at) : "—"}</td>
               </tr>
             );
           }) : (
