@@ -35,7 +35,7 @@ const NAV: [string, string, string][] = [
   ["salary", "Зарплата", "M3 7h18v12H3zM3 11h18M16 15h2"],
   ["mystats", "Моя статистика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["myorders", "Мои заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
-  ["staff", "Сотрудники", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6"],
+  ["staff", "Сотрудники", "M3 5h18v14H3zM9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 17v-.5a3 3 0 0 1 6 0V17M15 9h3M15 13h3"],
 ];
 
 function badge(id: string, user: Staff) {
