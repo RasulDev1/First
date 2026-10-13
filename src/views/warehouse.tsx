@@ -47,7 +47,7 @@ function StockRows({ wf }: { wf: WhFilter }) {
   if (!list.length) return <Empty title="Ничего не нашлось">Измените фильтры.</Empty>;
   return (
     <Table resize>
-      <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th><th className={TH_R}>Цена</th></tr></thead>
+      <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th><th className="text-center!">Цена</th></tr></thead>
       <tbody>{list.map((p) => {
         const total = qtyOf(p.id), low = isLow(p);
         const places = placesOf(p.id).map((s) => s.loc).join(", ");
@@ -59,7 +59,7 @@ function StockRows({ wf }: { wf: WhFilter }) {
             <td className="whitespace-nowrap">{places || <span className="text-muted">нет на складе</span>}</td>
             <td className={C}><b>{amount(p, total)}</b>{low ? <small className="text-bad! font-bold!">мало</small> : null}</td>
             <td className={cx(C, "text-muted")}>{num(p.min_qty)}</td>
-            <td className={cx(R, "whitespace-nowrap")}>{money(p.cost)}</td>
+            <td className={cx(C, "whitespace-nowrap")}>{money(p.cost)}</td>
           </tr>
         );
       })}</tbody>
