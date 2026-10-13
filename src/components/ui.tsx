@@ -86,7 +86,7 @@ export const formCol = "flex flex-col gap-3.5";
 // Цвета статусов по этапам: старт, подготовка, работа, архив
 const PILL: Record<string, string> = {
   new: "bg-[#eff6ff] text-[#1e40af]",
-  assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
+  assigned: "bg-[#f0fdfa] text-[#0f766e]", measure: "bg-[#fdf2f8] text-[#be185d]", pricing: "bg-[#fff7ed] text-[#b45309]",
   in_work: "bg-[#f5f3ff] text-[#5b21b6]",
   done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f3f4f6] text-[#4b5563]",
 };
