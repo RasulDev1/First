@@ -4,12 +4,12 @@
 import { useState } from "react";
 import { money, num } from "@/lib/core";
 import { MIN_MARKUP } from "@/lib/config";
-import { clampMarkup, estimateSums, markupFor } from "@/lib/estimate";
+import { clampMarkup, estimateSums, markupFor, syncEstimate } from "@/lib/estimate";
 import { expenseTotal } from "@/lib/stock";
 import type { EstimateLine, Request, Staff } from "@/lib/types";
-import { Kv, cx } from "@/components/ui";
+import { Button, Kv, cx } from "@/components/ui";
 import { toast } from "@/components/toast";
-import { P, muted, small } from "./shared";
+import { P, logBy, muted, save, small } from "./shared";
 
 const pct = (n: number) => `${num(Math.round(n * 10) / 10)}%`;
 
@@ -46,16 +46,30 @@ export function EstimateTable({ lines, markup, expenses }: { lines: EstimateLine
   );
 }
 
-/* ---------- Вкладка «Смета» в нижней панели: только просмотр, наценка меняется в карточке заказа ---------- */
-export function EstimateTab({ r }: { r: Request; user: Staff; readOnly?: boolean }) {
+/* ---------- Вкладка «Смета» в нижней панели: суммы и наценка, новая наценка применяется кнопкой «Сохранить» ---------- */
+export function EstimateTab({ r, user, readOnly }: { r: Request; user: Staff; readOnly?: boolean }) {
+  const [markup, setMarkup] = useState(markupFor(r));
   const e = r.estimate;
   if (!e?.lines?.length) {
     return <p className={cx(P, muted)}>Сметы пока нет. Она появится сама, когда в заказе сохранены замеры.</p>;
   }
+  const closed = readOnly || ["done", "cancelled"].includes(r.status);
+  const apply = () => {
+    if (markup === markupFor(r)) { toast("Изменений нет"); return; }
+    if (!syncEstimate(r, user.name, markup)) return;
+    logBy(r, `Смета: ${money(r.amount || 0)}, наценка ${markup}%`, user);
+    save("Наценка сохранена");
+  };
   return (
     <div className="flex flex-col gap-3">
-      <EstimateTable lines={e.lines} markup={markupFor(r)} expenses={expenseTotal(r)} />
-      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Сумма от замеров и расходов заказа плюс наценка (не ниже {MIN_MARKUP}%). Наценку меняют в карточке заказа.</p>
+      <EstimateTable lines={e.lines} markup={markup} expenses={expenseTotal(r)} />
+      {closed ? null : (
+        <div className="flex flex-row flex-wrap items-end gap-2">
+          <MarkupInput value={markup} onChange={setMarkup} />
+          <Button variant="primary" onClick={apply}>Сохранить</Button>
+        </div>
+      )}
+      <p className={cx(P, muted, small)}>Смета от {new Date(e.at).toLocaleDateString("ru-RU")}{e.by ? `, ${e.by}` : ""}. Сумма от замеров и расходов заказа плюс наценка (не ниже {MIN_MARKUP}%). Новая наценка применяется кнопкой «Сохранить».</p>
     </div>
   );
 }

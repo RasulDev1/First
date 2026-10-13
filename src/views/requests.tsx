@@ -214,7 +214,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
   };
 
   const body = tab === "survey" ? <SurveyView survey={r.survey || { rooms: [], routes: [], photos: [], note: "" }} />
-    : tab === "estimate" ? <EstimateTab r={r} user={user} readOnly={warehouse} />
+    : tab === "estimate" ? <EstimateTab key={r.id} r={r} user={user} readOnly={warehouse} />
     : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />
     : tab === "hist" ? <OrderHistory r={r} />
