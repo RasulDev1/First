@@ -93,12 +93,15 @@ export const STATUS_FILL: Record<string, string> = {
   new: "bg-st-new", assigned: "bg-st-assigned", measure: "bg-st-measure", pricing: "bg-st-pricing",
   in_work: "bg-st-in_work", done: "bg-st-done", cancelled: "bg-st-cancelled",
 };
-/** Вид статусов: «color» — у каждого свой оттенок, «focus» — цвет только у тех, что требуют внимания менеджера */
+/** Вид статусов: «color» — у каждого свой оттенок, «focus» — группы по этапам: старт, подготовка, работа, архив */
 export type StatusStyle = "color" | "focus";
 const FOCUS: Record<string, string> = {
-  new: "bg-[#fff7ed] text-[#9a3412]", done: "bg-[#f8fafc] text-[#94a3b8]",
+  new: "bg-[#eff6ff] text-[#1e40af]",
+  assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
+  in_work: "bg-[#f5f3ff] text-[#5b21b6]",
+  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f9fafb] text-[#6b7280]",
 };
-const FOCUS_NEUTRAL = "bg-[#f1f5f9] text-[#475569]";
+const FOCUS_NEUTRAL = "bg-[#f9fafb] text-[#6b7280]";
 const styleListeners = new Set<() => void>();
 export const statusStyle = (): StatusStyle => (storage.get<string>("status_style", "color") === "focus" ? "focus" : "color");
 export function setStatusStyle(v: StatusStyle) { storage.set("status_style", v); styleListeners.forEach((f) => f()); }
@@ -124,7 +127,7 @@ export function StatusStyleSwitch() {
   return (
     <div className="flex items-center gap-3 mb-3">
       <span className="text-xs text-muted">Вид статусов</span>
-      <Segmented items={[["color", "Цветные"], ["focus", "Только важное"]]} active={mode} onChange={(v) => setStatusStyle(v as StatusStyle)} />
+      <Segmented items={[["color", "Цветные"], ["focus", "По этапам"]]} active={mode} onChange={(v) => setStatusStyle(v as StatusStyle)} />
     </div>
   );
 }
