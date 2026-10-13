@@ -29,6 +29,14 @@ export { openRequest, openNewOrder };
 type SortKey = "updated" | "id" | "created" | "done" | "phone" | "city" | "street" | "status";
 const F0 = { created: "", done: "", phone: "", city: "", street: "", status: "" };
 type Filters = typeof F0;
+/** «13.10.2026» → «2026-10-13»; пока дата набрана не целиком — пусто (фильтр не действует) */
+const isoFromRu = (v: string) => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v.trim()); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; };
+/** Подставляет точки при наборе: 13102026 → 13.10.2026 */
+const maskDate = (v: string) => { const d = v.replace(/\D/g, "").slice(0, 8); return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("."); };
+const DateField = ({ name, value }: { name: string; value: string }) => (
+  <input type="text" inputMode="numeric" name={name} defaultValue={value} placeholder="дд.мм.гггг" maxLength={10} autoComplete="off" className={`${fltCtl} !px-2.5 !text-[13px]`}
+    onChange={(e) => { e.currentTarget.value = maskDate(e.currentTarget.value); }} />
+);
 const ui = {
   sort: { key: "updated" as SortKey, dir: -1 }, // по умолчанию — по последней смене статуса, свежие сверху
   sel: null as number | null,                    // выбранный заказ: открыт в нижней панели
@@ -42,8 +50,9 @@ const ui = {
 function matches(r: Request) {
   const { F, query } = ui;
   const c = localDay(new Date(r.created_at)), d = r.done_at ? localDay(new Date(r.done_at)) : null;
-  if (F.created && c !== F.created) return false;
-  if (F.done && d !== F.done) return false;
+  const fc = isoFromRu(F.created), fd = isoFromRu(F.done);
+  if (fc && c !== fc) return false;
+  if (fd && d !== fd) return false;
   if (F.phone && !r.phone.replace(/\D/g, "").includes(F.phone.replace(/\D/g, "")) && !r.phone.includes(F.phone)) return false;
   if (F.city && !cityOf(r).toLowerCase().replace(/^г\.\s*/, "").includes(F.city.toLowerCase().replace(/^г\.\s*/, ""))) return false;
   if (F.street && !streetOf(r).toLowerCase().includes(F.street.toLowerCase())) return false;
@@ -264,8 +273,8 @@ function Requests({ user }: { user: Staff }) {
       <form key={ui.formKey} onSubmit={find}
         className="grid grid-cols-2 min-[1000px]:grid-cols-12 items-end gap-x-3 gap-y-4 mb-5">
         <Flt span="min-[1000px]:col-span-4" label="Поиск"><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltCtl} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления"><input type="date" name="created" defaultValue={ui.F.created} className={fltCtl} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения"><input type="date" name="done" defaultValue={ui.F.done} className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления"><DateField name="created" value={ui.F.created} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения"><DateField name="done" value={ui.F.done} /></Flt>
         <Flt span="min-[1000px]:col-span-3" label="Номер клиента"><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltCtl} /></Flt>
         <Flt span="min-[1000px]:col-span-2" label="Город">
           <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltCtl} />
