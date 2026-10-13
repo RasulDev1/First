@@ -220,13 +220,15 @@ export function seed(): Data {
     r.history.push({ at: past(at), by: r.survey.by ?? "", text: "Замеры сохранены" });
     const lines = buildEstimate(r, products);
     if (!lines.length) continue;
-    const sum = estimateSums(lines, 0, 40);
-    r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by ?? "", markup: 40 };
-    r.amount = Math.round(sum.total / 100) * 100;
-    r.history.push({ at: past(at + 3600e3), by: r.survey.by ?? "", text: `Смета: ${Math.round(sum.total).toLocaleString("ru-RU")} ₽` });
+    // расходы со склада идут по материалам сметы, а сумма заказа = (замеры + расходы) + наценка 40%
     const spend = r.status === "done" ? lines.filter((l) => l.kind === "mat") : r.status === "in_work" ? lines.filter((l) => l.kind === "mat").slice(0, 3) : [];
     r.expenses = spend.map((l) => ({ product_id: l.product_id!, qty: Math.ceil(l.qty), loc: stock.find((x) => x.product_id === l.product_id)?.loc || null, cost: l.cost,
       at: past(at + DAY), by: DEMO_ACCOUNTS[4].name }));
+    const spent = r.expenses.reduce((n, e) => n + e.qty * (e.cost || 0), 0);
+    const sum = estimateSums(lines, spent, 40);
+    r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by ?? "", markup: 40 };
+    r.amount = Math.round(sum.total / 100) * 100;
+    r.history.push({ at: past(at + 3600e3), by: r.survey.by ?? "", text: `Смета: ${Math.round(sum.total).toLocaleString("ru-RU")} ₽` });
   }
   // Оплаты: завершённые оплачены полностью, в работе — предоплата 50%
   for (const r of requests) {
