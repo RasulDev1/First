@@ -316,11 +316,11 @@ function RequestsList({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap text-[#4A5568]"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.created_at)}</span></td>
-              <td className="tabular-nums whitespace-nowrap text-[#4A5568]">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.done_at)}</span> : <span className="text-[#4A5568]">—</span>}</td>
-              <td className="text-[#4A5568]" style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium "><IconPhone className="size-3.5 " />{r.phone}</b><small className="pl-5 !text-[#4A5568]">{r.client}</small></td>
-              <td className="whitespace-nowrap text-[#4A5568]" style={{ textAlign: "left" }}>{cityOf(r)}</td>
-              <td className="text-[#4A5568]" style={{ textAlign: "left" }}>{streetOf(r)}</td>
+              <td className="tabular-nums whitespace-nowrap text-[#2C3E5C]"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.created_at)}</span></td>
+              <td className="tabular-nums whitespace-nowrap text-[#2C3E5C]">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 " />{dateShort(r.done_at)}</span> : <span className="text-[#2C3E5C]">—</span>}</td>
+              <td className="text-[#2C3E5C]" style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium "><IconPhone className="size-3.5 " />{r.phone}</b><small className="pl-5 !text-[#2C3E5C]">{r.client}</small></td>
+              <td className="whitespace-nowrap text-[#2C3E5C]" style={{ textAlign: "left" }}>{cityOf(r)}</td>
+              <td className="text-[#2C3E5C]" style={{ textAlign: "left" }}>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
