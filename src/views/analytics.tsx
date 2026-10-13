@@ -12,11 +12,11 @@ import { bonusFor } from "@/lib/bonus";
 import type { Request, Staff } from "@/lib/types";
 import { Chips, Segmented, Empty, Kpi, Kpis, Panel, STATUS_FILL, Table, cx, rowClickable } from "@/components/ui";
 import { openBonus } from "./mystats";
-import { AutoTab, ExportTab } from "./data-tools";
+import { ExportTab } from "./data-tools";
 import type { View } from "./types";
 
-type Tab = "orders" | "revenue" | "traffic" | "services" | "buy" | "export" | "auto";
-const savedPeriod: Record<Tab, number> = { orders: 90, revenue: 90, traffic: 90, services: 90, buy: 90, export: 90, auto: 90 }; // дней; 0 — всё время (помним между переходами по разделам)
+type Tab = "orders" | "revenue" | "traffic" | "services" | "buy" | "export";
+const savedPeriod: Record<Tab, number> = { orders: 90, revenue: 90, traffic: 90, services: 90, buy: 90, export: 90 }; // дней; 0 — всё время (помним между переходами по разделам)
 let savedTab: Tab = "orders";
 
 const DAY = 864e5;
@@ -181,7 +181,7 @@ function stats(period: number) {
   return { list, done, cancelled, closed: done.length + cancelled.length, revenue, materials, salaries, net: revenue - materials - salaries, group };
 }
 
-const TABS: readonly (readonly [Tab, string])[] = [["orders", "Заказы"], ["revenue", "Выручка"], ["traffic", "Трафик"], ["services", "Услуги"], ["buy", "Закуп"], ["export", "Копия и выгрузка"], ["auto", "Автоматизации"]];
+const TABS: readonly (readonly [Tab, string])[] = [["orders", "Заказы"], ["revenue", "Выручка"], ["traffic", "Трафик"], ["services", "Услуги"], ["buy", "Закуп"], ["export", "Копия и выгрузка"]];
 const kpiGrid = "grid grid-cols-2 min-[700px]:grid-cols-3 min-[1100px]:grid-cols-5 gap-4";
 const cell = "text-right tabular-nums";
 
@@ -337,13 +337,13 @@ function Buy() {
 
 function Analytics({ user }: { user: Staff }) {
   const director = isDirector(user);
-  const tabs = director ? TABS : TABS.filter(([id]) => id !== "buy" && id !== "export" && id !== "auto");
+  const tabs = director ? TABS : TABS.filter(([id]) => id !== "buy" && id !== "export");
   const [tab, setTabState] = useState<Tab>(tabs.some(([id]) => id === savedTab) ? savedTab : "orders");
   const setTab = (t: string) => { savedTab = t as Tab; setTabState(t as Tab); };
   return (
     <>
       <Chips tabs items={tabs.map(([id, label]) => [id, label] as const)} active={tab} onChange={setTab} />
-      {tab === "orders" ? <Orders /> : tab === "revenue" ? <Revenue director={director} /> : tab === "traffic" ? <Traffic /> : tab === "services" ? <Services /> : tab === "export" ? <ExportTab /> : tab === "auto" ? <AutoTab /> : <Buy />}
+      {tab === "orders" ? <Orders /> : tab === "revenue" ? <Revenue director={director} /> : tab === "traffic" ? <Traffic /> : tab === "services" ? <Services /> : tab === "export" ? <ExportTab /> : <Buy />}
     </>
   );
 }
