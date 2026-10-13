@@ -8,7 +8,7 @@ import { seed, DEMO_PASSWORD } from "../src/lib/seed";
 import { rateOf, payOf, netOf } from "../src/lib/pay";
 import { DEFAULT_RULES, normalizeRule, rulesOf, automationTasks } from "../src/lib/automations";
 import { snapshot, recordChanges } from "../src/lib/audit";
-import { marginOf, markupOf, floorOf, totals, minMargin, setMinMargin } from "../src/lib/estimate";
+import { marginOf, markupOf, floorOf, totals, minMargin, clampMarkup, markupFor, syncEstimate } from "../src/lib/estimate";
 import { isLow, toBuy, qtyOf } from "../src/lib/stock";
 import { stageOf } from "../src/lib/orders";
 
@@ -149,11 +149,48 @@ test("чат: сообщения хранятся в базе", () => {
 });
 
 test("наценка: меньше 25% не сохраняется, больше можно", () => {
-  assert.equal(setMinMargin(10), 25);
   assert.equal(minMargin(), 25);
-  assert.equal(setMinMargin("abc"), 25);
-  assert.equal(setMinMargin(40), 40);
-  assert.equal(minMargin(), 40);
-  assert.equal(floorOf(100), 140);
-  assert.equal(setMinMargin(9999), 300);
+  assert.equal(clampMarkup(10), 25);
+  assert.equal(clampMarkup("abc"), 25);
+  assert.equal(clampMarkup(40), 40);
+  assert.equal(clampMarkup(9999), 300);
+  assert.equal(floorOf(100), 125);
+});
+
+function surveyRequest() {
+  const r = db.list("requests")[0];
+  r.survey = { rooms: [{ name: "Кухня", area: 12, height: 2.7, ac: false }], routes: [{ name: "Кухня → улица", diameter: 160, length: 6, bends: 2 }], photos: [], note: "", saved: true };
+  r.estimate = undefined; r.amount = 0;
+  return r;
+}
+
+test("смета считается сама из замеров и ставит стоимость работы", () => {
+  const r = surveyRequest();
+  assert.equal(syncEstimate(r, "Тест"), true);
+  assert.ok(r.estimate!.lines.some((l) => l.kind === "mat") && r.estimate!.lines.some((l) => l.kind === "work"));
+  assert.equal(r.amount, Math.round(totals(r.estimate!.lines).total));
+  assert.equal(markupFor(r), 40, "по умолчанию 40%");
+});
+
+test("смета: изменили замеры — изменилась смета", () => {
+  const r = surveyRequest();
+  syncEstimate(r, "Тест");
+  const before = r.amount!;
+  r.survey!.routes[0].length = 20;
+  syncEstimate(r, "Тест");
+  assert.ok(r.amount! > before);
+  r.survey!.routes = []; r.survey!.rooms = [];
+  assert.equal(syncEstimate(r, "Тест"), false, "без замеров смета не трогается");
+});
+
+test("смета: наценка влияет на цену материалов и не опускается ниже 25%", () => {
+  const r = surveyRequest();
+  syncEstimate(r, "Тест", 40);
+  const at40 = r.amount!;
+  syncEstimate(r, "Тест", 60);
+  assert.ok(r.amount! > at40);
+  syncEstimate(r, "Тест", 5);
+  assert.equal(r.estimate!.markup, 25);
+  for (const l of r.estimate!.lines.filter((x) => x.kind === "mat" && x.cost > 0)) assert.ok(l.price >= floorOf(l.cost) - 10, l.name);
+  assert.equal(markupFor(r), 25);
 });

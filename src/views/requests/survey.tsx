@@ -20,6 +20,7 @@ export function SurveyView({ survey: s, edit }: { survey: Survey; edit?: SurveyE
 
   const addRoom = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // форма замеров лежит внутри формы карточки: не сохранять карточку целиком
     if (!edit) return;
     const form = e.currentTarget, fd = new FormData(form);
     const area = Number(fd.get("area")), height = Number(fd.get("height")), name = formValue(fd, "name");
@@ -28,6 +29,7 @@ export function SurveyView({ survey: s, edit }: { survey: Survey; edit?: SurveyE
   };
   const addRoute = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // форма замеров лежит внутри формы карточки: не сохранять карточку целиком
     if (!edit) return;
     const form = e.currentTarget, fd = new FormData(form);
     const length = Number(fd.get("length")), name = formValue(fd, "name");

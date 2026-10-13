@@ -221,7 +221,7 @@ export function seed(): Data {
     const lines = buildEstimate(r, products);
     if (!lines.length) continue;
     const sum = totals(lines);
-    r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by ?? "" };
+    r.estimate = { lines, at: past(at + 3600e3), by: r.survey.by ?? "", markup: 40 };
     r.amount = Math.round(sum.total / 100) * 100;
     r.history.push({ at: past(at + 3600e3), by: r.survey.by ?? "", text: `Смета: ${Math.round(sum.total).toLocaleString("ru-RU")} ₽` });
     const spend = r.status === "done" ? lines.filter((l) => l.kind === "mat") : r.status === "in_work" ? lines.filter((l) => l.kind === "mat").slice(0, 3) : [];

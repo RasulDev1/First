@@ -14,7 +14,7 @@ import type { Request, Staff } from "@/lib/types";
 import { AuditLog } from "@/components/audit-log";
 import { Button, Chips, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
-import { EstimateTab, openEstimate } from "./requests/estimate";
+import { EstimateTab } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
 import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
@@ -211,9 +211,8 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
     grip.addEventListener("pointercancel", stop);
   };
 
-  const estOpen = () => { if (allowed(r, user)) openEstimate(r.id); };
   const body = tab === "survey" ? <SurveyView survey={r.survey || { rooms: [], routes: [], photos: [], note: "" }} />
-    : tab === "estimate" ? <EstimateTab r={r} user={user} onOpen={estOpen} readOnly={warehouse} />
+    : tab === "estimate" ? <EstimateTab r={r} user={user} readOnly={warehouse} />
     : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />
     : tab === "hist" ? <OrderHistory r={r} />

@@ -1,26 +1,24 @@
-// Автосмета: из замера считаются материалы (по складу) и работы (по прайсу). Менеджер правит количество и цены,
-// внизу видны итог, прибыль и наценка. Ниже минимальной наценки (не меньше 25%) менеджер цену опустить не может — её задаёт руководитель.
+// Автосмета: из замеров сама считаются материалы (по складу) и работы (по прайсу), смета пересчитывается при любой правке замеров.
+// Менеджер управляет только наценкой на материалы (не ниже 25%): цену ниже закупки плюс наценка поставить нельзя.
 import { MARKUP, MIN_MARKUP, WORKS } from "./config";
 import { db } from "./db";
 import { surveyOf } from "./survey";
 import { expenseTotal } from "./stock";
 import type { EstimateLine, Product, Request } from "./types";
 
-/** Наценка = (цена − закупка) / закупка; ниже MIN_MARKUP её опускать нельзя (в базе хранится в поле min_margin) */
-export const minMargin = () => Math.max(MIN_MARKUP, Number(db.list("settings")[0]?.min_margin ?? MIN_MARKUP));
-export function setMinMargin(value: unknown) {
-  const v = Math.min(300, Math.max(MIN_MARKUP, Number(value) || MIN_MARKUP));
-  const row = db.list("settings")[0];
-  if (row) db.patch("settings", row.id, { min_margin: v }); else db.insert("settings", { min_margin: v });
-  return v;
-}
+/** Наценка = (цена − закупка) / закупка; ниже MIN_MARKUP её опускать нельзя */
+export const minMargin = () => MIN_MARKUP;
+/** Наценка, которую можно сохранить: от 25% до 300% */
+export const clampMarkup = (value: unknown) => Math.min(300, Math.max(MIN_MARKUP, Number(value) || MIN_MARKUP));
+/** Наценка заказа; пока менеджер её не менял — наценка по умолчанию */
+export const markupFor = (r: Pick<Request, "estimate">) => clampMarkup(r.estimate?.markup ?? MARKUP);
 
 /** Маржа = прибыль / цена продажи */
 export const marginOf = (price: number, cost: number) => (price > 0 ? ((price - cost) / price) * 100 : 0);
 export const markupOf = (price: number, cost: number) => (cost > 0 ? ((price - cost) / cost) * 100 : 0);
 /** Самая низкая цена строки при минимальной наценке: закупка × (1 + наценка) */
 export const floorOf = (cost: number, m = minMargin()) => (cost > 0 ? Math.ceil(cost * (1 + m / 100) - 1e-9) : 0);
-const retail = (cost: number) => Math.round((cost * (1 + MARKUP / 100)) / 10) * 10;
+const retail = (cost: number, markup = MARKUP) => Math.round((cost * (1 + markup / 100)) / 10) * 10;
 
 export const lineSum = (l: EstimateLine) => l.qty * l.price;
 export const lineCost = (l: EstimateLine) => l.qty * (l.cost || 0);
@@ -44,14 +42,14 @@ const AC_SPLIT = (area: number) => (area <= 25 ? "SPL-09" : area <= 35 ? "SPL-12
 
 let seq = 0;
 const nextId = () => `l${Date.now().toString(36)}${++seq}`;
-export function materialLine(p: Product, qty: number): EstimateLine {
-  return { id: nextId(), kind: "mat", product_id: p.id, name: p.name, unit: p.unit, qty, cost: p.cost || 0, price: retail(p.cost || 0) };
+export function materialLine(p: Product, qty: number, markup = MARKUP): EstimateLine {
+  return { id: nextId(), kind: "mat", product_id: p.id, name: p.name, unit: p.unit, qty, cost: p.cost || 0, price: retail(p.cost || 0, markup) };
 }
 export function workLine(w: (typeof WORKS)[number], qty: number): EstimateLine {
   return { id: nextId(), kind: "work", work: w.id, name: w.name, unit: w.unit, qty, cost: 0, price: w.price };
 }
 
-export function buildEstimate(r: Pick<Request, "survey">, products: Product[] = db.list("products")) {
+export function buildEstimate(r: Pick<Request, "survey">, products: Product[] = db.list("products"), markup = MARKUP) {
   const bySku = (sku: string) => products.find((p) => p.sku === sku);
   const s = surveyOf(r), mats = new Map<string, { p: Product; qty: number }>(), works = new Map<string, number>();
   const mat = (sku: string, qty: number) => { const p = bySku(sku); if (p && qty > 0) mats.set(sku, { p, qty: (mats.get(sku)?.qty || 0) + qty }); };
@@ -81,9 +79,18 @@ export function buildEstimate(r: Pick<Request, "survey">, products: Product[] = 
     work("ac_route", 5);
   }
   if (s.rooms.length || s.routes.length) work("visit", 1);
-  return [...[...mats.values()].map(({ p, qty }) => materialLine(p, qty)),
+  return [...[...mats.values()].map(({ p, qty }) => materialLine(p, qty, markup)),
     ...WORKS.filter((w) => works.has(w.id)).map((w) => workLine(w, Math.round(works.get(w.id)! * 10) / 10))];
 }
 
-/** Шаги мастера автосметы */
-export const STEPS = [["survey", "Замер"], ["mat", "Материалы"], ["work", "Работы"], ["sum", "Итог"]] as const;
+/** Смета заказа считается сама из замеров; менеджер задаёт только наценку на материалы.
+ * Вызывается при сохранении замеров и наценки: обновляет смету и стоимость работы. false — в замерах нет помещений и трасс. */
+export function syncEstimate(r: Request, by: string, markup = markupFor(r), survey = r.survey): boolean {
+  const s = survey || { rooms: [], routes: [], photos: [], note: "" };
+  if (!s.rooms.length && !s.routes.length) return false;
+  const lines = buildEstimate({ survey: s }, db.list("products"), clampMarkup(markup));
+  if (!lines.length) return false;
+  r.estimate = { lines, at: new Date().toISOString(), by, markup: clampMarkup(markup) };
+  r.amount = Math.round(totals(lines).total);
+  return true;
+}

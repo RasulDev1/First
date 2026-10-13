@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { currentUser, isDirector, isWarehouse } from "@/lib/auth";
 import { ensureClient, findByPhone } from "@/lib/clients";
 import { pushComment } from "@/lib/comments";
-import { minAmount, minMargin } from "@/lib/estimate";
+import { buildEstimate, markupFor, minAmount, minMargin, syncEstimate } from "@/lib/estimate";
 import { emptySurvey, touch } from "@/lib/survey";
 import { PAY_METHODS, levelTitle, setStatus, stageOf } from "@/lib/orders";
 import type { Request, Staff, Survey } from "@/lib/types";
@@ -19,6 +19,7 @@ import { closeDrawer, openDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
 import { openClient } from "../clients";
 import { SurveyView } from "./survey";
+import { EstimateTable, MarkupInput } from "./estimate";
 import { Expenses, GuardButton, P, allowed, inlineForm, logBy, masterName, muted, orderNo, save, cityOf, streetOf, small, staffName, useGuard } from "./shared";
 
 /** Менеджер не может поставить сумму ниже закупки плюс минимальная наценка; руководитель может */
@@ -41,7 +42,8 @@ export function saveAmount(r: Request, value: unknown, user: Staff) {
 
 /* ---------- Замеры: черновик в карточке ---------- */
 const surveyKey = (sv: Survey = emptySurvey()) => JSON.stringify([sv.rooms, sv.routes, sv.photos, (sv.note || "").trim()]);
-const surveyOpen = (r: Request) => !r.survey?.saved && r.status !== "cancelled";
+/** Замеры можно править, пока заказ не закрыт: смета пересчитается сама */
+const surveyOpen = (r: Request) => !["done", "cancelled"].includes(r.status);
 
 /* ---------- Складовщик: заказ без цен и контактов ---------- */
 function WarehouseCard({ r, user }: { r: Request; user: Staff }) {
@@ -85,6 +87,7 @@ function OrderCard({ id }: { id: number }) {
   const user = currentUser();
   const r0 = db.find("requests", id);
   const [draft, setDraft] = useState<Survey>(() => structuredClone(r0?.survey || emptySurvey()));
+  const [markup, setMarkup] = useState(() => (r0 ? markupFor(r0) : 40));
   const [error, setError] = useState("");
   const gSave = useGuard(user ?? ({} as Staff));
   if (!user) return null;
@@ -100,6 +103,9 @@ function OrderCard({ id }: { id: number }) {
   const pricing = pricingStage(r);
   const showSurvey = pricing && surveyOpen(r);
   const surveyDirty = surveyKey(draft) !== surveyKey(r.survey);
+  // смета в карточке: пока замеры открыты — по черновику замеров (меняется сразу), потом — сохранённая
+  const estimateLines = showSurvey ? buildEstimate({ survey: draft }, db.list("products"), markup) : (r.estimate?.lines || []);
+  const markupKey = r.estimate?.at ?? "";
 
   const editSurvey = (fn: (s: Survey) => void) => {
     if (!allowed(r, user)) return false;
@@ -142,9 +148,12 @@ function OrderCard({ id }: { id: number }) {
     const assigning = !r.master_id && masterId != null;
     const amountChanged = amount !== (r.amount || 0);
     const surveyChanged = showSurvey && (surveyDirty || !r.survey?.saved) && (draft.rooms.length > 0 || draft.routes.length > 0 || draft.photos.length > 0 || Boolean(draft.note?.trim()));
-    if (!changed && !assigning && !amountChanged && !surveyChanged) { toast("Изменений нет"); return; }
+    const markupChanged = markup !== markupFor(r);
+    if (!changed && !assigning && !amountChanged && !surveyChanged && !markupChanged) { toast("Изменений нет"); return; }
     if (!v.client || !v.phone || !v.street) { setError("Заполните имя, телефон и адрес"); return; }
-    if (amountChanged && !amountAllowed(r, amount, user)) return;
+    // смета пересчитывается сама и ставит стоимость работы: вручную введённая сумма в этот момент не нужна
+    const reprice = surveyChanged || (markupChanged && Boolean(r.survey?.rooms.length || r.survey?.routes.length));
+    if (amountChanged && !reprice && !amountAllowed(r, amount, user)) return;
     if (!gSave.check(r)) return;
     setError("");
     if (changed) {
@@ -165,7 +174,9 @@ function OrderCard({ id }: { id: number }) {
       logBy(r, "Замеры сохранены", user);
       if (["assigned", "measure"].includes(r.status)) setStatus(r, "pricing", user.name);
     }
-    if (amountChanged) {
+    if (reprice && syncEstimate(r, user.name, markup)) {
+      logBy(r, `Смета: ${money(r.amount || 0)}, наценка ${markup}%`, user);
+    } else if (amountChanged) {
       r.amount = amount;
       logBy(r, `Стоимость работы: ${money(amount)}`, user);
     }
@@ -191,7 +202,9 @@ function OrderCard({ id }: { id: number }) {
         <DSec callout><p className="m-0"><b>Мастер сделал замеры</b> ({dateTime(r.measured_at)}). Впишите замеры и стоимость работы и нажмите «Сохранить».</p></DSec>
       ) : null}
 
-      <form key={`${r.id}-${r.status}-${r.master_id ?? 0}`} onSubmit={submit} className="flex flex-col gap-0">
+      {/* Замеры и смета вне <form>: у замеров свои формы, вложенная форма отправляла страницу целиком */}
+      <div key={`${r.id}-${r.status}-${r.master_id ?? 0}-${r.amount ?? 0}`} className="flex flex-col gap-0">
+      <form id="order-form" onSubmit={submit} className="contents">
         <DSec>
           <div className={cx(grid2, big)}>
             <Field label="Город"><input name="city" maxLength={60} defaultValue={bareCity(r)} placeholder="Город" /></Field>
@@ -233,16 +246,25 @@ function OrderCard({ id }: { id: number }) {
             <p className={cx(P, muted, small)}>Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
           </DSec>
         ) : null}
+      </form>
 
         {showSurvey ? <DSec title="Замеры"><SurveyView survey={draft} edit={editSurvey} /></DSec> : null}
+
+        {pricing && estimateLines.length ? (
+          <DSec title="Смета">
+            <p className={cx(P, muted, small)}>Считается сама из замеров и меняется вместе с ними. Менеджер задаёт только наценку на материалы.</p>
+            <EstimateTable lines={estimateLines} markup={markup} />
+            {closed ? null : <div className={inlineForm}><MarkupInput key={markupKey} value={markup} onChange={setMarkup} /></div>}
+          </DSec>
+        ) : null}
 
         <FormError>{error}</FormError>
         {closed ? null : (
           <div className="sticky bottom-0 z-2 flex justify-end py-3 bg-linear-to-t from-surface from-70% to-transparent">
-            <GuardButton g={gSave} variant="primary" size="big" type="submit">Сохранить</GuardButton>
+            <GuardButton g={gSave} variant="primary" size="big" type="submit" form="order-form">Сохранить</GuardButton>
           </div>
         )}
-      </form>
+      </div>
 
       {isDirector(user) ? (
         <DSec title="Ответственный менеджер">

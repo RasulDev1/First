@@ -27,7 +27,7 @@ export interface EstimateLine {
   id: string; kind: "mat" | "work"; product_id?: number; work?: string;
   name: string; unit: string; qty: number; cost: number; price: number;
 }
-export interface Estimate { lines: EstimateLine[]; at: string; by: string }
+export interface Estimate { lines: EstimateLine[]; at: string; by: string; markup?: number }
 
 export interface Payment { sum: number; method: string; note?: string; at: string | null; by?: string }
 export interface Expense { product_id: number; qty: number; loc: string | null; cost: number; note?: string; at: string; by: string }
