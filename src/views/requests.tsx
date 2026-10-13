@@ -109,7 +109,7 @@ function Flt({ label, span, icon, children }: { label: string; span: string; ico
 }
 
 /* ---------- Нижняя панель выбранного заказа ---------- */
-const TABS: [string, string][] = [["main", "Основное"], ["survey", "Замеры"], ["estimate", "Смета"], ["pay", "Оплата"], ["exp", "Расходы"], ["hist", "История"]];
+const TABS: [string, string][] = [["main", "Основное"], ["survey", "Замеры"], ["estimate", "Смета"], ["pay", "Оплата"], ["exp", "Расходы"], ["hist", "История изменений"]];
 const clampH = (vh: number) => Math.round(Math.min(90, Math.max(15, vh)));
 
 function SheetMain({ r, user }: { r: Request; user: Staff }) {
@@ -189,7 +189,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
   const sheetRef = useRef<HTMLElement>(null);
   const warehouse = isWarehouse(user);
   // Склад (складовщик и закупщик) видит все вкладки, но замеры, смету и оплату — только для просмотра
-  const tabs: [string, string][] = [...TABS, ["log", "Журнал изменений"]];
+  const tabs: [string, string][] = TABS;
   if (!tabs.some(([id]) => id === ui.tab)) ui.tab = "main";
   const tab = ui.tab;
   const h = ui.sheetH ?? 40;
@@ -219,8 +219,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
     : tab === "estimate" ? <EstimateTab key={r.id} r={r} user={user} readOnly={warehouse} />
     : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />
-    : tab === "hist" ? <OrderHistory r={r} />
-    : tab === "log" ? <AuditLog tables={["requests"]} rec={r.id} note="Все изменения этого заказа: кто, когда и что поменял." />
+    : tab === "hist" ? <><OrderHistory r={r} /><AuditLog tables={["requests"]} rec={r.id} note="Все изменения этого заказа: кто, когда и что поменял." /></>
     : <SheetMain r={r} user={user} />;
 
   return (
@@ -327,7 +326,7 @@ function RequestsList({ user }: { user: Staff }) {
         </thead>
         <tbody>
           {list.length ? list.map((r) => (
-            <tr key={r.id} className={cx(ORDER_NO, r.id === ui.sel && "[&>td]:bg-brand-soft")}
+            <tr key={r.id} className={cx(ORDER_NO, r.id === ui.sel ? "[&>td]:bg-brand-soft" : r.status === "new" && !r.manager_id && "[&>td]:bg-warn-soft/50 [&>td:first-child]:shadow-[inset_3px_0_0_var(--color-warn)]")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>

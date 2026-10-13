@@ -33,10 +33,20 @@ const Muted = ({ children }: { children: ReactNode }) => <p className="m-0 text-
 const ReqRow = ({ r, side }: { r: Request; side: ReactNode }) =>
   <MiniRow main={`№${r.id} · ${r.client}`} sub={`${r.service} · ${r.address}`} side={side} onClick={() => openRequest(r.id)} />;
 
-function VisitsPanel({ list, title }: { list: Request[]; title: string }) {
+const visitsOf = (list: Request[]) => {
   const today = localDay(new Date()), tomorrow = localDay(new Date(Date.now() + DAY));
-  const visits = list.filter((r) => ACTIVE.includes(r.status) && r.visit_at && [today, tomorrow].includes(localDay(new Date(r.visit_at))))
+  return list.filter((r) => ACTIVE.includes(r.status) && r.visit_at && [today, tomorrow].includes(localDay(new Date(r.visit_at))))
     .sort(byTime("visit_at"));
+};
+
+/** Когда выездов нет, вместо пустой карточки — одна спокойная строка */
+const NoVisits = ({ title }: { title: string }) => (
+  <p className="m-0 px-4 py-2.5 rounded-card bg-surface border border-black/[.04] text-sm text-muted"><b className="font-semibold text-heading">{title}:</b> выездов на сегодня и завтра нет.</p>
+);
+
+function VisitsPanel({ list, title }: { list: Request[]; title: string }) {
+  const today = localDay(new Date());
+  const visits = visitsOf(list);
   return (
     <Panel title={title}>
       {visits.length ? <MiniList>{visits.map((r) => (
@@ -85,6 +95,35 @@ function StockPanel() {
   );
 }
 
+/** Полоса «Требует внимания»: что директору нужно сделать сегодня, и кнопка к каждому делу */
+function Attention() {
+  const fresh = db.list("requests").filter((r) => r.status === "new" && !r.manager_id).length;
+  const late = db.list("tasks").filter((t) => !t.done_at && Date.parse(t.due) < Date.now()).length;
+  const empty = db.list("products").filter((p) => qtyOf(p.id) <= 0).length;
+  const items: { n: number; label: string; act: string; to: string }[] = [
+    { n: fresh, label: "Новые заказы без менеджера", act: "Назначить менеджера", to: "requests" },
+    { n: late, label: "Просроченные задачи", act: "Открыть задачи", to: "tasks" },
+    { n: empty, label: "Товары закончились", act: "Открыть склад", to: "warehouse" },
+  ].filter((i) => i.n > 0);
+  return (
+    <Panel title="Требует вашего внимания сегодня">
+      {items.length ? (
+        <div className="grid grid-cols-1 min-[901px]:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
+          {items.map((i) => (
+            <div key={i.to} className="flex items-center gap-3 px-4 py-3 rounded-card bg-warn-soft/60 border border-warn/20">
+              <b className="font-display text-[28px] leading-none tabular-nums text-warn">{i.n}</b>
+              <span className="flex flex-col gap-1.5 min-w-0 items-start">
+                <span className="text-sm font-medium text-heading leading-tight">{i.label}</span>
+                <button type="button" onClick={() => go(i.to)} className="p-0 border-0 bg-transparent cursor-pointer text-[13px] font-semibold text-brand hover:underline underline-offset-2">{i.act} →</button>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : <Muted>Всё под контролем: срочных дел нет.</Muted>}
+    </Panel>
+  );
+}
+
 const grid = "grid grid-cols-1 min-[901px]:grid-cols-2 gap-3.5";
 
 function Home({ user }: { user: Staff }) {
@@ -119,12 +158,13 @@ function Home({ user }: { user: Staff }) {
 
   const month = requests.filter((r) => Date.parse(r.created_at) >= Date.now() - 30 * DAY);
   const done = month.filter((r) => r.status === "done");
+  const compact = isDirector(user); // у директора плитки — справка под полосой внимания, поэтому мельче
   const kpis = (
-    <Kpis>
-      <Kpi label="Новые заказы" value={requests.filter((r) => r.status === "new").length} />
-      <Kpi label="Заказы в работе" value={requests.filter((r) => ACTIVE.includes(r.status)).length} />
-      <Kpi label="Заказов за 30 дней" value={month.length} sub={`${done.length} выполнено`} />
-      <Kpi label="Продажи за 30 дней" value={money(done.reduce((n, r) => n + (r.amount || 0), 0))} sub="по выполненным" tone="accent" />
+    <Kpis small={compact}>
+      <Kpi small={compact} label="Новые заказы" value={requests.filter((r) => r.status === "new").length} />
+      <Kpi small={compact} label="Заказы в работе" value={requests.filter((r) => ACTIVE.includes(r.status)).length} />
+      <Kpi small={compact} label="Заказов за 30 дней" value={month.length} sub={`${done.length} выполнено`} />
+      <Kpi small={compact} label="Продажи за 30 дней" value={money(done.reduce((n, r) => n + (r.amount || 0), 0))} sub="по выполненным" tone="accent" />
     </Kpis>
   );
 
@@ -146,12 +186,15 @@ function Home({ user }: { user: Staff }) {
     );
   }
 
+  const visitsTitle = "Выезды мастеров сегодня и завтра";
+  const noVisits = !visitsOf(requests).length;
   return (
     <>
-      {hello}{kpis}
+      {hello}<Attention />{kpis}
+      {noVisits ? <NoVisits title={visitsTitle} /> : null}
       <div className={grid}>
         <NewPanel requests={requests} />
-        <VisitsPanel list={requests} title="Выезды мастеров сегодня и завтра" />
+        {noVisits ? null : <VisitsPanel list={requests} title={visitsTitle} />}
         <TasksPanel list={db.list("tasks")} title="Задачи менеджеров" user={user} />
         <StockPanel />
       </div>
