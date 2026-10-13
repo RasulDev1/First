@@ -39,3 +39,5 @@ export const IconPing = ({ className = "" }: { className?: string }) => (
     <span className="relative inline-flex size-1.5 rounded-full bg-current" />
   </span>
 );
+export const IconPin = ic(<><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>);
+export const IconDoc = ic(<><path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5z" /><path className="l1" d="M9.5 11h5.5" /><path className="l2" d="M9.5 14h5.5" /><path className="l3" d="M9.5 17h3.5" /></>);

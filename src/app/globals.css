@@ -50,9 +50,23 @@
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-/* Галочка «Завершён» прорисовывается */
+/* «Живые» значки статусов */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.draw-check path { stroke-dasharray: 1; animation: draw .7s ease-out both; }
-@media (prefers-reduced-motion: reduce) { .draw-check path, .animate-ping, .animate-spin-slow { animation: none; } }
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .6; } 50% { transform: scale(1.13); opacity: 1; } }
+@keyframes rise { from { transform: translateY(3px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sway { 0%, 78%, 100% { transform: rotate(0); } 83% { transform: rotate(5deg); } 90% { transform: rotate(-5deg); } 96% { transform: rotate(0); } }
+@keyframes blink { 0%, 100% { opacity: .25; } 20%, 40% { opacity: 1; } 60% { opacity: .25; } }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
-.animate-spin-slow { animation: spin-slow 4s linear infinite; }
+@keyframes fade-half { to { opacity: .5; } }
+.draw-check path { stroke-dasharray: 1; animation: draw .4s ease-out both; }
+.live-breathe { animation: breathe 4s ease-in-out infinite; }
+.live-rise { animation: rise .5s ease-out both; }
+.live-sway { transform-origin: 50% 90%; animation: sway 5s ease-in-out infinite; }
+.live-lines path.l1, .live-lines path.l2, .live-lines path.l3 { animation: blink 3s ease-in-out infinite; }
+.live-lines path.l2 { animation-delay: .5s; }
+.live-lines path.l3 { animation-delay: 1s; }
+.animate-spin-slow { animation: spin-slow 9s linear infinite; }
+.live-fade { animation: fade-half .5s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .draw-check path, .live-breathe, .live-rise, .live-sway, .live-lines path, .animate-spin-slow, .live-fade, .animate-ping { animation: none; }
+}
