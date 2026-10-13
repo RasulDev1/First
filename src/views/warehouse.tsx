@@ -29,6 +29,7 @@ const saved: { tab: Tab; wf: WhFilter } = { tab: "stock", wf: { ...WF0 } }; // �
 const amount = (p: Product | null | undefined, n: unknown) => `${num(n)} ${p?.unit || ""}`;
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const R = "text-right tabular-nums";
+const C = "text-center tabular-nums";
 const TH_R = "text-right!";
 
 /* ---------- Остатки ---------- */
@@ -46,7 +47,7 @@ function StockRows({ wf }: { wf: WhFilter }) {
   if (!list.length) return <Empty title="Ничего не нашлось">Измените фильтры.</Empty>;
   return (
     <Table resize>
-      <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th><th className={TH_R}>Цена</th></tr></thead>
+      <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th><th className={TH_R}>Цена</th></tr></thead>
       <tbody>{list.map((p) => {
         const total = qtyOf(p.id), low = isLow(p);
         const places = placesOf(p.id).map((s) => s.loc).join(", ");
@@ -56,8 +57,8 @@ function StockRows({ wf }: { wf: WhFilter }) {
             <td><b>{p.name}</b><small>{p.sku} · {p.specs}</small></td>
             <td>{categoryTitle(p.category)}</td>
             <td className="whitespace-nowrap">{places || <span className="text-muted">нет на складе</span>}</td>
-            <td className={R}><b>{amount(p, total)}</b>{low ? <small className="text-bad! font-bold!">мало</small> : null}</td>
-            <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
+            <td className={C}><b>{amount(p, total)}</b>{low ? <small className="text-bad! font-bold!">мало</small> : null}</td>
+            <td className={cx(C, "text-muted")}>{num(p.min_qty)}</td>
             <td className={cx(R, "whitespace-nowrap")}>{money(p.cost)}</td>
           </tr>
         );
@@ -183,12 +184,12 @@ function BuyTab() {
     <>
       <p className="m-0 text-ink-2 max-w-[70ch]">Позиции ниже минимального остатка. Предлагаем докупить до двойного минимума.</p>
       <Table resize>
-        <thead><tr><th>Наименование</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th><th className={TH_R}>Купить</th><th className={TH_R}>Закупка</th></tr></thead>
+        <thead><tr><th>Наименование</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th><th className={TH_R}>Купить</th><th className={TH_R}>Закупка</th></tr></thead>
         <tbody>{rows.map(({ p, qty }) => (
           <tr key={p.id}>
             <td><b>{p.name}</b><small>{p.sku}</small></td>
-            <td className={cx(R, !qtyOf(p.id) && "text-bad")}>{amount(p, qtyOf(p.id))}</td>
-            <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
+            <td className={cx(C, !qtyOf(p.id) && "text-bad")}>{amount(p, qtyOf(p.id))}</td>
+            <td className={cx(C, "text-muted")}>{num(p.min_qty)}</td>
             <td className={R}><b>{amount(p, qty)}</b></td>
             <td className={R}>{money(qty * (p.cost || 0))}</td>
           </tr>
@@ -207,12 +208,12 @@ function LowTab() {
     <>
       <p className="m-0 text-ink-2 max-w-[70ch]">Товары, которых осталось мало: остаток не больше минимального.</p>
       <Table resize>
-        <thead><tr><th>Наименование</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th></tr></thead>
+        <thead><tr><th>Наименование</th><th className="text-center!">Остаток</th><th className="text-center!">Мин.</th></tr></thead>
         <tbody>{rows.map((p) => (
           <tr key={p.id} tabIndex={0} className="cursor-pointer" onClick={() => openProduct(p.id)}>
             <td><b>{p.name}</b><small>{p.sku}</small></td>
-            <td className={cx(R, "text-bad font-semibold")}>{amount(p, qtyOf(p.id))}</td>
-            <td className={cx(R, "text-muted")}>{num(p.min_qty)}</td>
+            <td className={cx(C, "text-bad font-semibold")}>{amount(p, qtyOf(p.id))}</td>
+            <td className={cx(C, "text-muted")}>{num(p.min_qty)}</td>
           </tr>
         ))}</tbody>
       </Table>
