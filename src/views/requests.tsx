@@ -83,8 +83,8 @@ function sorted(list: Request[]) {
   });
 }
 
-/** Дата, номер клиента, имя, город, улица — один цвет, включая вложенный текст и иконки (у них свои цвета, их перебиваем) */
-const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#000612] [&>td:nth-child(n+2):nth-child(-n+6)]:!font-semibold [&>td:nth-child(n+2):nth-child(-n+6)_*]:!font-semibold [&>td:nth-child(n+2):nth-child(-n+6)]:!text-[15px] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[15px] [&>td:nth-child(n+2):nth-child(-n+6)_small]:!text-[13px]";
+/** Номер заказа в таблице — фирменный синий */
+const ORDER_NO = "[&>td:first-child_*]:!text-brand";
 const LEFT: SortKey[] = ["phone", "city", "street"];
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
@@ -95,7 +95,7 @@ const fltIn = `${fltCtl} !pl-9`;
 function Flt({ label, span, icon, children }: { label: string; span: string; icon?: ReactNode; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
-      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#051C42] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-heading whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {icon ? (
         <span className="relative block">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] [&_svg]:size-4">{icon}</span>
@@ -314,7 +314,7 @@ function RequestsList({ user }: { user: Staff }) {
         </thead>
         <tbody>
           {list.length ? list.map((r) => (
-            <tr key={r.id} className={cx(CELLS, r.id === ui.sel && "[&>td]:bg-brand-soft")}
+            <tr key={r.id} className={cx(ORDER_NO, r.id === ui.sel && "[&>td]:bg-brand-soft")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
