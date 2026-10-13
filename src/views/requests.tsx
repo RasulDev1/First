@@ -19,7 +19,7 @@ import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
 } from "./requests/shared";
-import { IconArrow, IconPlus } from "@/components/icons";
+import { IconArrow, IconCalendar, IconPhone, IconPlus } from "@/components/icons";
 import { OrderNo } from "./requests/order-no";
 import type { View } from "./types";
 
@@ -300,9 +300,9 @@ function Requests({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap">{dateShort(r.created_at)}</td>
-              <td className="tabular-nums whitespace-nowrap">{r.done_at ? dateShort(r.done_at) : <span className={muted}>—</span>}</td>
-              <td><b className="tabular-nums whitespace-nowrap font-medium text-heading">{r.phone}</b><small>{r.client}</small></td>
+              <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
+              <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
+              <td><b className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small>{r.client}</small></td>
               <td className="whitespace-nowrap">{cityOf(r)}</td>
               <td>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
