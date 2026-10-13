@@ -10,8 +10,9 @@ import warehouse from "./warehouse";
 import analytics from "./analytics";
 import staff from "./staff";
 import chat from "./chat";
+import salary from "./salary";
 import automations from "./automations";
 import myorders from "./myorders";
 import mystats from "./mystats";
 
-export const VIEWS: Record<string, View> = { home, requests, clients, calc, masters, tasks, warehouse, analytics, automations, chat, staff, myorders, mystats };
+export const VIEWS: Record<string, View> = { home, requests, clients, calc, masters, tasks, warehouse, analytics, automations, chat, salary, staff, myorders, mystats };

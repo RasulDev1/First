@@ -4,19 +4,19 @@
 import { money, dateTime } from "@/lib/core";
 import { ACTIVE_STATUSES } from "@/lib/config";
 import { db } from "@/lib/db";
-import { payOf, rateOf } from "@/lib/pay";
+import { payOf } from "@/lib/pay";
 import { statusAt, setStatus, log } from "@/lib/orders";
 import { currentUser } from "@/lib/auth";
 import type { Request, Staff, StatusId } from "@/lib/types";
-import { ArmedButton, Button, DHead, DSec, Empty, Kpi, Kpis, Kv, StatusPill, Table, rowClickable } from "@/components/ui";
+import { ArmedButton, Button, DHead, DSec, Empty, Kv, StatusPill, Table, rowClickable } from "@/components/ui";
 import { openDrawer, closeDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
 import type { View } from "./types";
 
 const monthOf = (iso: string) => { const d = new Date(iso), n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); };
-const mine = (me: Staff) => db.list("requests").filter((r) => r.master_id === me.master_id);
-const visible = (r: Request) => ACTIVE_STATUSES.includes(r.status) || (r.status === "done" && Boolean(r.done_at) && monthOf(r.done_at!));
-const Earn = ({ r }: { r: Request }) => (r.amount ? <>{money(payOf(r))}</> : <span className="text-muted">цена не согласована</span>);
+export const mine = (me: Staff) => db.list("requests").filter((r) => r.master_id === me.master_id);
+export const visible = (r: Request) => ACTIVE_STATUSES.includes(r.status) || (r.status === "done" && Boolean(r.done_at) && monthOf(r.done_at!));
+export const Earn = ({ r }: { r: Request }) => (r.amount ? <>{money(payOf(r))}</> : <span className="text-muted">цена не согласована</span>);
 
 const nextStep = (r: Request) => ({
   assigned: "Дальше: выехать на замеры",
@@ -107,18 +107,9 @@ function Detail({ id }: { id: number }) {
 }
 
 function MyOrders({ user }: { user: Staff }) {
-  const master = db.find("masters", user.master_id);
   const orders = mine(user).filter(visible).sort((a, b) => Date.parse(statusAt(b)) - Date.parse(statusAt(a)));
-  const earned = orders.reduce((n, r) => n + payOf(r), 0);
-  const total = orders.reduce((n, r) => n + (r.amount || 0), 0);
   return (
     <>
-      <Kpis>
-        <Kpi tone="accent" label="Заработано в этом месяце" value={money(earned)} sub={`${rateOf(master)}% от суммы заказов`} />
-        <Kpi label="Сумма заказов" value={money(total)} sub="по всем вашим заказам за месяц" />
-        <Kpi label="Заказы" value={String(orders.length)} sub="в работе и завершённые" />
-        <Kpi label="Ваша ставка" value={`${rateOf(master)}%`} sub="от суммы заказа" />
-      </Kpis>
       {orders.length ? (
         <div className="flex flex-col gap-3">
           {orders.map((r) => (

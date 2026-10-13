@@ -32,6 +32,7 @@ const NAV: [string, string, string][] = [
   ["analytics", "Аналитика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["chat", "Чат", "M4 5h16v11H10l-5 4v-4H4z"],
   ["automations", "Автоматизации", "M13 2 4 14h7l-1 8 9-12h-7z"],
+  ["salary", "Зарплата", "M3 7h18v12H3zM3 11h18M16 15h2"],
   ["mystats", "Моя статистика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["myorders", "Мои заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
   ["staff", "Сотрудники", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6"],
@@ -183,7 +184,7 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
           CRM<b className="text-sm text-[#bfdbfe]">Вентиляция</b>
         </span>
       </a>
-      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
+      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-2 min-[901px]:gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
         {ids.map((sid) => NAV.find(([id]) => id === sid)).filter((x): x is [string, string, string] => Boolean(x)).map(([id, label, path]) => {
           const n = badge(id, user), current = id === section;
           return (
@@ -196,14 +197,14 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
                 if (drag.over !== id || drag.below !== below) setDrag({ ...drag, over: id, below });
               }}
               onDrop={(e) => { e.preventDefault(); drop(); }} onDragEnd={() => setDrag(null)}
-              className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] rounded-lg text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+              className={cx("relative flex-1 min-[901px]:flex-none flex flex-col items-center justify-center text-center gap-1 px-2 py-3 rounded-xl text-[15px] min-[901px]:flex-row min-[901px]:justify-start min-[901px]:text-left min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:rounded-lg min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
                 drag?.id === id && "opacity-40",
                 drag?.over === id && drag.id !== id && (drag.below ? "shadow-[0_2px_0_0_#7ba4ff]" : "shadow-[0_-2px_0_0_#7ba4ff]"),
                 "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
                 current ? "text-[#7ba4ff] font-semibold min-[901px]:before:bg-[#60a5fa]" : "text-white hover:bg-white/10 min-[901px]:before:bg-transparent")}>
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7 min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
-              {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
+              {n ? <i className={cx("absolute top-1 right-2 min-[901px]:static min-[901px]:ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
                 current ? "bg-white/15 text-[#7ba4ff]" : id === "chat" || (id === "requests" && !isWarehouse(user)) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );

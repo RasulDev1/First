@@ -15,7 +15,7 @@ export const ROLES: Record<Role, { title: string; sections: string[] }> = {
   director: { title: "Руководитель", sections: ["home", "requests", "clients", "calc", "masters", "tasks", "chat", "warehouse", "analytics", "automations", "staff"] },
   manager: { title: "Менеджер по продажам", sections: ["home", "requests", "clients", "calc", "tasks", "chat", "mystats"] },
   warehouse: { title: "Склад", sections: ["home", "requests", "chat", "warehouse"] },
-  master: { title: "Мастер", sections: ["myorders", "chat"] },
+  master: { title: "Мастер", sections: ["myorders", "chat", "salary"] },
 };
 export const POSITIONS: { id: string; role: Role; title: string }[] = [
   { id: "director", role: "director", title: "Руководитель" },
