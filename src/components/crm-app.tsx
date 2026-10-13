@@ -222,7 +222,15 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
 
 function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () => void }) {
   const [persistent, setPersistent] = useState(true);
-  useEffect(() => setPersistent(db.persistent), []);
+  const [phone, setPhone] = useState(false); // на телефоне входят только мастера и стажёры
+  useEffect(() => {
+    setPersistent(db.persistent);
+    const mq = window.matchMedia("(max-width: 900px)");
+    const on = () => setPhone(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
@@ -254,7 +262,7 @@ function Login({ onLogin, onReset }: { onLogin: (u: Staff) => void; onReset: () 
         <div className="border-t border-dashed border-line pt-3.5 flex flex-col gap-2">
           <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted">Войти в демо как</p>
           <div className="grid grid-cols-1 min-[561px]:grid-cols-2 gap-2">
-            {DEMO_ACCOUNTS.map((a) => {
+            {DEMO_ACCOUNTS.filter((a) => !phone || a.master_id).map((a) => {
               const s = db.list("staff").find((x) => x.login === a.login);
               return s ? (
                 <button key={a.login} type="button" onClick={() => { setName(a.login); submit(a.login, DEMO_PASSWORD); }}
