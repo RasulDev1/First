@@ -1,10 +1,10 @@
 "use client";
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
-import { useEffect, useRef, useState, useSyncExternalStore, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
-import { IconX } from "./icons";
+import { IconCheck, IconCog, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
-import { dateTime, storage } from "@/lib/core";
+import { dateTime } from "@/lib/core";
 
 export const cx = (...list: (string | false | null | undefined)[]) => list.filter(Boolean).join(" ");
 
@@ -83,31 +83,22 @@ export const grid2 = "grid grid-cols-1 min-[561px]:grid-cols-2 gap-3.5";
 export const formCol = "flex flex-col gap-3.5";
 
 /* ---------- Статусы и метки ---------- */
+// Цвета статусов по этапам: старт, подготовка, работа, архив
 const PILL: Record<string, string> = {
-  new: "bg-[#eff6ff] text-[#1e40af]", assigned: "bg-[#f5f3ff] text-[#5b21b6]", measure: "bg-[#fff7ed] text-[#9a3412]",
-  pricing: "bg-[#fdf2f8] text-[#9d174d]", in_work: "bg-[#fefce8] text-[#854d0e]", done: "bg-[#ecfdf5] text-[#065f46]",
-  cancelled: "bg-[#f1f5f9] text-[#475569]",
+  new: "bg-[#eff6ff] text-[#1e40af]",
+  assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
+  in_work: "bg-[#f5f3ff] text-[#5b21b6]",
+  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f9fafb] text-[#6b7280]",
+};
+const PILL_ICON: Record<string, ReactNode> = {
+  new: <IconSpark />, assigned: <IconUser />, measure: <IconRuler />, pricing: <IconReceipt />,
+  in_work: <IconCog />, done: <IconCheck />, cancelled: <IconX />,
 };
 /** Цвет заливки статуса — для полос графиков */
 export const STATUS_FILL: Record<string, string> = {
   new: "bg-st-new", assigned: "bg-st-assigned", measure: "bg-st-measure", pricing: "bg-st-pricing",
   in_work: "bg-st-in_work", done: "bg-st-done", cancelled: "bg-st-cancelled",
 };
-/** Вид статусов: «color» — у каждого свой оттенок, «focus» — группы по этапам: старт, подготовка, работа, архив */
-export type StatusStyle = "color" | "focus";
-const FOCUS: Record<string, string> = {
-  new: "bg-[#eff6ff] text-[#1e40af]",
-  assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
-  in_work: "bg-[#f5f3ff] text-[#5b21b6]",
-  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f9fafb] text-[#6b7280]",
-};
-const FOCUS_NEUTRAL = "bg-[#f9fafb] text-[#6b7280]";
-const styleListeners = new Set<() => void>();
-export const statusStyle = (): StatusStyle => (storage.get<string>("status_style", "color") === "focus" ? "focus" : "color");
-export function setStatusStyle(v: StatusStyle) { storage.set("status_style", v); styleListeners.forEach((f) => f()); }
-export function useStatusStyle(): StatusStyle {
-  return useSyncExternalStore((cb) => { styleListeners.add(cb); return () => { styleListeners.delete(cb); }; }, statusStyle, () => "color");
-}
 export const statusTitle = (id: string) => STATUSES.find((s) => s.id === id)?.title || id;
 export function Pill({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -117,18 +108,10 @@ export function Pill({ className, children }: { className?: string; children: Re
   );
 }
 export function StatusPill({ id }: { id: StatusId | string }) {
-  const mode = useStatusStyle();
-  const tone = mode === "focus" ? (FOCUS[id] ?? FOCUS_NEUTRAL) : (PILL[id] ?? PILL.cancelled);
-  return <span className={cx("inline-flex items-center self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", tone)}>{statusTitle(id)}</span>;
-}
-/** Переключатель вида статусов */
-export function StatusStyleSwitch() {
-  const mode = useStatusStyle();
   return (
-    <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs text-muted">Вид статусов</span>
-      <Segmented items={[["color", "Цветные"], ["focus", "По этапам"]]} active={mode} onChange={(v) => setStatusStyle(v as StatusStyle)} />
-    </div>
+    <span className={cx("inline-flex items-center gap-1.5 self-start w-max px-2.5 py-1 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled)}>
+      <span className="[&>svg]:size-3.5">{PILL_ICON[id] ?? PILL_ICON.cancelled}</span>{statusTitle(id)}
+    </span>
   );
 }
 

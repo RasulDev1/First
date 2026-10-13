@@ -11,7 +11,7 @@ import { pushComment } from "@/lib/comments";
 import { levelTitle, statusAt } from "@/lib/orders";
 import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
-import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, StatusStyleSwitch, Table, buttonClass, cx } from "@/components/ui";
+import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab, openEstimate } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
@@ -282,7 +282,6 @@ function Requests({ user }: { user: Staff }) {
         </div>
       </form>
 
-      <StatusStyleSwitch />
       <Table>
         <thead>
           <tr>{COLS.map(([key, title]) => (
