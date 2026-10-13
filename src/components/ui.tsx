@@ -166,17 +166,33 @@ export function Count({ n, warn }: { n: number; warn?: boolean }) {
 /* ---------- Чипы-фильтры и вкладки ---------- */
 export type ChipItem = readonly [id: string | number, label: ReactNode, count?: number];
 export function Chips({ items, active, onChange, tabs }: { items: readonly ChipItem[]; active: string | number; onChange: (id: string) => void; tabs?: boolean }) {
+  if (tabs) {
+    // Вкладки: серая подложка, у выбранной синяя плашка
+    return (
+      <div role="tablist" className="inline-flex self-start gap-0.5 p-1 rounded-lg bg-surface-2 max-w-full overflow-x-auto">
+        {items.map(([id, label, count]) => {
+          const on = String(id) === String(active);
+          return (
+            <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
+              className={cx("flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium whitespace-nowrap cursor-pointer text-black rounded-md border-0 transition-[background-color,box-shadow] duration-150",
+                on ? "font-semibold bg-brand-soft shadow-[inset_0_0_0_1px_rgba(30,58,138,.25),0_1px_3px_rgba(15,23,42,.1)]" : "bg-transparent hover:bg-black/[.04]")}>
+              {label}
+              {count != null ? <i className={cx("not-italic tabular-nums", on ? "text-brand" : "text-muted")}>{count}</i> : null}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
-    <div role="tablist" className={cx("flex overflow-x-auto pb-0.5", tabs ? "gap-0 border-b border-line" : "gap-1.5")}>
+    <div role="tablist" className="flex overflow-x-auto pb-0.5 gap-1.5">
       {items.map(([id, label, count]) => {
         const on = String(id) === String(active);
         return (
           <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
-            className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer",
-              tabs ? cx("px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-black font-semibold border-brand" : "text-black border-transparent")
-                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-black"))}>
+            className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-black")}>
             {label}
-            {count != null ? <i className={cx("not-italic tabular-nums", on ? (tabs ? "text-brand-deep" : "text-page/75") : "text-muted")}>{count}</i> : null}
+            {count != null ? <i className={cx("not-italic tabular-nums", on ? "text-page/75" : "text-muted")}>{count}</i> : null}
           </button>
         );
       })}
@@ -190,7 +206,7 @@ export function Segmented({ items, active, onChange }: { items: readonly (readon
   return (
     <div role="tablist" className="relative inline-grid grid-flow-col auto-cols-fr self-start p-1 rounded-lg bg-surface-2 max-w-full overflow-x-auto">
       <span aria-hidden="true" style={{ width: `calc(100% / ${items.length})`, transform: `translateX(${i * 100}%)` }}
-        className="absolute inset-y-1 left-0 rounded-md bg-surface shadow-[0_1px_3px_rgba(15,23,42,.12)] transition-transform duration-200 ease-out motion-reduce:transition-none" />
+        className="absolute inset-y-1 left-0 rounded-md bg-brand-soft shadow-[inset_0_0_0_1px_rgba(30,58,138,.25),0_1px_3px_rgba(15,23,42,.1)] transition-transform duration-200 ease-out motion-reduce:transition-none" />
       {items.map(([id, label]) => (
         <button key={String(id)} type="button" aria-pressed={String(id) === String(active)} onClick={() => onChange(String(id))}
           className={cx("relative z-1 px-4 py-1.5 text-[13px] font-medium whitespace-nowrap border-0 bg-transparent cursor-pointer transition-colors duration-150",
