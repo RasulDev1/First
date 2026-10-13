@@ -5,12 +5,13 @@ import { useState, type CSSProperties, type FormEvent, type ReactNode } from "re
 import { money, num, dateTime, formValue } from "@/lib/core";
 import { LINES, RACKS, SHELVES, CATEGORIES, UNITS } from "@/lib/config";
 import { db } from "@/lib/db";
-import { currentUser } from "@/lib/auth";
+import { currentUser, isDirector } from "@/lib/auth";
 import {
   LOCATIONS, describeLocation, categoryTitle, product, placesOf, qtyOf, qtyAt, contentsOf, isLow, toBuy,
   receive, move, writeOff, recount, expense, ACTIVE_REQUESTS,
 } from "@/lib/stock";
-import type { Move, MoveKind, Product } from "@/lib/types";
+import { AuditLog } from "@/components/audit-log";
+import type { Move, MoveKind, Product, Staff } from "@/lib/types";
 import {
   ArmedButton, Button, Chips, DHead, DSec, Empty, Field, FormError, Kpi, Kpis, Loc, Note, Options, Table,
   btnRow, cx, formCol, grid2, rowClickable,
@@ -20,8 +21,8 @@ import { toast } from "@/components/toast";
 import type { View } from "./types";
 
 /* ---------- Состояние раздела: живёт между переходами, как в прежней версии ---------- */
-type Tab = "stock" | "map" | "buy" | "log" | "low";
-const TABS: readonly (readonly [Tab, string])[] = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Журнал"], ["low", "Заканчиваются"]];
+type Tab = "stock" | "map" | "buy" | "log" | "low" | "changes";
+const TABS: readonly (readonly [Tab, string])[] = [["stock", "Остатки"], ["map", "Карта склада"], ["buy", "Закупка"], ["log", "Движения"], ["low", "Заканчиваются"], ["changes", "Журнал изменений"]];
 interface WhFilter { name: string; type: string; price: string; place: string }
 const WF0: WhFilter = { name: "", type: "", price: "", place: "" };
 const saved: { tab: Tab; wf: WhFilter } = { tab: "stock", wf: { ...WF0 } }; // фильтры остатков применяются кнопкой «Найти»
@@ -260,10 +261,11 @@ function LogTable({ productId }: { productId?: number }) {
 }
 
 /* ---------- Раздел ---------- */
-function Warehouse() {
+function Warehouse({ user }: { user: Staff }) {
+  const tabsList = isDirector(user) ? TABS : TABS.filter(([id]) => id !== "changes");
   const [tab, setTabState] = useState<Tab>(saved.tab);
   const setTab = (id: string) => {
-    const next = TABS.find(([t]) => t === id)?.[0] ?? "stock";
+    const next = tabsList.find(([t]) => t === id)?.[0] ?? "stock";
     saved.tab = next;
     setTabState(next);
   };
@@ -271,9 +273,9 @@ function Warehouse() {
   const counts: Partial<Record<Tab, number>> = { buy: low, low };
   return (
     <>
-      <Chips tabs items={TABS.map(([id, label]) => [id, label, counts[id] || undefined] as const)} active={tab} onChange={setTab} />
+      <Chips tabs items={tabsList.map(([id, label]) => [id, label, counts[id] || undefined] as const)} active={tabsList.some(([t]) => t === tab) ? tab : "stock"} onChange={setTab} />
       <div className="flex flex-col gap-3.5">
-        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? <BuyTab /> : tab === "low" ? <LowTab /> : <LogTable />}
+        {tab === "stock" ? <StockTab /> : tab === "map" ? <MapTab /> : tab === "buy" ? <BuyTab /> : tab === "low" ? <LowTab /> : tab === "changes" ? <AuditLog tables={["products"]} note="Кто, когда и что менял в карточках товаров: цены, минимум, названия." /> : <LogTable />}
       </div>
     </>
   );

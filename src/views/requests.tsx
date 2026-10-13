@@ -2,16 +2,17 @@
 // «Заказы» (менеджер и руководитель): единый список по порядку с сортировками, создание и удаление заказов, мастер, выезд, статусы,
 // стоимость работы, расходы со склада (их добавляет только складовщик) и история изменений.
 // Складовщик видит заказы в урезанном виде и только выписывает материал в «Расходы».
-import { useReducer, useRef, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
+import { useReducer, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { storage, money, dateTime, dateShort, localDay } from "@/lib/core";
 import { STATUSES } from "@/lib/config";
 import { db } from "@/lib/db";
-import { isWarehouse } from "@/lib/auth";
+import { isDirector, isWarehouse } from "@/lib/auth";
 import { pushComment } from "@/lib/comments";
 import { levelTitle, statusAt } from "@/lib/orders";
 import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
-import { Button, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
+import { AuditLog } from "@/components/audit-log";
+import { Button, Chips, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
 import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab, openEstimate } from "./requests/estimate";
 import { SurveyView } from "./requests/survey";
@@ -251,7 +252,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
 }
 
 /* ---------- Раздел ---------- */
-function Requests({ user }: { user: Staff }) {
+function RequestsList({ user }: { user: Staff }) {
   const [, refresh] = useReducer((n: number) => n + 1, 0);
   const spaceRef = useRef<HTMLDivElement>(null);
   if (ui.sheetH == null) ui.sheetH = clampH(Number(storage.get("sheetH", 40)) || 40);
@@ -338,6 +339,18 @@ function Requests({ user }: { user: Staff }) {
             onClose={() => { ui.sel = null; refresh(); }} onTab={(id) => { ui.tab = id; refresh(); }} />
         </>
       ) : null}
+    </>
+  );
+}
+
+let requestsTab = "list";
+function Requests({ user }: { user: Staff }) {
+  const [tab, setTab] = useState(requestsTab);
+  if (!isDirector(user)) return <RequestsList user={user} />;
+  return (
+    <>
+      <Chips tabs items={[["list", "Заказы"], ["log", "Журнал изменений"]] as const} active={tab} onChange={(t) => { requestsTab = t; setTab(t); }} />
+      {tab === "log" ? <AuditLog tables={["requests"]} note="Кто, когда и что менял в заказах: статусы, мастера, суммы, данные клиента." /> : <RequestsList user={user} />}
     </>
   );
 }

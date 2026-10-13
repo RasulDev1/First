@@ -1,17 +1,14 @@
 "use client";
-// «Данные» (руководитель): резервная копия и выгрузка в Excel, журнал изменений, автоматизации.
+// Вкладки «Копия и выгрузка» и «Автоматизации» в аналитике (руководитель): резервная копия, выгрузка в Excel, правила задач.
 import { useRef, useState } from "react";
 import { dateTime, dateShort, pluralize } from "@/lib/core";
 import { CATEGORIES, STATUSES } from "@/lib/config";
 import { db } from "@/lib/db";
 import { RULES } from "@/lib/automations";
 import { placesOf, qtyOf } from "@/lib/stock";
-import { Button, Chips, Empty, Panel, Table, cx } from "@/components/ui";
+import { Button, Panel } from "@/components/ui";
 import { toast } from "@/components/toast";
-import type { View } from "./types";
 
-type Tab = "export" | "log" | "auto";
-let savedTab: Tab = "export";
 
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -55,7 +52,7 @@ const EXPORTS: { id: string; title: string; hint: string; rows: () => (string | 
     ...db.list("tasks").map((t) => [t.title, staffName(t.assignee_id), dateTime(t.due), t.done_at ? dateTime(t.done_at) : "", t.request_id || ""])] },
 ];
 
-function ExportTab() {
+export function ExportTab() {
   const file = useRef<HTMLInputElement>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
   const restoreFile = async (f: File) => {
@@ -98,41 +95,7 @@ function ExportTab() {
   );
 }
 
-const ACTION: Record<string, string> = { create: "bg-st-done-soft text-st-done", update: "bg-st-new-soft text-st-new", delete: "bg-bad-soft text-bad", system: "bg-surface-2 text-ink-2" };
-const ACTION_TITLE: Record<string, string> = { create: "Создано", update: "Изменено", delete: "Удалено", system: "Система" };
-
-function LogTab() {
-  const [q, setQ] = useState("");
-  const [shown, setShown] = useState(60);
-  const all = [...(db.exportAudit())].reverse();
-  const list = q ? all.filter((e) => (e.text + e.user).toLowerCase().includes(q.toLowerCase())) : all;
-  return (
-    <>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <p className="m-0 text-ink-2 flex-[1_1_320px] max-w-[70ch]">Кто и что менял в заказах, клиентах, складе, задачах и сотрудниках. Хранятся последние 1000 записей.</p>
-        <input type="search" value={q} onChange={(e) => { setQ(e.target.value); setShown(60); }} placeholder="Поиск по журналу" className="w-full min-[561px]:w-[260px]" />
-      </div>
-      {list.length ? (
-        <>
-          <Table>
-            <thead><tr><th style={{ width: 150 }}>Когда</th><th style={{ width: 170 }}>Кто</th><th style={{ width: 120 }}>Действие</th><th>Что изменено</th></tr></thead>
-            <tbody>{list.slice(0, shown).map((e) => (
-              <tr key={e.id}>
-                <td className="whitespace-nowrap tabular-nums">{dateTime(e.at)}</td>
-                <td>{e.user}</td>
-                <td><span className={cx("px-2 py-0.5 rounded-[5px] text-xs font-medium", ACTION[e.action])}>{ACTION_TITLE[e.action]}</span></td>
-                <td className="wrap-anywhere">{e.text}</td>
-              </tr>
-            ))}</tbody>
-          </Table>
-          {list.length > shown ? <Button onClick={() => setShown(shown + 60)}>Показать ещё ({list.length - shown})</Button> : null}
-        </>
-      ) : <Empty title="Записей нет">{q ? "Измените поиск." : "Изменения появятся, как только кто-то что-то поменяет."}</Empty>}
-    </>
-  );
-}
-
-function AutoTab() {
+export function AutoTab() {
   const toggle = (id: string, on: boolean) => {
     const s = db.list("settings")[0];
     db.patch("settings", s.id, { auto: { ...(s.auto || {}), [id]: on } });
@@ -160,16 +123,3 @@ function AutoTab() {
   );
 }
 
-function System() {
-  const [tab, setTabState] = useState<Tab>(savedTab);
-  const setTab = (t: string) => { savedTab = t as Tab; setTabState(t as Tab); };
-  return (
-    <>
-      <Chips tabs items={[["export", "Копия и выгрузка"], ["log", "Журнал изменений"], ["auto", "Автоматизации"]] as const} active={tab} onChange={setTab} />
-      {tab === "export" ? <ExportTab /> : tab === "log" ? <LogTab /> : <AutoTab />}
-    </>
-  );
-}
-
-const view: View = { title: () => "Данные", Component: System };
-export default view;

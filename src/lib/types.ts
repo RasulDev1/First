@@ -63,7 +63,7 @@ export interface Client { id: number; created_at: string; name: string; phone: s
 export interface Settings { id: number; min_margin: number; auto?: Record<string, boolean> }
 
 /** Запись журнала изменений: кто, когда и что поменял */
-export interface AuditEntry { id: number; at: string; user: string; action: "create" | "update" | "delete" | "system"; text: string }
+export interface AuditEntry { id: number; at: string; user: string; table?: TableName; action: "create" | "update" | "delete" | "system"; text: string }
 
 export interface Tables {
   staff: Staff[]; masters: Master[]; requests: Request[]; products: Product[]; stock: StockRow[];

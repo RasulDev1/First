@@ -4,8 +4,10 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { money, num, dateShort, formValue } from "@/lib/core";
 import { db } from "@/lib/db";
 import { digits, ordersOf, findByPhone } from "@/lib/clients";
-import type { Client } from "@/lib/types";
-import { Button, DHead, DSec, Empty, Field, FormError, Kpi, Kpis, StatusPill, Table, btnRow, rowClickable } from "@/components/ui";
+import { isDirector } from "@/lib/auth";
+import type { Client, Staff } from "@/lib/types";
+import { AuditLog } from "@/components/audit-log";
+import { Button, Chips, DHead, DSec, Empty, Field, FormError, Kpi, Kpis, StatusPill, Table, btnRow, rowClickable } from "@/components/ui";
 import { openDrawer } from "@/components/drawer";
 import { toast } from "@/components/toast";
 import { openRequest, openNewOrder } from "./requests";
@@ -34,7 +36,7 @@ function Flt({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Clients() {
+function ClientsList() {
   const [filter, setFilter] = useState<Filter>(CF);
   const [formKey, setFormKey] = useState(0);
   const apply = (f: Filter) => { CF = f; setFilter(f); };
@@ -166,6 +168,18 @@ function ClientForm({ c }: { c: Client | null }) {
 
 function openForm(c: Client | null) {
   openDrawer(() => <ClientForm c={c} />);
+}
+
+let clientsTab = "list";
+function Clients({ user }: { user: Staff }) {
+  const [tab, setTab] = useState(clientsTab);
+  if (!isDirector(user)) return <ClientsList />;
+  return (
+    <>
+      <Chips tabs items={[["list", "Клиенты"], ["log", "Журнал изменений"]] as const} active={tab} onChange={(t) => { clientsTab = t; setTab(t); }} />
+      {tab === "log" ? <AuditLog tables={["clients"]} note="Кто и когда менял клиентов." /> : <ClientsList />}
+    </>
+  );
 }
 
 const view: View = { title: () => "Клиенты", Component: Clients };
