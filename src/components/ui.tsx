@@ -254,7 +254,7 @@ export function Table({ className, center, widths, children }: { className?: str
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
       <table className={cx("w-full border-collapse text-sm", center && "[&_td]:text-center", widths && "table-fixed min-w-[900px] [&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
-        (center ? "[&_th]:text-center" : "[&_th]:text-left"), "[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:text-[#94a3b8] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
+        (center ? "[&_th]:text-center" : "[&_th]:text-left"), "[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:text-[#64748b] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
         "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",

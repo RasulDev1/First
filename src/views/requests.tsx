@@ -92,7 +92,7 @@ const fltIn = `${fltCtl} !pl-9`;
 function Flt({ label, span, icon, children }: { label: string; span: string; icon?: ReactNode; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
-      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#94a3b8] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#64748b] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {icon ? (
         <span className="relative block">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] [&_svg]:size-4">{icon}</span>
