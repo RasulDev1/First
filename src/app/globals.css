@@ -67,7 +67,7 @@
 @keyframes spark2 { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.4); opacity: 0; } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-2.5px); } 40% { transform: translateX(2.5px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1.5px); } }
 @keyframes fade-half { to { opacity: .5; } }
-.live-twinkle { transform-origin: center; transform-box: fill-box; animation: twinkle 1.5s ease-in-out infinite; }
+.live-twinkle { transform-origin: center; transform-box: fill-box; animation: twinkle 2.25s ease-in-out infinite; }
 .live-wave { animation: wave 2s ease-out infinite; }
 .live-wave.w2 { animation-delay: 1s; }
 .live-hop { animation: hop 1.2s ease-in-out infinite; }
