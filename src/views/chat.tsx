@@ -1,12 +1,28 @@
 "use client";
 // «Чат» — внутренняя переписка сотрудников: общий чат и личные сообщения. Доступен всем ролям, в том числе мастерам с телефона.
 import { useEffect, useRef, useState } from "react";
+import { shrinkPhoto } from "@/lib/survey";
 import { storage } from "@/lib/core";
 import { db } from "@/lib/db";
 import { positionTitle } from "@/lib/auth";
-import type { Message, Staff } from "@/lib/types";
+import type { Attachment, Message, Staff } from "@/lib/types";
 import { cx } from "@/components/ui";
+import { toast } from "@/components/toast";
 import type { View } from "./types";
+
+const MAX_FILES = 4;
+const MAX_FILE_KB = 700; // файлы хранятся в браузере, поэтому большие не берём; фотографии сжимаются сами
+const kb = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} МБ` : `${Math.max(1, Math.round(n / 1024))} КБ`);
+
+/** Руководителю и мастерам (и стажёрам) могут писать только менеджеры; остальным — любой сотрудник */
+export const canWrite = (from: Staff, to: Staff) => (to.role === "director" || to.role === "master" ? from.role === "manager" : true);
+
+const readFile = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(String(r.result));
+  r.onerror = () => reject(new Error("Не удалось прочитать файл"));
+  r.readAsDataURL(file);
+});
 
 const READ_KEY = "chat_read";
 const ALL = "all";
@@ -56,10 +72,15 @@ function Avatar({ name, group }: { name: string; group?: boolean }) {
 }
 
 function Chat({ user }: { user: Staff }) {
-  const people = db.list("staff").filter((s) => s.active && s.id !== user.id);
+  const mine = db.list("messages");
+  const talked = (id: number) => mine.some((m) => (m.from_id === user.id && m.to_id === id) || (m.to_id === user.id && m.from_id === id));
+  const people = db.list("staff").filter((s) => s.active && s.id !== user.id && (canWrite(user, s) || talked(s.id)));
   const [conv, setConv] = useState<string | null>(null); // на телефоне сначала список чатов
   const [wide, setWide] = useState(true);
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<Attachment[]>([]);
+  const [zoom, setZoom] = useState<string | null>(null);
+  const picker = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 800px)");
@@ -74,11 +95,32 @@ function Chat({ user }: { user: Staff }) {
   useEffect(() => { if (current && unreadHere) markRead(user, current); });
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [list.length, current]);
 
+  const peer = current && current !== ALL ? db.find("staff", current) : null;
+  const allowed = !peer || canWrite(user, peer);
   const send = () => {
     const body = text.trim();
-    if (!body || !current) return;
-    db.insert("messages", { from_id: user.id, to_id: current === ALL ? null : Number(current), text: body.slice(0, 2000) });
+    if ((!body && !files.length) || !current || !allowed) return;
+    db.insert("messages", { from_id: user.id, to_id: current === ALL ? null : Number(current), text: body.slice(0, 2000), ...(files.length ? { files } : {}) });
     setText("");
+    setFiles([]);
+  };
+  const attach = async (input: HTMLInputElement) => {
+    const picked = [...(input.files || [])].slice(0, MAX_FILES - files.length);
+    input.value = "";
+    const added: Attachment[] = [];
+    for (const f of picked) {
+      try {
+        if (f.type.startsWith("image/")) {
+          const data = await shrinkPhoto(f, 1000);
+          added.push({ name: f.name, type: "image/jpeg", size: Math.round(data.length * 0.75), data });
+        } else if (f.size > MAX_FILE_KB * 1024) {
+          toast(`«${f.name}» больше ${MAX_FILE_KB} КБ: в демо файлы хранятся в браузере`, "bad");
+        } else {
+          added.push({ name: f.name, type: f.type || "application/octet-stream", size: f.size, data: await readFile(f) });
+        }
+      } catch (error) { toast((error as Error).message, "bad"); }
+    }
+    setFiles((cur) => [...cur, ...added].slice(0, MAX_FILES));
   };
   const nameOf = (id: number) => db.find("staff", id)?.name || "Сотрудник";
   const last = (c: string) => db.list("messages").filter((m) => inConv(m, user.id, c)).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
@@ -125,6 +167,19 @@ function Chat({ user }: { user: Staff }) {
               {showName ? <span className="text-xs text-muted mb-0.5 ml-1">{nameOf(m.from_id)}</span> : null}
               <div className={cx("max-w-[82%] px-3 py-2 rounded-2xl whitespace-pre-wrap wrap-anywhere text-[14px] leading-snug",
                 mine ? "self-end bg-brand text-white rounded-br-md" : "self-start bg-surface-2 rounded-bl-md")}>
+                {m.files?.length ? (
+                  <span className="flex flex-col gap-1.5 mb-1">
+                    {m.files.map((f, i) => f.type.startsWith("image/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src={f.data} alt={f.name} onClick={() => setZoom(f.data)} className="max-w-full max-h-[240px] rounded-lg cursor-zoom-in object-cover" />
+                    ) : (
+                      <a key={i} href={f.data} download={f.name} className={cx("flex items-center gap-2 px-2.5 py-2 rounded-lg no-underline", mine ? "bg-white/15 text-white" : "bg-white text-ink")}>
+                        <span aria-hidden="true">📎</span>
+                        <span className="flex flex-col min-w-0"><b className="truncate text-[13px]">{f.name}</b><span className="text-[11px] opacity-70">{kb(f.size)}</span></span>
+                      </a>
+                    ))}
+                  </span>
+                ) : null}
                 {m.text}
                 <span className={cx("block text-[11px] mt-0.5 text-right tabular-nums", mine ? "text-white/70" : "text-muted")}>{clockOf(m.created_at)}</span>
               </div>
@@ -133,16 +188,48 @@ function Chat({ user }: { user: Staff }) {
         }) : <p className="m-auto text-muted text-sm">Сообщений пока нет. Напишите первым.</p>}
         <div ref={end} />
       </div>
+      {allowed ? (
+      <>
+      {files.length ? (
+        <div className="flex flex-wrap gap-2 px-3 pt-3">
+          {files.map((f, i) => (
+            <span key={i} className="inline-flex items-center gap-2 pl-2 pr-1 py-1 rounded-lg bg-surface-2 text-[13px] max-w-full">
+              {f.type.startsWith("image/") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={f.data} alt="" className="size-7 rounded object-cover" />
+              ) : <span aria-hidden="true">📎</span>}
+              <span className="truncate max-w-[160px]">{f.name}</span>
+              <button type="button" aria-label={`Убрать ${f.name}`} onClick={() => setFiles(files.filter((_, j) => j !== i))} className="border-0 bg-transparent text-muted cursor-pointer px-1.5 text-base leading-none">×</button>
+            </span>
+          ))}
+        </div>
+      ) : null}
       <form className="flex items-end gap-2 p-3 border-t border-line" onSubmit={(e) => { e.preventDefault(); send(); }}>
+        <input ref={picker} type="file" multiple className="hidden" onChange={(e) => attach(e.target)} />
+        <button type="button" onClick={() => picker.current?.click()} disabled={files.length >= MAX_FILES} aria-label="Прикрепить фото или файл" title="Прикрепить фото или файл"
+          className="grid place-items-center size-[42px] flex-none rounded-lg border border-line bg-surface-2 cursor-pointer text-lg disabled:opacity-40">📎</button>
         <textarea rows={1} value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" maxLength={2000} aria-label="Сообщение"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
           className="flex-1 resize-none max-h-32 min-h-[42px]" />
-        <button type="submit" disabled={!text.trim()} className="px-4 min-h-[42px] rounded-lg border-0 bg-brand text-white font-medium cursor-pointer disabled:opacity-40 disabled:cursor-default">Отправить</button>
+        <button type="submit" disabled={!text.trim() && !files.length} className="px-4 min-h-[42px] rounded-lg border-0 bg-brand text-white font-medium cursor-pointer disabled:opacity-40 disabled:cursor-default">Отправить</button>
       </form>
+      </>
+      ) : <p className="m-0 px-4 py-3 border-t border-line text-sm text-muted">Руководителю и мастерам могут писать только менеджеры. Вы можете читать эту переписку.</p>}
     </div>
   );
 
-  return wide ? <div className="flex gap-4 items-start">{Sidebar}{Dialog}</div> : current ? Dialog : Sidebar;
+  const body = wide ? <div className="flex gap-4 items-start">{Sidebar}{Dialog}</div> : current ? Dialog : Sidebar;
+  return (
+    <>
+      {body}
+      {zoom ? (
+        <div role="dialog" aria-label="Фото" onClick={() => setZoom(null)} className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 cursor-zoom-out">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoom} alt="" className="max-w-full max-h-full rounded-lg" />
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 const view: View = { title: () => "Чат", Component: Chat };

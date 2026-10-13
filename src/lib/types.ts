@@ -68,7 +68,8 @@ export interface AutoRule {
 export interface Settings { id: number; min_margin: number; rules?: AutoRule[] }
 
 /** Сообщение внутреннего чата: to_id пустой — общий чат, иначе личное сообщение */
-export interface Message { id: number; created_at: string; from_id: number; to_id: number | null; text: string }
+export interface Attachment { name: string; type: string; size: number; data: string }
+export interface Message { id: number; created_at: string; from_id: number; to_id: number | null; text: string; files?: Attachment[] }
 
 /** Запись журнала изменений: кто, когда и что поменял */
 export interface AuditEntry { id: number; at: string; user: string; table?: TableName; action: "create" | "update" | "delete" | "system"; text: string }
