@@ -214,15 +214,16 @@ export function Note({ tone, className, children }: { tone?: "warn" | "ok"; clas
 }
 export const card = "bg-surface border border-black/[.04] rounded-card shadow-card";
 export function Panel({ title, actions, className, children }: { title?: ReactNode; actions?: ReactNode; className?: string; children: ReactNode }) {
+  const head = title || actions;
   return (
-    <section className={cx(card, "p-5 sm:p-6 flex flex-col gap-4 min-w-0", className)}>
-      {title || actions ? (
-        <div className="flex items-center justify-between gap-2.5">
-          {title ? <h3 className="font-display text-sm font-semibold leading-tight">{title}</h3> : <span />}
+    <section className={cx(card, "flex flex-col min-w-0 overflow-hidden", className)}>
+      {head ? (
+        <div className="flex items-center justify-between gap-2.5 px-5 sm:px-6 py-3.5 bg-page border-b border-black/[.04]">
+          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-black">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
-      {children}
+      <div className={cx("p-5 sm:p-6 flex flex-col gap-4 min-w-0 flex-1", Boolean(head) && "pt-4 sm:pt-5")}>{children}</div>
     </section>
   );
 }
