@@ -57,17 +57,17 @@ function StaffView({ user }: { user: Staff }) {
           </div>
         ))}
       </div>
-      <Table>
+      <Table resize center widths={[30, 22, 18, 15, 15]}>
         <thead><tr><th>Сотрудник</th><th>Должность</th><th>Логин</th><th>С нами с</th><th></th></tr></thead>
         <tbody>
           {list.map((s) => (
             <tr key={s.id} tabIndex={0} className={cx(rowClickable, !s.active && "[&_td]:text-muted")}
               onClick={() => openForm(s, user)} onKeyDown={(e) => { if (e.key === "Enter") openForm(s, user); }}>
-              <td><b>{s.name}{s.id === user.id ? " (вы)" : ""}</b></td>
-              <td>{positionTitle(s)}</td>
+              <td style={{ textAlign: "left" }}><b>{s.name}{s.id === user.id ? " (вы)" : ""}</b></td>
+              <td style={{ textAlign: "left" }}>{positionTitle(s)}</td>
               <td className="tabular-nums">{s.login}</td>
               <td className="tabular-nums">{dateShort(s.created_at)}</td>
-              <td className="text-right">{s.active ? null : <Pill className="text-st-cancelled bg-st-cancelled-soft">Отключён</Pill>}</td>
+              <td>{s.active ? null : <Pill className="text-st-cancelled bg-st-cancelled-soft">Отключён</Pill>}</td>
             </tr>
           ))}
         </tbody>
