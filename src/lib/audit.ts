@@ -2,6 +2,7 @@
 // Так журнал ловит любые правки, откуда бы они ни пришли (карточка заказа, склад, задачи, сотрудники).
 import { STATUSES } from "./config";
 import { dateTime, money } from "./core";
+import { sumsOf } from "./estimate";
 import type { AuditEntry, Data, Request, TableName } from "./types";
 
 const AUDITED: TableName[] = ["requests", "clients", "products", "tasks", "staff", "masters", "settings"];
@@ -53,6 +54,8 @@ function title(d: Data, t: TableName, r: Rec): string {
   }
 }
 
+const paid = (r: Rec) => ((r.payments as { sum: number }[] | undefined) || []).reduce((n, p) => n + (p.sum || 0), 0);
+
 function changes(d: Data, before: Rec, after: Rec): string[] {
   const out: string[] = [];
   for (const k of new Set([...Object.keys(before), ...Object.keys(after)])) {
@@ -60,6 +63,8 @@ function changes(d: Data, before: Rec, after: Rec): string[] {
     const a = JSON.stringify(before[k]), b = JSON.stringify(after[k]);
     if (a === b) continue;
     if (k === "password_hash") { out.push("пароль изменён"); continue; }
+    if (k === "estimate") { out.push(`смета: ${before.estimate ? money(sumsOf(before as unknown as Request).total) : "нет"} → ${after.estimate ? money(sumsOf(after as unknown as Request).total) : "нет"}`); continue; }
+    if (k === "payments") { out.push(`оплата: ${money(paid(before))} → ${money(paid(after))}`); continue; }
     if (BLOCKS[k]) { out.push(BLOCKS[k]); continue; }
     out.push(`${LABELS[k] || k}: ${show(d, k, before[k])} → ${show(d, k, after[k])}`);
   }

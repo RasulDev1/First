@@ -3,6 +3,7 @@
 import { LOCATIONS } from "./stock";
 import { SERVICES, OBJECTS, SOURCES } from "./config";
 import { addEntries } from "./audit";
+import { money } from "./core";
 import { hashPassword } from "./db";
 import { buildEstimate, estimateSums } from "./estimate";
 import type { AuditEntry, Data, Master, Message, Move, Product, Request, Role, Staff, StatusId, StockRow, Task } from "./types";
@@ -309,9 +310,13 @@ export function seed(): Data {
       else if (h.text.startsWith("Назначен мастер: ")) mk(`мастер: пусто → ${h.text.slice(17)}`);
       else if (h.text.startsWith("Статус: ")) { const next = h.text.slice(8); mk(`статус: ${prev} → ${next}`); prev = next; }
       else if (h.text === "Замеры сохранены") mk("замеры изменены");
-      else if (h.text.startsWith("Смета: ")) mk("смета изменена");
+      else if (h.text.startsWith("Смета: ")) mk(`смета: нет → ${h.text.slice(7)}`);
     }
-    for (const pay of r.payments || []) if (pay.at) log.push({ at: pay.at, user: pay.by || "Система", table: "requests", rec: r.id, action: "update", text: `${reqTitle(r)}: оплата изменена` });
+    let paidSum = 0;
+    for (const pay of r.payments || []) {
+      if (pay.at) log.push({ at: pay.at, user: pay.by || "Система", table: "requests", rec: r.id, action: "update", text: `${reqTitle(r)}: оплата: ${money(paidSum)} → ${money(paidSum + pay.sum)}` });
+      paidSum += pay.sum;
+    }
   }
   for (const c of clients) log.push({ at: c.created_at, user: "Система", table: "clients", rec: c.id, action: "create", text: `Клиент «${c.name}»: создан` });
   products.forEach((p, i) => {
