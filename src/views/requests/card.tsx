@@ -189,7 +189,7 @@ function OrderCard({ id }: { id: number }) {
       <DHead eyebrow={`Заказ №${r.id} · ${r.source || ""} · ${dateTime(r.created_at)}`} title={r.client}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <StatusPill id={r.status} />
-          <span className={muted}>{r.manager_id ? `Менеджер: ${staffName(r.manager_id)}` : "Менеджер не назначен"}</span>
+          <span className={muted}>{r.manager_id ? <>Менеджер: <span className="ml-1 inline-flex items-center rounded-full border border-ok px-2.5 py-0.5 text-[13px] font-medium text-ok">{staffName(r.manager_id)}</span></> : "Менеджер не назначен"}</span>
         </div>
       </DHead>
 
@@ -223,7 +223,7 @@ function OrderCard({ id }: { id: number }) {
         <DSec title="Мастер">
           {r.master_id ? (
             <>
-              <p className={P}><b>{masterName(r.master_id)}</b> · {master ? levelTitle(master) : ""}</p>
+              <p className={P}><b className="text-brand">{masterName(r.master_id)}</b> · {master ? levelTitle(master) : ""}</p>
               <p className={cx(P, muted, small)}>Переназначить мастера можно только после того, как он откажется от заказа в «Мои заказы».</p>
             </>
           ) : (

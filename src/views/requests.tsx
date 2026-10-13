@@ -27,7 +27,7 @@ import type { View } from "./types";
 export { openRequest, openNewOrder };
 
 /* ---------- Состояние раздела: живёт, пока открыта вкладка браузера ---------- */
-type SortKey = "updated" | "id" | "created" | "done" | "phone" | "city" | "street" | "status";
+type SortKey = "updated" | "id" | "created" | "done" | "phone" | "city" | "street" | "manager" | "status";
 const F0 = { created: "", done: "", phone: "", city: "", street: "", status: "" };
 type Filters = typeof F0;
 /** «13.10.2026» → «2026-10-13»; пока дата набрана не целиком — пусто (фильтр не действует) */
@@ -71,6 +71,7 @@ const sortValue: Record<SortKey, (r: Request) => number | string | null> = {
   phone: (r) => r.phone.replace(/\D/g, ""),
   city: (r) => cityOf(r).toLowerCase(),
   street: (r) => streetOf(r).toLowerCase(),
+  manager: (r) => staffName(r.manager_id).toLowerCase(),
   status: (r) => STATUSES.findIndex((s) => s.id === r.status),
 };
 
@@ -86,7 +87,7 @@ function sorted(list: Request[]) {
 /** Номер заказа в таблице — фирменный синий */
 const ORDER_NO = "[&>td:first-child_*]:!text-brand";
 const LEFT: SortKey[] = ["phone", "city", "street"];
-const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
+const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["manager", "Менеджер"], ["status", "Статус заказа"]];
 
 /* ---------- Фильтры ---------- */
 const fltBtn = "!h-[42px] !min-h-[42px] !px-5 !py-0 !text-sm";
@@ -301,7 +302,7 @@ function RequestsList({ user }: { user: Staff }) {
         </div>
       </form>
 
-      <Table resize center widths={[7, 14, 14, 18, 10, 19, 18]}>
+      <Table resize center widths={[8, 12, 12, 18, 8, 13, 12, 17]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
             <th key={key}>
@@ -319,15 +320,16 @@ function RequestsList({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
-              <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
+              <td className="tabular-nums whitespace-nowrap text-xs"><span className="inline-flex items-center gap-1"><IconCalendar className="size-3 text-muted" />{dateShort(r.created_at)}</span></td>
+              <td className="tabular-nums whitespace-nowrap text-xs">{r.done_at ? <span className="inline-flex items-center gap-1"><IconCalendar className="size-3 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
               <td style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small className="pl-5">{r.client}</small></td>
               <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
               <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
+              <td style={{ textAlign: "left" }}>{r.manager_id ? staffName(r.manager_id) : <span className={muted}>—</span>}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
-            <tr><td colSpan={7}>
+            <tr><td colSpan={8}>
               <Empty title="Заказов нет">{filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами."}</Empty>
             </td></tr>
           )}
