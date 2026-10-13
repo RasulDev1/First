@@ -69,7 +69,7 @@ function MyStats({ user }: { user: Staff }) {
       </Kpis>
       {list.length ? (
         <Table>
-          <thead><tr><th>№</th><th>Оформлен</th><th>Клиент</th><th>Статус заказа</th><th className="text-right">Сумма</th></tr></thead>
+          <thead><tr><th>№</th><th>Оформлен</th><th>Клиент</th><th>Статус заказа</th><th className="text-center!">Сумма</th></tr></thead>
           <tbody>
             {list.map((r) => (
               <tr key={r.id} className={rowClickable} onClick={() => openRequest(r.id)}>
@@ -77,7 +77,7 @@ function MyStats({ user }: { user: Staff }) {
                 <td className="tabular-nums whitespace-nowrap">{dateShort(r.created_at)}</td>
                 <td>{r.client}<small>{r.service}</small></td>
                 <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
-                <td className={cx("text-right tabular-nums")}>{r.amount ? money(r.amount) : <span className="text-muted">—</span>}</td>
+                <td className={cx("text-center tabular-nums")}>{r.amount ? money(r.amount) : <span className="text-muted">—</span>}</td>
               </tr>
             ))}
           </tbody>

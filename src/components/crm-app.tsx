@@ -13,6 +13,7 @@ import { ArmedButton, Button, FormError, Field, cx, card } from "./ui";
 import { DrawerHost, closeDrawer } from "./drawer";
 import { ToastHost, toast } from "./toast";
 import { Mark } from "./mark";
+import { storage } from "@/lib/core";
 import { go } from "./nav";
 import { TaskPopups } from "./task-popups";
 import RequestForm from "@/app/zayavka/request-form";
@@ -153,7 +154,26 @@ export default function CrmApp() {
   );
 }
 
+const NAV_ORDER_KEY = "nav_order"; // userId → порядок разделов в меню, который сотрудник выстроил мышкой
+
 function Sidebar({ user, section, onLogout }: { user: Staff; section: string; onLogout: () => void }) {
+  const [saved, setSaved] = useState<string[]>(() => storage.get<Record<string, string[]>>(NAV_ORDER_KEY, {})[user.id] ?? []);
+  const [drag, setDrag] = useState<{ id: string; over: string | null; below: boolean } | null>(null);
+  const sections = ROLES[user.role].sections;
+  const ids = [...sections].sort((a, b) => {
+    const ia = saved.indexOf(a), ib = saved.indexOf(b);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || sections.indexOf(a) - sections.indexOf(b);
+  });
+  const drop = () => {
+    if (drag?.over && drag.over !== drag.id) {
+      const rest = ids.filter((x) => x !== drag.id);
+      const at = rest.indexOf(drag.over) + (drag.below ? 1 : 0);
+      const next = [...rest.slice(0, at), drag.id, ...rest.slice(at)];
+      setSaved(next);
+      storage.set(NAV_ORDER_KEY, { ...storage.get<Record<string, string[]>>(NAV_ORDER_KEY, {}), [user.id]: next });
+    }
+    setDrag(null);
+  };
   return (
     <aside className="sticky top-0 z-30 flex flex-row flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 bg-[#374151] text-white
       min-[901px]:h-[100vh] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5">
@@ -164,11 +184,21 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
         </span>
       </a>
       <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
-        {ROLES[user.role].sections.map((sid) => NAV.find(([id]) => id === sid)).filter((x): x is [string, string, string] => Boolean(x)).map(([id, label, path]) => {
+        {ids.map((sid) => NAV.find(([id]) => id === sid)).filter((x): x is [string, string, string] => Boolean(x)).map(([id, label, path]) => {
           const n = badge(id, user), current = id === section;
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
+              draggable onDragStart={(e) => { if (!window.matchMedia("(min-width: 901px)").matches) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id); setDrag({ id, over: null, below: false }); }}
+              onDragOver={(e) => {
+                if (!drag) return;
+                e.preventDefault();
+                const r = e.currentTarget.getBoundingClientRect(), below = e.clientY > r.top + r.height / 2;
+                if (drag.over !== id || drag.below !== below) setDrag({ ...drag, over: id, below });
+              }}
+              onDrop={(e) => { e.preventDefault(); drop(); }} onDragEnd={() => setDrag(null)}
               className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] rounded-lg text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+                drag?.id === id && "opacity-40",
+                drag?.over === id && drag.id !== id && (drag.below ? "shadow-[0_2px_0_0_#7ba4ff]" : "shadow-[0_-2px_0_0_#7ba4ff]"),
                 "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
                 current ? "text-[#7ba4ff] font-semibold min-[901px]:before:bg-[#60a5fa]" : "text-white hover:bg-white/10 min-[901px]:before:bg-transparent")}>
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
