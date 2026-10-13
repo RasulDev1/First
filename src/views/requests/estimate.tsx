@@ -24,7 +24,7 @@ export function MarkupInput({ value, onChange, disabled }: { value: number; onCh
     onChange(v);
   };
   return (
-    <label className="flex flex-col gap-1 text-[13px]">Наценка, %
+    <label className="flex flex-col gap-1 text-[13px] text-black">Наценка, %
       <input type="number" min={MIN_MARKUP} max="300" step="1" inputMode="numeric" value={text} disabled={disabled} className="!flex-none !w-28"
         onChange={(e) => setText(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }} />
     </label>

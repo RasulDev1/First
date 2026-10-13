@@ -30,7 +30,7 @@ const fbar = "grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-[repeat(2,m
 function Flt({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 min-w-0">
-      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-muted truncate">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-black truncate">{label}</span>
       {children}
     </label>
   );

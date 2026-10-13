@@ -71,7 +71,7 @@ export const P = "my-[1em]";
 export const muted = "text-muted";
 export const small = "text-[13px]";
 /** Строка формы: поля и кнопка в ряд */
-export const inlineForm = "flex flex-row flex-wrap items-center gap-2 [&_select]:flex-[1_1_240px] [&_select]:w-auto [&_input]:flex-[0_1_140px] [&_input]:w-auto [&_label]:flex [&_label]:flex-col [&_label]:gap-1 [&_label]:text-[13px]";
+export const inlineForm = "flex flex-row flex-wrap items-center gap-2 [&_select]:flex-[1_1_240px] [&_select]:w-auto [&_input]:flex-[0_1_140px] [&_input]:w-auto [&_label]:flex [&_label]:flex-col [&_label]:gap-1 [&_label]:text-[13px] [&_label]:text-black";
 /** Колонки нижней панели */
 export const sheetCols = "grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[18px]";
 /** Номер заказа — ссылка на карточку */

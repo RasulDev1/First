@@ -173,8 +173,8 @@ export function Chips({ items, active, onChange, tabs }: { items: readonly ChipI
         return (
           <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
             className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer",
-              tabs ? cx("px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-brand-deep border-brand" : "text-ink-2 border-transparent")
-                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-ink-2"))}>
+              tabs ? cx("px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-black font-semibold border-brand" : "text-black border-transparent")
+                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-black"))}>
             {label}
             {count != null ? <i className={cx("not-italic tabular-nums", on ? (tabs ? "text-brand-deep" : "text-page/75") : "text-muted")}>{count}</i> : null}
           </button>
@@ -194,7 +194,7 @@ export function Segmented({ items, active, onChange }: { items: readonly (readon
       {items.map(([id, label]) => (
         <button key={String(id)} type="button" aria-pressed={String(id) === String(active)} onClick={() => onChange(String(id))}
           className={cx("relative z-1 px-4 py-1.5 text-[13px] font-medium whitespace-nowrap border-0 bg-transparent cursor-pointer transition-colors duration-150",
-            String(id) === String(active) ? "text-heading" : "text-muted hover:text-ink")}>{label}</button>
+            "text-black", String(id) === String(active) && "font-semibold")}>{label}</button>
       ))}
     </div>
   );
