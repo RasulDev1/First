@@ -155,11 +155,11 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
               className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] rounded-lg text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
-                current ? "bg-[#2563eb] text-white font-semibold" : "text-white hover:bg-white/10")}>
+                current ? "bg-[#2563eb]/55 text-black font-semibold" : "text-white hover:bg-white/10 active:bg-[#2563eb]/55 active:text-black")}>
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                current ? "bg-white/25 text-white" : id === "requests" && !isWarehouse(user) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                current ? "bg-black/15 text-black" : id === "requests" && !isWarehouse(user) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
