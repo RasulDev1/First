@@ -141,12 +141,12 @@ function DemoBar({ onReset }: { onReset: () => void }) {
 
 function Sidebar({ user, section, onLogout }: { user: Staff; section: string; onLogout: () => void }) {
   return (
-    <aside className="sticky top-0 z-30 flex flex-row flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 bg-surface border-b border-line
-      min-[901px]:h-[calc(100vh-34px)] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5 min-[901px]:border-b-0 min-[901px]:border-r">
-      <a href="#home" aria-label={`${COMPANY} — главная`} className="flex items-center gap-2.5 no-underline text-heading px-1.5">
-        <Mark className="size-[34px] min-[901px]:size-[42px] flex-none" />
+    <aside className="sticky top-0 z-30 flex flex-row flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 bg-[#374151] text-white
+      min-[901px]:h-[calc(100vh-34px)] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5">
+      <a href="#home" aria-label={`${COMPANY} — главная`} className="flex items-center gap-2.5 no-underline text-white px-1.5">
+        <Mark light className="size-[34px] min-[901px]:size-[42px] flex-none" />
         <span className="font-display font-semibold text-base leading-[1.05] tracking-wide flex flex-col">
-          CRM<b className="text-sm bg-linear-135 from-brand-light via-brand to-brand-deep bg-clip-text text-transparent">Вентиляция</b>
+          CRM<b className="text-sm text-[#bfdbfe]">Вентиляция</b>
         </span>
       </a>
       <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
@@ -155,21 +155,21 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
               className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] rounded-lg text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
-                current ? "bg-brand text-white font-semibold" : "text-muted hover:text-heading hover:bg-surface-2")}>
+                current ? "bg-[#2563eb] text-white font-semibold" : "text-white hover:bg-white/10")}>
               <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
               {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
-                current ? "bg-white/20 text-white" : id === "requests" && !isWarehouse(user) ? "bg-brand text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
+                current ? "bg-white/25 text-white" : id === "requests" && !isWarehouse(user) ? "bg-[#2563eb] text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
       </nav>
       <div className="ml-auto flex flex-row items-center gap-2.5 min-[901px]:mt-auto min-[901px]:ml-0 min-[901px]:flex-col min-[901px]:items-stretch min-[901px]:p-3 min-[901px]:rounded-card">
         <div className="hidden min-[561px]:flex flex-col min-w-0">
-          <span className="font-semibold text-heading wrap-anywhere text-[13px] min-[901px]:text-[15px]">{user.name}</span>
-          <span className="self-start mt-0.5 px-2.5 py-px rounded-full bg-brand-soft text-brand-deep text-xs font-medium">{positionTitle(user)}</span>
+          <span className="font-semibold text-white wrap-anywhere text-[13px] min-[901px]:text-[15px]">{user.name}</span>
+          <span className="self-start mt-0.5 px-2.5 py-px rounded-full bg-white/15 text-white text-xs font-medium">{positionTitle(user)}</span>
         </div>
-        <ArmedButton size="sm" question="Точно выйти?" onConfirm={onLogout}>Выйти</ArmedButton>
+        <ArmedButton size="sm" question="Точно выйти?" onConfirm={onLogout} className="!bg-white/10 !border-white/25 !text-white hover:!bg-white/20 data-[armed]:!bg-bad data-[armed]:!border-bad">Выйти</ArmedButton>
       </div>
     </aside>
   );
