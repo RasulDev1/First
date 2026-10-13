@@ -2,7 +2,7 @@
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
 import { useEffect, useRef, useState, useSyncExternalStore, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
-import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPin, IconProgress, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
+import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPencil, IconPin, IconProgress, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
 import { dateTime, storage } from "@/lib/core";
 
@@ -134,7 +134,12 @@ function statusIcon(id: string, mode: StatusStyle): ReactNode {
         <i className="live-hop-shadow absolute -bottom-0.5 left-1/2 -ml-[3px] h-[2px] w-[6px] rounded-full bg-current" />
       </span>
     );
-    if (id === "pricing") return <IconDoc className="live-lines" />;
+    if (id === "pricing") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <IconDoc className="live-lines" />
+        <IconPencil className="live-pencil" />
+      </span>
+    );
     if (id === "in_work") return <IconCog className="animate-spin-slow" />;
     if (id === "done") return (
       <span className="live-done relative inline-flex size-3.5 items-center justify-center">
