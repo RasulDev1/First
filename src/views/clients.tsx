@@ -24,11 +24,11 @@ function matches(c: Client, f: Filter) {
 }
 
 // Панель фильтров: поля и кнопки одной высоты, без скруглений
-const fbar = "grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-[repeat(2,minmax(0,1fr))_repeat(3,minmax(0,150px))] [&_input]:h-[42px] [&_input]:min-h-[42px] [&_input]:px-2.5 [&_input]:py-0 [&_input]:text-sm [&_input]:rounded-none [&_button]:w-full [&_button]:h-[42px] [&_button]:min-h-[42px] [&_button]:px-1.5 [&_button]:py-0 [&_button]:text-sm";
+const fbar = "grid gap-2 items-end grid-cols-2 min-[701px]:grid-cols-[repeat(2,minmax(0,1fr))_repeat(3,minmax(0,150px))] [&_input]:h-[42px] [&_input]:min-h-[42px] [&_input]:px-2.5 [&_input]:py-0 [&_input]:text-sm [&_input]:rounded-lg [&_button]:w-full [&_button]:h-[42px] [&_button]:min-h-[42px] [&_button]:px-1.5 [&_button]:py-0 [&_button]:text-sm";
 function Flt({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 min-w-0">
-      <span className="text-[11.5px] font-bold text-muted truncate">{label}</span>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-muted truncate">{label}</span>
       {children}
     </label>
   );
@@ -103,7 +103,7 @@ function Detail({ id }: { id: number }) {
           <div className="flex flex-col">
             {orders.map((r) => (
               <button key={r.id} type="button" onClick={() => openRequest(r.id)}
-                className="flex justify-between gap-3 px-1 py-[9px] border-0 border-b border-line last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2">
+                className="flex justify-between gap-3 px-1 py-3 border-0 border-b border-line last:border-b-0 bg-transparent text-left cursor-pointer hover:bg-surface-2">
                 <span className="flex flex-col min-w-0">
                   <b>№{r.id} · {r.service}</b>
                   <small className="text-[12.5px] text-muted truncate">{r.address} · {dateShort(r.created_at)}</small>

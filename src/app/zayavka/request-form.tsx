@@ -37,7 +37,7 @@ export default function RequestForm({ crmHref = "../#requests" }: { crmHref?: st
       <main className="min-h-[calc(100vh-34px)] grid place-items-center px-4 py-8">
         <div className={cx(card, "w-full max-w-[420px] rounded-[20px] p-7 flex flex-col gap-4")}>
           <div className="size-[84px] -mt-1 mx-auto p-3 rounded-3xl bg-brand-soft"><Mark className="size-full block" /></div>
-          <h1 className="font-display font-bold text-[22px] leading-tight text-center">Заявка на вентиляцию</h1>
+          <h1 className="font-display font-semibold text-[22px] leading-tight text-center">Заявка на вентиляцию</h1>
           <p className="-mt-2 m-0 text-center text-muted">Оставьте телефон — менеджер перезвонит, уточнит задачу и согласует выезд мастера.</p>
           <form className={formCol} hidden={sent != null} onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget); }}>
             <Field label="Как к вам обращаться"><input ref={nameRef} name="client" required maxLength={120} autoComplete="name" /></Field>

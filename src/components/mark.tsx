@@ -4,7 +4,7 @@ export function Mark({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
       <defs>
         <linearGradient id="markGrad" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="42" y2="42">
-          <stop offset="0" stopColor="#7f9fd9" /><stop offset=".55" stopColor="#3366cc" /><stop offset="1" stopColor="#003399" />
+          <stop offset="0" stopColor="#93b4f5" /><stop offset=".55" stopColor="#3b64c4" /><stop offset="1" stopColor="#1e3a8a" />
         </linearGradient>
       </defs>
       <g fill="none" stroke="url(#markGrad)" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">

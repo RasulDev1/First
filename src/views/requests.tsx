@@ -19,6 +19,7 @@ import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
 } from "./requests/shared";
+import { IconArrow, IconCalendar, IconPhone, IconPlus } from "@/components/icons";
 import { OrderNo } from "./requests/order-no";
 import type { View } from "./types";
 
@@ -75,12 +76,12 @@ function sorted(list: Request[]) {
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
 /* ---------- Фильтры ---------- */
-const fltBtn = "!w-full !h-[42px] !min-h-[42px] !px-1.5 !py-0 !text-sm";
-const fltCtl = "!h-[42px] !min-h-[42px] !px-2.5 !py-0 !text-sm !rounded-none";
-function Flt({ label, children }: { label: string; children: ReactNode }) {
+const fltBtn = "!h-[42px] !min-h-[42px] !px-5 !py-0 !text-sm";
+const fltCtl = "!h-[42px] !min-h-[42px] !px-3 !py-0 !text-sm";
+function Flt({ label, span, children }: { label: string; span: string; children: ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 min-w-0">
-      <span className="text-[11.5px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+    <label className={cx("flex flex-col gap-1.5 min-w-0", span)}>
+      <span className="text-[11px] font-medium tracking-[.05em] uppercase text-[#94a3b8] whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {children}
     </label>
   );
@@ -109,7 +110,7 @@ function SheetMain({ r, user }: { r: Request; user: Staff }) {
         r.note ? ["Со слов клиента", r.note] : null,
       ]} />
       <div className="mt-4">
-        <h4 className="m-0 mb-2 text-sm font-bold">Комментарии</h4>
+        <h4 className="m-0 mb-2 text-sm font-semibold">Комментарии</h4>
         <CommentsList list={r.comments} />
         {warehouse ? null : <CommentForm stacked onSend={(text) => {
           if (!pushComment(r, text, user)) return false;
@@ -221,7 +222,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
         <nav className="flex gap-0.5 flex-wrap">
           {tabs.map(([id, title]) => (
             <button key={id} type="button" aria-pressed={id === tab} onClick={() => onTab(id)}
-              className={cx("text-sm font-bold px-3 py-1.5 border-0 border-b-2 bg-transparent cursor-pointer", id === tab ? "text-brand-deep border-brand" : "text-muted border-transparent")}>
+              className={cx("text-sm font-medium px-3 py-1.5 border-0 border-b-2 bg-transparent cursor-pointer", id === tab ? "text-brand-deep border-brand" : "text-muted border-transparent")}>
               {title}
             </button>
           ))}
@@ -261,31 +262,33 @@ function Requests({ user }: { user: Staff }) {
   return (
     <>
       <form key={ui.formKey} onSubmit={find}
-        className="grid grid-cols-2 min-[701px]:grid-cols-5 min-[1500px]:grid-cols-10 items-end gap-2 mb-3.5">
-        <Flt label="Поиск"><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltCtl} /></Flt>
-        <Flt label="Дата оформления"><input type="date" name="created" defaultValue={ui.F.created} className={fltCtl} /></Flt>
-        <Flt label="Дата завершения"><input type="date" name="done" defaultValue={ui.F.done} className={fltCtl} /></Flt>
-        <Flt label="Номер клиента"><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltCtl} /></Flt>
-        <Flt label="Город">
+        className="grid grid-cols-2 min-[1000px]:grid-cols-12 items-end gap-x-3 gap-y-4 mb-5">
+        <Flt span="min-[1000px]:col-span-4" label="Поиск"><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления"><input type="date" name="created" defaultValue={ui.F.created} className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения"><input type="date" name="done" defaultValue={ui.F.done} className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-3" label="Номер клиента"><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-2" label="Город">
           <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltCtl} />
           <datalist id="cityList">{cities.map((c) => <option key={c} value={c} />)}</datalist>
         </Flt>
-        <Flt label="Улица"><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltCtl} /></Flt>
-        <Flt label="Статус заказа">
+        <Flt span="min-[1000px]:col-span-3 order-6" label="Улица"><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltCtl} /></Flt>
+        <Flt span="min-[1000px]:col-span-3" label="Статус заказа">
           <select name="status" defaultValue={ui.F.status} className={fltCtl}><Options list={STATUSES} empty="Все статусы" /></select>
         </Flt>
-        <button type="submit" className={cx(buttonClass(), fltBtn)}>Найти</button>
-        <button type="button" className={cx(buttonClass(), fltBtn)} onClick={reset}>Сбросить</button>
-        {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn)} onClick={openCreate}>Создать заказ</button>}
+        <div className="col-span-full min-[1000px]:col-span-5 order-7 flex items-center gap-4">
+          <button type="submit" className={cx(buttonClass(), fltBtn, "!bg-brand !border-brand !text-white hover:!bg-brand-deep hover:!border-brand-deep")}>Найти</button>
+          <button type="button" className="bg-transparent border-0 p-0 text-sm text-muted cursor-pointer hover:text-heading hover:underline" onClick={reset}>Сбросить</button>
+          {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "ml-auto gap-2")} onClick={openCreate}><IconPlus />Создать заказ</button>}
+        </div>
       </form>
 
-      <Table>
+      <Table center>
         <thead>
           <tr>{COLS.map(([key, title]) => (
-            <th key={key}>
+            <th key={key} style={key === "city" || key === "street" ? { textAlign: "left" } : undefined}>
               <button type="button" onClick={() => sortBy(key)}
                 className="bg-transparent border-0 p-0 cursor-pointer uppercase hover:text-ink">
-                {title}{ui.sort.key === key ? (ui.sort.dir > 0 ? " ↑" : " ↓") : ""}
+                {title}{ui.sort.key === key ? <IconArrow up={ui.sort.dir > 0} className="inline size-3 ml-1 -mt-0.5" /> : null}
               </button>
             </th>
           ))}</tr>
@@ -297,11 +300,11 @@ function Requests({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap">{dateShort(r.created_at)}</td>
-              <td className="tabular-nums whitespace-nowrap">{r.done_at ? dateShort(r.done_at) : <span className={muted}>—</span>}</td>
-              <td><b className="tabular-nums whitespace-nowrap">{r.phone}</b><small>{r.client}</small></td>
-              <td className="whitespace-nowrap">{cityOf(r)}</td>
-              <td>{streetOf(r)}</td>
+              <td className="tabular-nums whitespace-nowrap"><span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.created_at)}</span></td>
+              <td className="tabular-nums whitespace-nowrap">{r.done_at ? <span className="inline-flex items-center gap-1.5"><IconCalendar className="size-3.5 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
+              <td><b className="inline-flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small>{r.client}</small></td>
+              <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
+              <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (

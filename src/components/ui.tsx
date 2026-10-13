@@ -2,6 +2,7 @@
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
+import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPencil, IconPin, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
 import { dateTime } from "@/lib/core";
 
@@ -10,9 +11,9 @@ export const cx = (...list: (string | false | null | undefined)[]) => list.filte
 /* ---------- Кнопки ---------- */
 // Все кнопки CRM с прямыми углами. Второстепенная — по умолчанию, главная — синяя, опасная — красная.
 const BTN = {
-  base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-bold border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
+  base: "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium border cursor-pointer transition-[background-color,border-color,transform] duration-150 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed",
   secondary: "bg-surface-2 border-surface-2 text-ink hover:bg-line hover:border-line disabled:hover:bg-surface-2",
-  primary: "bg-brand border-brand text-white hover:bg-brand-deep hover:border-brand-deep disabled:hover:bg-brand",
+  primary: "bg-brand border-brand text-white hover:bg-brand-deep hover:border-brand-deep disabled:hover:bg-brand disabled:hover:border-brand",
   danger: "bg-bad border-bad text-white hover:bg-bad-deep hover:border-bad-deep",
   md: "min-h-10 px-4 py-2",
   sm: "min-h-8 px-3 py-1 text-[13px]",
@@ -30,12 +31,12 @@ export const buttonClass = (variant: ButtonVariant = "secondary", size: "md" | "
 
 /** Текстовая кнопка-ссылка */
 export function LinkButton({ className, type = "button", ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type={type} className={cx("bg-transparent border-0 p-0 text-brand font-bold cursor-pointer text-[13px] hover:underline", className)} {...rest} />;
+  return <button type={type} className={cx("bg-transparent border-0 p-0 text-brand font-medium cursor-pointer text-[13px] hover:underline", className)} {...rest} />;
 }
 
 /** Маленькая кнопка ✕ (убрать строку, фото) */
-export function IconButton({ className, type = "button", children = "✕", ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type={type} className={cx("bg-transparent border-0 text-muted cursor-pointer px-2 py-1 hover:text-bad hover:bg-bad-soft", className)} {...rest}>{children}</button>;
+export function IconButton({ className, type = "button", children = <IconX />, ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type={type} className={cx("bg-transparent border-0 text-muted cursor-pointer px-2 py-1 rounded-md hover:text-bad hover:bg-bad-soft", className)} {...rest}>{children}</button>;
 }
 
 /** Кнопка опасного действия: первое нажатие спрашивает «Точно?», второе — выполняет (confirm() в части браузеров не работает) */
@@ -56,7 +57,7 @@ export function ArmedButton({ question = "Точно?", onConfirm, variant = "se
 export function Field({ label, hint, className, children }: { label: ReactNode; hint?: ReactNode; className?: string; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", className)}>
-      <span className="text-[13px] font-bold text-ink-2">{label}</span>
+      <span className="text-[13px] font-medium text-ink-2">{label}</span>
       {children}
       {hint ? <small className="text-xs text-muted">{hint}</small> : null}
     </label>
@@ -82,10 +83,16 @@ export const grid2 = "grid grid-cols-1 min-[561px]:grid-cols-2 gap-3.5";
 export const formCol = "flex flex-col gap-3.5";
 
 /* ---------- Статусы и метки ---------- */
+// Цвета статусов по этапам: старт, подготовка, работа, архив
 const PILL: Record<string, string> = {
-  new: "text-st-new bg-st-new-soft", assigned: "text-st-assigned bg-st-assigned-soft", measure: "text-st-measure bg-st-measure-soft",
-  pricing: "text-st-pricing bg-st-pricing-soft", in_work: "text-st-in_work bg-st-in_work-soft", done: "text-st-done bg-st-done-soft",
-  cancelled: "text-st-cancelled bg-st-cancelled-soft",
+  new: "bg-[#eff6ff] text-[#1e40af]",
+  assigned: "bg-[#fff7ed] text-[#b45309]", measure: "bg-[#fff7ed] text-[#b45309]", pricing: "bg-[#fff7ed] text-[#b45309]",
+  in_work: "bg-[#f5f3ff] text-[#5b21b6]",
+  done: "bg-[#f0fdf4] text-[#166534]", cancelled: "bg-[#f9fafb] text-[#6b7280]",
+};
+const PILL_ICON: Record<string, ReactNode> = {
+  new: <IconSpark />, assigned: <IconUser />, measure: <IconRuler />, pricing: <IconReceipt />,
+  in_work: <IconCog />, done: <IconCheck />, cancelled: <IconX />,
 };
 /** Цвет заливки статуса — для полос графиков */
 export const STATUS_FILL: Record<string, string> = {
@@ -95,17 +102,56 @@ export const STATUS_FILL: Record<string, string> = {
 export const statusTitle = (id: string) => STATUSES.find((s) => s.id === id)?.title || id;
 export function Pill({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center self-start w-max px-2.5 py-0.5 rounded-full text-xs font-extrabold whitespace-nowrap before:content-[''] before:size-1.5 before:rounded-full before:bg-current before:mr-1.5", className)}>
+    <span className={cx("inline-flex items-center self-start w-max px-2.5 py-px rounded-full text-[11px] font-medium whitespace-nowrap before:content-[''] before:size-1.5 before:rounded-full before:bg-current before:mr-1.5", className)}>
       {children}
     </span>
   );
 }
-export const StatusPill = ({ id }: { id: StatusId | string }) => <Pill className={PILL[id] ?? PILL.cancelled}>{statusTitle(id)}</Pill>;
+function statusIcon(id: string): ReactNode {
+    if (id === "new") return <IconSpark className="live-twinkle" />;
+    if (id === "assigned") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <i className="live-wave absolute inset-0 rounded-full border border-current" />
+        <i className="live-wave w2 absolute inset-0 rounded-full border border-current" />
+        <IconUser className="relative" />
+      </span>
+    );
+    if (id === "measure") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <IconPin className="live-hop" />
+        <i className="live-hop-shadow absolute -bottom-0.5 left-1/2 -ml-[3px] h-[2px] w-[6px] rounded-full bg-current" />
+      </span>
+    );
+    if (id === "pricing") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <IconDoc className="live-lines" />
+        <IconPencil className="live-pencil" />
+      </span>
+    );
+    if (id === "in_work") return <IconCog className="animate-spin-slow" />;
+    if (id === "done") return (
+      <span className="live-done relative inline-flex size-3.5 items-center justify-center">
+        <IconCheckCircle />
+        {[["-7px", "-7px"], ["7px", "-7px"], ["-8px", "4px"], ["8px", "4px"]].map(([x, y]) => (
+          <i key={x + y} className="absolute left-1/2 top-1/2 -ml-px -mt-px size-[3px] rounded-full bg-current" style={{ "--dx": x, "--dy": y } as React.CSSProperties} />
+        ))}
+      </span>
+    );
+    if (id === "cancelled") return <IconXCircle className="live-shake" />;
+  return PILL_ICON[id] ?? PILL_ICON.cancelled;
+}
+export function StatusPill({ id }: { id: StatusId | string }) {
+  return (
+    <span className={cx("group inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, id === "cancelled" && "live-fade")}>
+      <span className="inline-flex [&_svg]:size-3.5 [&_svg]:stroke-[1.75]">{statusIcon(id)}</span>{statusTitle(id)}
+    </span>
+  );
+}
 
 /** Место на складе «А-1-2» */
 export function Loc({ code, children, big, className }: { code: string; children?: ReactNode; big?: boolean; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 px-2 py-px rounded-md bg-brand-soft text-brand-deep font-extrabold tabular-nums tracking-wide whitespace-nowrap",
+    <span className={cx("inline-flex items-center gap-1.5 px-2 py-px rounded-md bg-brand-soft text-brand-deep font-semibold tabular-nums tracking-wide whitespace-nowrap",
       big ? "text-base px-2.5 py-1" : "text-[13px]", className)}>
       {code}{children}
     </span>
@@ -114,7 +160,7 @@ export function Loc({ code, children, big, className }: { code: string; children
 
 /** Счётчик рядом с заголовком */
 export function Count({ n, warn }: { n: number; warn?: boolean }) {
-  return <i className={cx("not-italic font-body text-xs font-bold px-2 py-px rounded-full align-[2px]", warn ? "bg-warn-soft text-warn" : "bg-brand text-white")}>{n}</i>;
+  return <i className={cx("not-italic font-body text-xs font-medium px-2 py-px rounded-full align-[2px]", warn ? "bg-warn-soft text-warn" : "bg-brand text-white")}>{n}</i>;
 }
 
 /* ---------- Чипы-фильтры и вкладки ---------- */
@@ -126,9 +172,9 @@ export function Chips({ items, active, onChange, tabs }: { items: readonly ChipI
         const on = String(id) === String(active);
         return (
           <button key={String(id)} type="button" aria-pressed={on} onClick={() => onChange(String(id))}
-            className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-bold cursor-pointer",
+            className={cx("flex-none inline-flex items-center gap-1.5 text-[13px] font-medium cursor-pointer",
               tabs ? cx("px-3.5 py-2.5 border-0 border-b-2 bg-transparent", on ? "text-brand-deep border-brand" : "text-ink-2 border-transparent")
-                : cx("px-3 py-1.5 border", on ? "bg-ink border-ink text-page" : "bg-surface border-line text-ink-2"))}>
+                : cx("px-3 py-1.5 border rounded-lg", on ? "bg-brand border-brand text-white" : "bg-surface border-black/[.06] text-ink-2"))}>
             {label}
             {count != null ? <i className={cx("not-italic tabular-nums", on ? (tabs ? "text-brand-deep" : "text-page/75") : "text-muted")}>{count}</i> : null}
           </button>
@@ -138,25 +184,41 @@ export function Chips({ items, active, onChange, tabs }: { items: readonly ChipI
   );
 }
 
+/** Переключатель-сегменты: общая подложка и белая плашка, которая плавно переезжает на выбранный пункт */
+export function Segmented({ items, active, onChange }: { items: readonly (readonly [string | number, string])[]; active: string | number; onChange: (id: string) => void }) {
+  const i = Math.max(0, items.findIndex(([id]) => String(id) === String(active)));
+  return (
+    <div role="tablist" className="relative inline-grid grid-flow-col auto-cols-fr self-start p-1 rounded-lg bg-surface-2 max-w-full overflow-x-auto">
+      <span aria-hidden="true" style={{ width: `calc(100% / ${items.length})`, transform: `translateX(${i * 100}%)` }}
+        className="absolute inset-y-1 left-0 rounded-md bg-surface shadow-[0_1px_3px_rgba(15,23,42,.12)] transition-transform duration-200 ease-out motion-reduce:transition-none" />
+      {items.map(([id, label]) => (
+        <button key={String(id)} type="button" aria-pressed={String(id) === String(active)} onClick={() => onChange(String(id))}
+          className={cx("relative z-1 px-4 py-1.5 text-[13px] font-medium whitespace-nowrap border-0 bg-transparent cursor-pointer transition-colors duration-150",
+            String(id) === String(active) ? "text-heading" : "text-muted hover:text-ink")}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- Блоки ---------- */
 export function Empty({ title, children }: { title: ReactNode; children?: ReactNode }) {
   return (
-    <div className="py-8 px-5 text-center border border-dashed border-line rounded-card text-ink-2">
+    <div className="py-10 px-6 text-center rounded-card bg-surface-2/70 text-ink-2">
       <b>{title}</b>
       {children ? <p className="mt-1.5 mb-0 text-muted">{children}</p> : null}
     </div>
   );
 }
 export function Note({ tone, className, children }: { tone?: "warn" | "ok"; className?: string; children: ReactNode }) {
-  return <p className={cx("m-0 px-3 py-2.5 rounded-[10px] text-sm", tone === "warn" ? "bg-warn-soft text-warn" : tone === "ok" ? "bg-ok-soft text-ok" : "bg-surface-2 text-ink-2", className)}>{children}</p>;
+  return <p className={cx("m-0 px-4 py-3 rounded-lg text-sm", tone === "warn" ? "bg-warn-soft text-warn" : tone === "ok" ? "bg-ok-soft text-ok" : "bg-surface-2 text-ink-2", className)}>{children}</p>;
 }
-export const card = "bg-surface border border-line rounded-card shadow-card";
+export const card = "bg-surface border border-black/[.04] rounded-card shadow-card";
 export function Panel({ title, actions, className, children }: { title?: ReactNode; actions?: ReactNode; className?: string; children: ReactNode }) {
   return (
-    <section className={cx(card, "p-4 flex flex-col gap-3 min-w-0", className)}>
+    <section className={cx(card, "p-5 sm:p-6 flex flex-col gap-4 min-w-0", className)}>
       {title || actions ? (
         <div className="flex items-center justify-between gap-2.5">
-          {title ? <h3 className="font-display text-sm font-bold leading-tight">{title}</h3> : <span />}
+          {title ? <h3 className="font-display text-sm font-semibold leading-tight">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
@@ -169,30 +231,34 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
 export function Kpis({ small, children }: { small?: boolean; children: ReactNode }) {
   return <div className={cx("grid", small ? "grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2" : "grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3")}>{children}</div>;
 }
-export function Kpi({ label, value, sub, tone, small, onClick }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: "accent" | "bad"; small?: boolean; onClick?: () => void }) {
+export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: "accent" | "bad"; subTone?: "ok" | "warn"; small?: boolean; onClick?: () => void }) {
   const Tag = onClick ? "button" : "div";
   return (
-    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-0.5 min-w-0 text-left",
-      small ? "px-3 py-2.5 rounded-card bg-surface-2" : "px-4 py-3.5 rounded-card",
-      !small && (tone === "accent" ? "bg-linear-135 from-brand-light via-brand to-brand-deep text-white shadow-card" : "bg-surface border border-line shadow-card"),
+    <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-1 min-w-0 text-left",
+      small ? "px-3 py-2.5 rounded-card bg-surface-2" : "p-6 gap-1.5 rounded-card bg-surface border border-black/[.04] shadow-card",
       onClick && "cursor-pointer hover:border-brand")}>
-      <small className={cx("text-xs font-extrabold tracking-wider uppercase", tone === "accent" ? "text-white/85" : "text-muted")}>{label}</small>
-      <b className={cx("font-display font-bold leading-tight wrap-anywhere tabular-nums", small ? "text-base" : "text-lg sm:text-2xl", tone === "bad" && "text-bad")}>{value}</b>
-      {sub ? <span className={cx("text-[13px]", tone === "accent" ? "text-white/85" : "text-muted")}>{sub}</span> : null}
+      <small className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{label}</small>
+      <b className={cx("font-display font-medium leading-tight whitespace-nowrap tabular-nums text-heading", small ? "text-lg" : "text-[22px] sm:text-[26px]", tone === "bad" && "text-bad")}>{value}</b>
+      {sub ? (
+        <span className={cx("text-[11px] leading-snug",
+          subTone === "ok" ? "self-start mt-1 px-3 py-1 rounded-full whitespace-nowrap bg-ok-soft text-ok font-medium"
+            : subTone === "warn" ? "self-start mt-1 px-3 py-1 rounded-full whitespace-nowrap bg-warn-soft text-warn font-medium" : "text-muted")}>{sub}</span>
+      ) : null}
     </Tag>
   );
 }
 
 /* ---------- Таблица ---------- */
 // <Table> оборачивает <table>: заголовки, строки, итоговая строка в <tfoot>. Числа справа — className="text-right tabular-nums".
-export function Table({ className, children }: { className?: string; children: ReactNode }) {
+export function Table({ className, center, children }: { className?: string; center?: boolean; children: ReactNode }) {
   return (
     <div className={cx(card, "overflow-x-auto", className)}>
-      <table className={cx("w-full border-collapse text-sm",
-        "[&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:tracking-wide [&_th]:uppercase [&_th]:text-muted [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:border-b [&_th]:border-line [&_th]:bg-surface-2 [&_th]:whitespace-nowrap [&_th]:align-bottom",
-        "[&_td]:px-3.5 [&_td]:py-2.5 [&_td]:border-b [&_td]:border-line [&_td]:align-top",
-        "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-bold",
-        "[&_td_small]:block [&_td_small]:text-[12.5px] [&_td_small]:text-muted [&_td_small]:font-medium")}>
+      <table className={cx("w-full border-collapse text-sm", center && "[&_th]:!text-center [&_td]:text-center",
+        "[&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.05em] [&_th]:uppercase [&_th]:text-[#94a3b8] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
+        "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
+        "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
+        "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",
+        "[&_td_small]:block [&_td_small]:text-xs [&_td_small]:text-muted [&_td_small]:font-medium [&_td_small]:mt-0.5")}>
         {children}
       </table>
     </div>
@@ -205,16 +271,16 @@ export const rowClickable = "cursor-pointer hover:[&_td]:bg-surface-2";
 export function DHead({ eyebrow, title, children }: { eyebrow?: ReactNode; title: ReactNode; children?: ReactNode }) {
   return (
     <header className="flex flex-col gap-1.5 pr-9">
-      {eyebrow ? <p className="m-0 text-xs font-bold tracking-wider uppercase text-muted">{eyebrow}</p> : null}
-      <h2 className="font-display text-[21px] font-bold leading-tight wrap-anywhere">{title}</h2>
+      {eyebrow ? <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted">{eyebrow}</p> : null}
+      <h2 className="font-display text-[22px] font-semibold leading-tight wrap-anywhere">{title}</h2>
       {children}
     </header>
   );
 }
 export function DSec({ title, callout, className, children }: { title?: ReactNode; callout?: boolean; className?: string; children: ReactNode }) {
   return (
-    <section className={cx("flex flex-col gap-2.5", callout ? "p-4 border border-st-new rounded-card bg-st-new-soft" : "pt-4.5 border-t border-line", className)}>
-      {title ? <h3 className="text-[13px] font-extrabold tracking-wider uppercase text-muted">{title}</h3> : null}
+    <section className={cx("flex flex-col gap-2.5", callout ? "p-5 rounded-card bg-surface-2" : "pt-6 border-t border-line/70", className)}>
+      {title ? <h3 className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{title}</h3> : null}
       {children}
     </section>
   );
@@ -235,7 +301,7 @@ export function Kv({ items, wide }: { items: readonly KvItem[]; wide?: boolean }
   );
 }
 export const btnRow = "flex flex-wrap gap-2";
-export const eyebrow = "m-0 text-xs font-bold tracking-wider uppercase text-muted";
+export const eyebrow = "m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted";
 
 /* ---------- Комментарии ---------- */
 export function CommentsList({ list = [] }: { list?: Comment[] }) {

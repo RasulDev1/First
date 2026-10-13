@@ -113,7 +113,7 @@ export default function CrmApp() {
             window.history.replaceState(null, "", window.location.pathname + window.location.search);
           }} />
           <div className="min-w-0 px-4 pt-4.5 pb-10 min-[901px]:px-[clamp(16px,3vw,36px)] min-[901px]:pt-6 min-[901px]:pb-12 flex flex-col gap-4.5">
-            <header><h1 className="font-display font-bold text-[clamp(20px,2.4vw,26px)] leading-tight tracking-tight">{view.title(user)}</h1></header>
+            <header><h1 className="font-display font-semibold text-[clamp(20px,2.4vw,26px)] leading-tight tracking-tight">{view.title(user)}</h1></header>
             <div className="flex flex-col gap-4 min-w-0"><view.Component user={user} /></div>
           </div>
         </div>
@@ -145,29 +145,30 @@ function Sidebar({ user, section, onLogout }: { user: Staff; section: string; on
       min-[901px]:h-[calc(100vh-34px)] min-[901px]:flex-col min-[901px]:flex-nowrap min-[901px]:items-stretch min-[901px]:gap-5 min-[901px]:px-3.5 min-[901px]:py-5 min-[901px]:border-b-0 min-[901px]:border-r">
       <a href="#home" aria-label={`${COMPANY} — главная`} className="flex items-center gap-2.5 no-underline text-heading px-1.5">
         <Mark className="size-[34px] min-[901px]:size-[42px] flex-none" />
-        <span className="font-display font-bold text-base leading-[1.05] tracking-wide flex flex-col">
+        <span className="font-display font-semibold text-base leading-[1.05] tracking-wide flex flex-col">
           CRM<b className="text-sm bg-linear-135 from-brand-light via-brand to-brand-deep bg-clip-text text-transparent">Вентиляция</b>
         </span>
       </a>
-      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col">
+      <nav aria-label="Разделы" className="order-3 w-full flex flex-row gap-0.5 overflow-x-auto -mx-1 [scrollbar-width:none] min-[901px]:order-none min-[901px]:mx-0 min-[901px]:flex-col min-[901px]:overflow-visible">
         {NAV.filter(([id]) => can(user, id)).map(([id, label, path]) => {
           const n = badge(id, user), current = id === section;
           return (
             <a key={id} href={`#${id}`} aria-current={current ? "page" : undefined}
-              className={cx("flex-none flex items-center gap-1.5 px-2.5 py-[7px] text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-bold transition-colors duration-150",
-                current ? "bg-brand/14 text-brand" : "text-muted hover:bg-brand/9 hover:text-brand-deep active:bg-brand/18")}>
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
+              className={cx("relative flex-none flex items-center gap-1.5 px-2.5 py-[7px] text-sm min-[901px]:gap-3 min-[901px]:px-3 min-[901px]:py-2.5 min-[901px]:text-[15px] no-underline font-medium transition-colors duration-150",
+                "min-[901px]:before:content-[''] min-[901px]:before:absolute min-[901px]:before:-left-3.5 min-[901px]:before:top-1.5 min-[901px]:before:bottom-1.5 min-[901px]:before:w-[3px] min-[901px]:before:rounded-r-full min-[901px]:before:transition-colors",
+                current ? "text-brand font-semibold min-[901px]:before:bg-brand" : "text-muted hover:text-heading min-[901px]:before:bg-transparent")}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[17px] min-[901px]:size-5 flex-none fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d={path} /></svg>
               <span>{label}</span>
-              {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-bold leading-normal text-center",
+              {n ? <i className={cx("ml-auto min-w-[22px] px-[7px] py-px rounded-full not-italic text-xs font-medium leading-normal text-center",
                 id === "requests" && !isWarehouse(user) ? "bg-brand text-white" : "bg-warn-soft text-warn")}>{n}</i> : null}
             </a>
           );
         })}
       </nav>
-      <div className="ml-auto flex flex-row items-center gap-2.5 min-[901px]:mt-auto min-[901px]:ml-0 min-[901px]:flex-col min-[901px]:items-stretch min-[901px]:p-3 min-[901px]:bg-surface min-[901px]:border min-[901px]:border-line min-[901px]:rounded-card">
+      <div className="ml-auto flex flex-row items-center gap-2.5 min-[901px]:mt-auto min-[901px]:ml-0 min-[901px]:flex-col min-[901px]:items-stretch min-[901px]:p-3 min-[901px]:rounded-card">
         <div className="hidden min-[561px]:flex flex-col min-w-0">
-          <span className="font-extrabold text-heading wrap-anywhere text-[13px] min-[901px]:text-[15px]">{user.name}</span>
-          <span className="self-start mt-0.5 px-2.5 py-px rounded-full bg-brand-soft text-brand-deep text-xs font-bold">{positionTitle(user)}</span>
+          <span className="font-semibold text-heading wrap-anywhere text-[13px] min-[901px]:text-[15px]">{user.name}</span>
+          <span className="self-start mt-0.5 px-2.5 py-px rounded-full bg-brand-soft text-brand-deep text-xs font-medium">{positionTitle(user)}</span>
         </div>
         <ArmedButton size="sm" question="Точно выйти?" onConfirm={onLogout}>Выйти</ArmedButton>
       </div>
@@ -194,7 +195,7 @@ function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
     <main className="min-h-[calc(100vh-34px)] grid place-items-center px-4 py-8">
       <div className={cx(card, "w-full max-w-[420px] rounded-[20px] p-7 flex flex-col gap-4")}>
         <div className="size-[84px] -mt-1 mx-auto p-3 rounded-3xl bg-brand-soft"><Mark className="size-full block" /></div>
-        <h1 className="font-display font-bold text-[22px] leading-tight text-center">Вход в CRM</h1>
+        <h1 className="font-display font-semibold text-[22px] leading-tight text-center">Вход в CRM</h1>
         <p className="-mt-2 m-0 text-center text-muted">Логин и пароль выдаёт руководитель.</p>
         <form className="flex flex-col gap-3.5" autoComplete="on" onSubmit={(e) => { e.preventDefault(); submit(name, pass); }}>
           <Field label="Логин"><input name="username" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required autoFocus
@@ -205,7 +206,7 @@ function Login({ onLogin }: { onLogin: (u: Staff) => void }) {
           <Button variant="primary" type="submit" block>Войти</Button>
         </form>
         <div className="border-t border-dashed border-line pt-3.5 flex flex-col gap-2">
-          <p className="m-0 text-xs font-bold tracking-wider uppercase text-muted">Войти в демо как</p>
+          <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted">Войти в демо как</p>
           <div className="grid grid-cols-1 min-[561px]:grid-cols-2 gap-2">
             {DEMO_ACCOUNTS.map((a) => {
               const s = db.list("staff").find((x) => x.login === a.login);

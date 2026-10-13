@@ -71,7 +71,7 @@ const sum = (list: EstimateLine[]) => list.reduce((n, l) => n + l.qty * l.price,
 function LinesTable({ title, list }: { title: string; list: EstimateLine[] }) {
   return (
     <>
-      <h4 className="mt-1 mb-0 text-sm font-bold text-heading">{title} · {money(sum(list))}</h4>
+      <h4 className="mt-1 mb-0 text-sm font-semibold text-heading">{title} · {money(sum(list))}</h4>
       <Table>
         <thead><tr><th>Позиция</th><th className="text-right!">Кол-во</th><th className="text-right!">Цена</th><th className="text-right!">Сумма</th></tr></thead>
         <tbody>{list.map((l) => (
@@ -108,7 +108,7 @@ function Calc() {
   const state = toInput(form);
   return (
     <div className="grid grid-cols-1 min-[901px]:grid-cols-[320px_minmax(0,1fr)] gap-5 items-start">
-      <form className="bg-surface border border-line shadow-card p-4 flex flex-col gap-3.5 min-[901px]:sticky min-[901px]:top-4" onSubmit={(e) => e.preventDefault()}>
+      <form className="bg-surface border border-black/[.04] rounded-card shadow-card p-6 flex flex-col gap-4 min-[901px]:sticky min-[901px]:top-4" onSubmit={(e) => e.preventDefault()}>
         <Field label="Что считаем">
           <select name="system" value={form.system} onChange={(e) => set("system", e.target.value)}>
             {SYSTEMS.map(([id, t]) => <option key={id} value={id}>{t}</option>)}

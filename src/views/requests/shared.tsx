@@ -75,7 +75,7 @@ export const inlineForm = "flex flex-row flex-wrap items-center gap-2 [&_select]
 /** Колонки нижней панели */
 export const sheetCols = "grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[18px]";
 /** Номер заказа — ссылка на карточку */
-export const orderNo = "bg-transparent border-0 p-0 text-brand font-bold cursor-pointer underline underline-offset-3 text-[length:inherit]";
+export const orderNo = "bg-transparent border-0 p-0 text-heading font-semibold cursor-pointer no-underline hover:underline hover:text-brand underline-offset-3 text-[length:inherit]";
 /** Заголовок колонки справа (перебивает выравнивание <Table>) */
 export const thR = "!text-right";
 

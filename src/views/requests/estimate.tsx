@@ -88,7 +88,7 @@ function NumIn({ value, onCommit, step, inputMode, label }: { value: number; onC
   }, []);
   return (
     <input ref={ref} type="number" min="0" step={step} inputMode={inputMode} aria-label={label} value={text} onChange={(e) => setText(e.target.value)}
-      className="!w-[90px] !min-h-0 text-right !px-2 !py-1.5 !rounded-none" />
+      className="!w-[90px] !min-h-0 text-right !px-2 !py-1.5 !rounded-md" />
   );
 }
 
@@ -255,7 +255,7 @@ function EstimateWizard({ id }: { id: number }) {
         {STEPS.map(([sid, title], i) => (
           <button key={sid} type="button" aria-pressed={i === step} onClick={() => setStep(i)}
             className={cx("inline-flex gap-1.5 items-center border px-3 py-2 cursor-pointer", i === step ? "bg-brand-deep border-brand-deep text-white" : "bg-surface-2 border-surface-2 text-ink")}>
-            <i className="not-italic font-bold">{i + 1}</i>{title}
+            <i className="not-italic font-semibold">{i + 1}</i>{title}
           </button>
         ))}
       </nav>
