@@ -298,7 +298,7 @@ function Requests({ user }: { user: Staff }) {
         </div>
       </form>
 
-      <Table center widths={[7, 14, 14, 18, 10, 19, 18]}>
+      <Table resize center widths={[7, 14, 14, 18, 10, 19, 18]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
             <th key={key} style={LEFT.includes(key) ? { textAlign: "left" } : undefined}>

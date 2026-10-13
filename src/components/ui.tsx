@@ -1,6 +1,6 @@
 "use client";
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
 import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPencil, IconPin, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
@@ -250,16 +250,72 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
 
 /* ---------- Таблица ---------- */
 // <Table> оборачивает <table>: заголовки, строки, итоговая строка в <tfoot>. Числа справа — className="text-right tabular-nums".
-export function Table({ className, center, widths, children }: { className?: string; center?: boolean; widths?: number[]; children: ReactNode }) {
+export function Table({ className, center, widths, resize, children }: { className?: string; center?: boolean; widths?: number[]; resize?: boolean; children: ReactNode }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const tbl = useRef<HTMLTableElement>(null);
+  const [cols, setCols] = useState<number[] | null>(null);
+  const touched = useRef(false);
+  // Первый показ: измеряем естественную ширину колонок и дальше ведём их в пикселях
+  useLayoutEffect(() => {
+    if (!resize || cols || !tbl.current) return;
+    const ths = Array.from(tbl.current.querySelectorAll("thead th"));
+    if (ths.length) setCols(ths.map((th) => (th as HTMLElement).offsetWidth));
+  });
+  // Без ручной правки таблица подстраивается под ширину окна
+  useEffect(() => {
+    const el = wrap.current;
+    if (!resize || !el || typeof ResizeObserver === "undefined") return;
+    let w = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== w) { w = el.clientWidth; if (!touched.current) setCols(null); }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [resize]);
+  // Ручки изменения ширины в каждом заголовке
+  useEffect(() => {
+    const t = tbl.current;
+    if (!resize || !t || !cols) return;
+    t.querySelectorAll("thead th").forEach((th) => {
+      if (th.querySelector(":scope > [data-resize]")) return;
+      const h = document.createElement("span");
+      h.setAttribute("data-resize", "");
+      h.setAttribute("role", "separator");
+      h.setAttribute("aria-orientation", "vertical");
+      h.title = "Потяните, чтобы изменить ширину";
+      h.className = "absolute top-0 -right-[5px] z-10 h-full w-[11px] cursor-col-resize touch-none after:content-[''] after:absolute after:top-[22%] after:bottom-[22%] after:left-[5px] after:w-px after:bg-[#cbd5e1] hover:after:bg-[#2563eb] hover:after:w-[2px] hover:after:left-[4.5px]";
+      h.addEventListener("click", (e) => e.stopPropagation());
+      h.addEventListener("pointerdown", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const all = Array.from(t.querySelectorAll("thead th"));
+        const start = e.clientX, base = all.map((x) => (x as HTMLElement).offsetWidth), idx = all.indexOf(th);
+        h.setPointerCapture(e.pointerId);
+        touched.current = true;
+        const move = (ev: PointerEvent) => {
+          const next = idx + 1 < base.length;
+          let d = Math.max(ev.clientX - start, 56 - base[idx]);
+          if (next) d = Math.min(d, base[idx + 1] - 56);
+          setCols(base.map((w, j) => (j === idx ? w + d : next && j === idx + 1 ? w - d : w)));
+        };
+        const up = () => { h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up); };
+        h.addEventListener("pointermove", move); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
+      });
+      (th as HTMLElement).appendChild(h);
+    });
+  });
   return (
-    <div className={cx(card, "overflow-x-auto", className)}>
-      <table className={cx("w-full border-collapse text-sm", center && "[&_td]:text-center", widths && "table-fixed min-w-[900px] [&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
+    <div ref={wrap} className={cx(card, "overflow-x-auto", className)}>
+      <table ref={tbl} style={cols ? { width: cols.reduce((a, b) => a + b, 0), tableLayout: "fixed" } : undefined}
+        className={cx(cols ? "max-w-none" : "w-full", "border-collapse text-sm", center && "[&_td]:text-center", widths && !cols && "table-fixed min-w-[900px]", widths && "[&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
+        cols && "[&_td]:overflow-hidden [&_td]:text-ellipsis [&_th]:overflow-hidden [&_th]:text-ellipsis",
+        resize && "[&_th]:relative",
         (center ? "[&_th]:text-center" : "[&_th]:text-left"), "[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:text-[#64748b] [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-bottom",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
         "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",
         "[&_td_small]:block [&_td_small]:text-xs [&_td_small]:text-muted [&_td_small]:font-medium [&_td_small]:mt-0.5")}>
-        {widths ? <colgroup>{widths.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}</colgroup> : null}
+        {cols ? <colgroup>{cols.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
+          : widths ? <colgroup>{widths.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}</colgroup> : null}
         {children}
       </table>
     </div>

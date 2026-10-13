@@ -45,7 +45,7 @@ function StockRows({ wf }: { wf: WhFilter }) {
   if (wf.price) list.sort((a, b) => Math.abs((a.cost || 0) - Number(wf.price)) - Math.abs((b.cost || 0) - Number(wf.price)));
   if (!list.length) return <Empty title="Ничего не нашлось">Измените фильтры.</Empty>;
   return (
-    <Table className="[&_tbody_td:first-child]:min-w-[240px]">
+    <Table resize>
       <thead><tr><th>Наименование</th><th>Тип</th><th>Места</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th><th className={TH_R}>Цена</th></tr></thead>
       <tbody>{list.map((p) => {
         const total = qtyOf(p.id), low = isLow(p);
@@ -182,7 +182,7 @@ function BuyTab() {
   return (
     <>
       <p className="m-0 text-ink-2 max-w-[70ch]">Позиции ниже минимального остатка. Предлагаем докупить до двойного минимума.</p>
-      <Table>
+      <Table resize>
         <thead><tr><th>Наименование</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th><th className={TH_R}>Купить</th><th className={TH_R}>Закупка</th></tr></thead>
         <tbody>{rows.map(({ p, qty }) => (
           <tr key={p.id}>
@@ -206,7 +206,7 @@ function LowTab() {
   return (
     <>
       <p className="m-0 text-ink-2 max-w-[70ch]">Товары, которых осталось мало: остаток не больше минимального.</p>
-      <Table>
+      <Table resize>
         <thead><tr><th>Наименование</th><th className={TH_R}>Остаток</th><th className={TH_R}>Мин.</th></tr></thead>
         <tbody>{rows.map((p) => (
           <tr key={p.id} tabIndex={0} className="cursor-pointer" onClick={() => openProduct(p.id)}>
@@ -251,7 +251,7 @@ function LogTable({ productId }: { productId?: number }) {
     .sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 150);
   if (!list.length) return <Empty title="Движений пока нет" />;
   return (
-    <Table>
+    <Table resize>
       <thead><tr><th>Когда</th><th>Операция</th><th>{productId ? "Комментарий" : "Товар"}</th><th>Место</th><th className={TH_R}>Кол-во</th><th>Кто</th></tr></thead>
       <tbody>{list.map((m) => <MoveRow key={m.id} m={m} withProduct={!productId} />)}</tbody>
     </Table>

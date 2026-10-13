@@ -52,7 +52,7 @@ function Clients() {
         <Button onClick={() => { apply({ name: "", phone: "" }); setFormKey((k) => k + 1); }}>Сброс</Button>
         <Button variant="primary" onClick={() => openForm(null)}>Новый клиент</Button>
       </form>
-      <Table>
+      <Table resize>
         <thead><tr><th>Клиент</th><th>Телефон</th><th className="text-right!">Заказов</th><th className="text-right!">Сумма завершённых</th><th>Последний заказ</th></tr></thead>
         <tbody>
           {list.length ? list.map((c) => {
