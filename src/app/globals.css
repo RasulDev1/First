@@ -52,21 +52,32 @@
 
 /* «Живые» значки статусов */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .6; } 50% { transform: scale(1.13); opacity: 1; } }
-@keyframes rise { from { transform: translateY(3px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes sway { 0%, 78%, 100% { transform: rotate(0); } 83% { transform: rotate(5deg); } 90% { transform: rotate(-5deg); } 96% { transform: rotate(0); } }
-@keyframes blink { 0%, 100% { opacity: .25; } 20%, 40% { opacity: 1; } 60% { opacity: .25; } }
-@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes twinkle { 0%, 100% { transform: scale(1) rotate(0); opacity: 1; } 40% { transform: scale(.15) rotate(25deg); opacity: .1; } 70% { transform: scale(1.3) rotate(45deg); opacity: 1; filter: drop-shadow(0 0 3px currentColor); } }
+@keyframes wave { from { transform: scale(.7); opacity: .55; } to { transform: scale(2.3); opacity: 0; } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes hop-shadow { 0%, 100% { transform: scaleX(1); opacity: .5; } 50% { transform: scaleX(.45); opacity: .25; } }
+@keyframes march { to { stroke-dashoffset: -4; } }
+@keyframes spin-fast { to { transform: rotate(360deg); } }
+@keyframes pop { 0% { transform: scale(1); } 30% { transform: scale(.6); } 60% { transform: scale(1.3) rotate(-8deg); } 80% { transform: scale(.95) rotate(4deg); } 100% { transform: scale(1); } }
+@keyframes pop2 { 0% { transform: scale(1); } 30% { transform: scale(.6); } 60% { transform: scale(1.3) rotate(-8deg); } 80% { transform: scale(.95) rotate(4deg); } 100% { transform: scale(1); } }
+@keyframes spark { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.4); opacity: 0; } }
+@keyframes spark2 { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.4); opacity: 0; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-2.5px); } 40% { transform: translateX(2.5px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1.5px); } }
 @keyframes fade-half { to { opacity: .5; } }
-.draw-check path { stroke-dasharray: 1; animation: draw .4s ease-out both; }
-.live-breathe { animation: breathe 4s ease-in-out infinite; }
-.live-rise { animation: rise .5s ease-out both; }
-.live-sway { transform-origin: 50% 90%; animation: sway 5s ease-in-out infinite; }
-.live-lines path.l1, .live-lines path.l2, .live-lines path.l3 { animation: blink 3s ease-in-out infinite; }
-.live-lines path.l2 { animation-delay: .5s; }
-.live-lines path.l3 { animation-delay: 1s; }
-.animate-spin-slow { animation: spin-slow 9s linear infinite; }
-.live-fade { animation: fade-half .5s ease-out forwards; }
+.live-twinkle { animation: twinkle 1.5s ease-in-out infinite; }
+.live-wave { animation: wave 2s ease-out infinite; }
+.live-wave.w2 { animation-delay: 1s; }
+.live-hop { animation: hop 1.2s ease-in-out infinite; }
+.live-hop-shadow { animation: hop-shadow 1.2s ease-in-out infinite; }
+.live-lines path.l1, .live-lines path.l2, .live-lines path.l3 { stroke-dasharray: 2 2; animation: march 1.5s linear infinite; }
+.animate-spin-slow { animation: spin-fast 3s linear infinite; }
+.live-done svg { animation: pop .5s ease-out both; }
+.live-done i { animation: spark .6s ease-out both; }
+.group:hover .live-done svg { animation: pop2 .5s ease-out both; }
+.group:hover .live-done i { animation: spark2 .6s ease-out both; }
+.live-shake { animation: shake .4s ease-in-out both; }
+.live-fade { animation: fade-half .5s .4s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) {
-  .draw-check path, .live-breathe, .live-rise, .live-sway, .live-lines path, .animate-spin-slow, .live-fade, .animate-ping { animation: none; }
+  .live-twinkle, .live-wave, .live-hop, .live-hop-shadow, .live-lines path, .animate-spin-slow, .live-done svg, .live-done i, .live-shake, .live-fade, .animate-ping { animation: none; }
+  .live-done i { display: none; }
 }

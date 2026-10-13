@@ -41,3 +41,5 @@ export const IconPing = ({ className = "" }: { className?: string }) => (
 );
 export const IconPin = ic(<><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>);
 export const IconDoc = ic(<><path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5z" /><path className="l1" d="M9.5 11h5.5" /><path className="l2" d="M9.5 14h5.5" /><path className="l3" d="M9.5 17h3.5" /></>);
+export const IconCheckCircle = ic(<><circle cx="12" cy="12" r="9" /><path d="M8 12.4l2.8 2.8 5.2-5.8" /></>);
+export const IconXCircle = ic(<><circle cx="12" cy="12" r="9" /><path d="M9 9l6 6M15 9l-6 6" /></>);

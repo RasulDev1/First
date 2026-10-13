@@ -2,7 +2,7 @@
 // Общие элементы интерфейса CRM на Tailwind: кнопки, поля, статусы, чипы, плитки, панели, таблицы, разделы карточки.
 import { useEffect, useRef, useState, useSyncExternalStore, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { STATUSES } from "@/lib/config";
-import { IconCheck, IconCog, IconDoc, IconPin, IconProgress, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
+import { IconCheck, IconCheckCircle, IconXCircle, IconCog, IconDoc, IconPin, IconProgress, IconReceipt, IconRuler, IconSpark, IconUser, IconX } from "./icons";
 import type { Comment, StatusId } from "@/lib/types";
 import { dateTime, storage } from "@/lib/core";
 
@@ -120,20 +120,39 @@ const PROGRESS: Record<string, number> = { new: 0, assigned: .125, measure: .25,
 function statusIcon(id: string, mode: StatusStyle): ReactNode {
   if (mode === "progress" && id in PROGRESS) return <IconProgress f={PROGRESS[id]} />;
   if (mode === "live") {
-    if (id === "new") return <IconSpark className="live-breathe" />;
-    if (id === "assigned") return <IconUser className="live-rise" />;
-    if (id === "measure") return <IconPin className="live-sway" />;
+    if (id === "new") return <IconSpark className="live-twinkle" />;
+    if (id === "assigned") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <i className="live-wave absolute inset-0 rounded-full border border-current" />
+        <i className="live-wave w2 absolute inset-0 rounded-full border border-current" />
+        <IconUser className="relative" />
+      </span>
+    );
+    if (id === "measure") return (
+      <span className="relative inline-flex size-3.5 items-center justify-center">
+        <IconPin className="live-hop" />
+        <i className="live-hop-shadow absolute -bottom-0.5 left-1/2 -ml-[3px] h-[2px] w-[6px] rounded-full bg-current" />
+      </span>
+    );
     if (id === "pricing") return <IconDoc className="live-lines" />;
     if (id === "in_work") return <IconCog className="animate-spin-slow" />;
-    if (id === "done") return <IconCheck className="draw-check" />;
+    if (id === "done") return (
+      <span className="live-done relative inline-flex size-3.5 items-center justify-center">
+        <IconCheckCircle />
+        {[["-7px", "-7px"], ["7px", "-7px"], ["-8px", "4px"], ["8px", "4px"]].map(([x, y]) => (
+          <i key={x + y} className="absolute left-1/2 top-1/2 -ml-px -mt-px size-[3px] rounded-full bg-current" style={{ "--dx": x, "--dy": y } as React.CSSProperties} />
+        ))}
+      </span>
+    );
+    if (id === "cancelled") return <IconXCircle className="live-shake" />;
   }
   return PILL_ICON[id] ?? PILL_ICON.cancelled;
 }
 export function StatusPill({ id }: { id: StatusId | string }) {
   const mode = useStatusStyle();
   return (
-    <span className={cx("inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, mode === "live" && id === "cancelled" && "live-fade")}>
-      <span className="inline-flex [&>svg]:size-3.5 [&>svg]:stroke-[1.75]">{statusIcon(id, mode)}</span>{statusTitle(id)}
+    <span className={cx("group inline-flex items-center gap-1 self-start w-max px-2 py-0.5 rounded-[5px] text-xs font-medium whitespace-nowrap", PILL[id] ?? PILL.cancelled, mode === "live" && id === "cancelled" && "live-fade")}>
+      <span className="inline-flex [&_svg]:size-3.5 [&_svg]:stroke-[1.75]">{statusIcon(id, mode)}</span>{statusTitle(id)}
     </span>
   );
 }
