@@ -84,6 +84,39 @@ const big = "[&_input]:text-[15px] [&_input]:min-h-11 [&_input]:font-medium [&_i
 /** Замеры и стоимость работы появляются, когда мастер сделал замеры (стадия согласования стоимости) */
 const pricingStage = (r: Request) => ["pricing", "in_work", "done"].includes(r.status) || (r.status === "measure" && Boolean(r.measured_at));
 
+/** Вкладка «Замеры» в нижней панели: правка черновика, применяется кнопкой «Сохранить» и сразу пересчитывает смету */
+export function SurveyTab({ r, user, readOnly }: { r: Request; user: Staff; readOnly?: boolean }) {
+  const [draft, setDraft] = useState<Survey>(() => structuredClone(r.survey || emptySurvey()));
+  const editable = !readOnly && surveyOpen(r);
+  if (!editable) return <SurveyView survey={r.survey || emptySurvey()} />;
+  const dirty = surveyKey(draft) !== surveyKey(r.survey);
+  const edit = (fn: (s: Survey) => void) => {
+    if (!allowed(r, user)) return false;
+    setDraft((prev) => {
+      const next = structuredClone(prev);
+      touch({ survey: next }, user);
+      fn(next);
+      return next;
+    });
+    return true;
+  };
+  const apply = () => {
+    if (!dirty) { toast("Изменений нет"); return; }
+    r.survey = { ...structuredClone(draft), note: (draft.note || "").trim(), saved: true };
+    setDraft(structuredClone(r.survey));
+    logBy(r, "Замеры сохранены", user);
+    if (["assigned", "measure"].includes(r.status)) setStatus(r, "pricing", user.name);
+    if (syncEstimate(r, user.name)) logBy(r, `Смета: ${money(r.amount || 0)}, наценка ${markupFor(r)}%`, user);
+    save("Замеры сохранены");
+  };
+  return (
+    <div className="flex flex-col gap-3">
+      <SurveyView survey={draft} edit={edit} />
+      <div><Button variant="primary" onClick={apply}>Сохранить</Button></div>
+    </div>
+  );
+}
+
 function OrderCard({ id }: { id: number }) {
   const user = currentUser();
   const r0 = db.find("requests", id);
