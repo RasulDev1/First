@@ -83,6 +83,8 @@ function sorted(list: Request[]) {
   });
 }
 
+/** Дата, номер клиента, имя, город, улица — один цвет, включая вложенный текст и иконки (у них свои цвета, их перебиваем) */
+const CELLS = "[&>td:nth-child(n+2):nth-child(-n+6)]:!text-[#4A5568] [&>td:nth-child(n+2):nth-child(-n+6)_*]:!text-[#4A5568]";
 const LEFT: SortKey[] = ["phone", "city", "street"];
 const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["status", "Статус заказа"]];
 
@@ -312,7 +314,7 @@ function RequestsList({ user }: { user: Staff }) {
         </thead>
         <tbody>
           {list.length ? list.map((r) => (
-            <tr key={r.id} className={cx(r.id === ui.sel && "[&>td]:bg-brand-soft")}
+            <tr key={r.id} className={cx(CELLS, r.id === ui.sel && "[&>td]:bg-brand-soft")}
               onClick={() => { ui.sel = ui.sel === r.id ? null : r.id; refresh(); }}>
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
