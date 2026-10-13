@@ -12,7 +12,7 @@ import { emptySurvey, touch } from "@/lib/survey";
 import { PAY_METHODS, levelTitle, setStatus, stageOf } from "@/lib/orders";
 import type { Request, Staff, Survey } from "@/lib/types";
 import {
-  ArmedButton, Button, CommentForm, CommentsList, DHead, DSec, Empty, Field, FormError, Kv, Note, Options, StatusPill,
+  ArmedButton, Button, Chips, CommentForm, CommentsList, DHead, DSec, Empty, Field, FormError, Kv, Note, Options, StatusPill,
   cx, formCol, grid2,
 } from "@/components/ui";
 import { closeDrawer, openDrawer } from "@/components/drawer";
@@ -90,6 +90,7 @@ function OrderCard({ id }: { id: number }) {
   const [draft, setDraft] = useState<Survey>(() => structuredClone(r0?.survey || emptySurvey()));
   const [markup, setMarkup] = useState(() => (r0 ? markupFor(r0) : 40));
   const [error, setError] = useState("");
+  const [section, setSection] = useState("data");
   const gSave = useGuard(user ?? ({} as Staff));
   if (!user) return null;
   const r = r0;
@@ -107,6 +108,11 @@ function OrderCard({ id }: { id: number }) {
   // смета в карточке: пока замеры открыты — по черновику замеров (меняется сразу), потом — сохранённая
   const estimateLines = showSurvey ? buildEstimate({ survey: draft }, db.list("products")) : (r.estimate?.lines || []);
   const markupKey = r.estimate?.at ?? "";
+  const hasEstimate = pricing && estimateLines.length > 0;
+  const hasSurvey = showSurvey || pricing || Boolean(r.survey?.saved);
+  const sections: [string, string][] = [["data", "Данные"], ...(hasSurvey ? [["survey", "Замеры"] as [string, string]] : []), ...(hasEstimate ? [["estimate", "Смета"] as [string, string]] : [])];
+  const cur = sections.some(([id]) => id === section) ? section : "data";
+  const show = (id: string) => (cur === id ? "contents" : "hidden");
 
   const editSurvey = (fn: (s: Survey) => void) => {
     if (!allowed(r, user)) return false;
@@ -203,9 +209,13 @@ function OrderCard({ id }: { id: number }) {
         <DSec callout><p className="m-0"><b>Мастер сделал замеры</b> ({dateTime(r.measured_at)}). Впишите замеры и стоимость работы и нажмите «Сохранить».</p></DSec>
       ) : null}
 
+      {/* Разделы карточки: данные, замеры, смета. Скрытые разделы остаются в DOM, чтобы введённое не терялось */}
+      {sections.length > 1 ? <Chips tabs items={sections} active={section} onChange={setSection} /> : null}
+
       {/* Замеры и смета вне <form>: у замеров свои формы, вложенная форма отправляла страницу целиком */}
       <div key={`${r.id}-${r.status}-${r.master_id ?? 0}-${r.amount ?? 0}`} className="flex flex-col gap-0">
       <form id="order-form" onSubmit={submit} className="contents">
+        <div className={show("data")}>
         <DSec>
           <div className={cx(grid2, big)}>
             <Field label="Город"><input name="city" maxLength={60} defaultValue={bareCity(r)} placeholder="Город" /></Field>
@@ -247,22 +257,27 @@ function OrderCard({ id }: { id: number }) {
             <p className={cx(P, muted, small)}>Работы и оборудование для клиента. По выполненным заказам сумма идёт в выручку в «Аналитике».</p>
           </DSec>
         ) : null}
+        </div>
       </form>
 
+        <div className={show("survey")}>
         {showSurvey ? <DSec title="Замеры"><SurveyView survey={draft} edit={editSurvey} /></DSec>
-          : pricing || r.survey?.saved ? <DSec title="Замеры"><SurveyView survey={r.survey || emptySurvey()} /></DSec> : null}
+          : hasSurvey ? <DSec title="Замеры"><SurveyView survey={r.survey || emptySurvey()} /></DSec> : null}
+        </div>
 
-        {pricing && estimateLines.length ? (
+        <div className={show("estimate")}>
+        {hasEstimate ? (
           <DSec title="Смета">
             <p className={cx(P, muted, small)}>Сумма от замеров и расходов заказа, на неё накидывается наценка. Новая наценка применяется кнопкой «Сохранить».</p>
             <EstimateTable lines={estimateLines} markup={markup} expenses={expenseTotal(r)} />
             {closed ? null : <div className={inlineForm}><MarkupInput key={markupKey} value={markup} onChange={setMarkup} /></div>}
           </DSec>
         ) : null}
+        </div>
 
         <FormError>{error}</FormError>
         {closed ? null : (
-          <div className="sticky bottom-0 z-2 flex justify-end py-3 bg-linear-to-t from-surface from-70% to-transparent">
+          <div className="sticky bottom-0 z-2 flex justify-end py-3 mt-4 bg-surface border-t border-line">
             <GuardButton g={gSave} variant="primary" size="big" type="submit" form="order-form">Сохранить</GuardButton>
           </div>
         )}

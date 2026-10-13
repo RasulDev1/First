@@ -27,7 +27,7 @@ import type { View } from "./types";
 export { openRequest, openNewOrder };
 
 /* ---------- Состояние раздела: живёт, пока открыта вкладка браузера ---------- */
-type SortKey = "updated" | "id" | "created" | "done" | "phone" | "city" | "street" | "manager" | "status";
+type SortKey = "updated" | "id" | "created" | "done" | "phone" | "city" | "street" | "address" | "manager" | "status";
 const F0 = { created: "", done: "", phone: "", city: "", street: "", status: "" };
 type Filters = typeof F0;
 /** «13.10.2026» → «2026-10-13»; пока дата набрана не целиком — пусто (фильтр не действует) */
@@ -45,6 +45,7 @@ const ui = {
   query: "",
   F: { ...F0 } as Filters,
   formKey: 0,
+  more: false,                                   // раскрыты ли дополнительные фильтры
   sheetH: null as number | null,
 };
 
@@ -71,6 +72,7 @@ const sortValue: Record<SortKey, (r: Request) => number | string | null> = {
   phone: (r) => r.phone.replace(/\D/g, ""),
   city: (r) => cityOf(r).toLowerCase(),
   street: (r) => streetOf(r).toLowerCase(),
+  address: (r) => `${cityOf(r)} ${streetOf(r)}`.toLowerCase(),
   manager: (r) => staffName(r.manager_id).toLowerCase(),
   status: (r) => STATUSES.findIndex((s) => s.id === r.status),
 };
@@ -86,8 +88,7 @@ function sorted(list: Request[]) {
 
 /** Номер заказа в таблице — фирменный синий */
 const ORDER_NO = "[&>td:first-child_*]:!text-brand";
-const LEFT: SortKey[] = ["phone", "city", "street"];
-const COLS: [SortKey, string][] = [["id", "№"], ["created", "Дата оформления"], ["done", "Дата завершения"], ["phone", "Номер клиента"], ["city", "Город"], ["street", "Улица"], ["manager", "Менеджер"], ["status", "Статус заказа"]];
+const COLS: [SortKey, string][] = [["id", "№"], ["created", "Оформлен"], ["phone", "Клиент"], ["address", "Адрес"], ["manager", "Менеджер"], ["status", "Статус"]];
 
 /* ---------- Фильтры ---------- */
 const fltBtn = "!h-[42px] !min-h-[42px] !px-5 !py-0 !text-sm";
@@ -262,47 +263,58 @@ function RequestsList({ user }: { user: Staff }) {
   if (ui.sel && !db.find("requests", ui.sel)) ui.sel = null;
   const warehouse = isWarehouse(user);
   const filtered = Boolean(ui.query) || Object.values(ui.F).some(Boolean);
+  const extraActive = (["created", "done", "phone", "city", "street"] as const).filter((k) => ui.F[k]).length;
+  const moreOpen = ui.more || extraActive > 0;
   const list = sorted(db.list("requests").filter(matches));
   const cities = [...new Set(db.list("requests").map(cityOf).filter(Boolean))].sort();
   const selected = ui.sel != null ? db.find("requests", ui.sel) : null;
 
+  /** Фильтры применяются сразу при вводе; Enter форму не отправляет */
   const find = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     ui.query = String(fd.get("q") || "").trim();
     for (const k of Object.keys(F0) as (keyof Filters)[]) ui.F[k] = String(fd.get(k) || "").trim();
+    if (["created", "done", "phone", "city", "street"].some((k) => ui.F[k as keyof Filters])) ui.more = true;
     refresh();
   };
   const reset = () => { ui.F = { ...F0 }; ui.query = ""; ui.formKey++; refresh(); };
   const sortBy = (key: SortKey) => {
-    ui.sort = ui.sort.key === key ? { key, dir: -ui.sort.dir } : { key, dir: key === "created" || key === "done" ? -1 : 1 };
+    ui.sort = ui.sort.key === key ? { key, dir: -ui.sort.dir } : { key, dir: key === "created" ? -1 : 1 };
     refresh();
   };
 
   return (
     <>
-      <form key={ui.formKey} onSubmit={find}
-        className="grid grid-cols-2 min-[1000px]:grid-cols-12 items-end gap-x-3 gap-y-4 mb-5">
-        <Flt span="min-[1000px]:col-span-4" label="Поиск" icon={<IconSearch />}><input type="search" name="q" placeholder="Заказ №" defaultValue={ui.query} className={fltIn} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-4" label="Дата оформления" icon={<IconCalendar />}><DateField name="created" value={ui.F.created} /></Flt>
-        <Flt span="min-[1000px]:col-span-2 order-5" label="Дата завершения" icon={<IconCalendar />}><DateField name="done" value={ui.F.done} /></Flt>
-        <Flt span="min-[1000px]:col-span-3" label="Номер клиента" icon={<IconPhone />}><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltIn} /></Flt>
-        <Flt span="min-[1000px]:col-span-2" label="Город" icon={<IconPin />}>
-          <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltIn} />
-          <datalist id="cityList">{cities.map((c) => <option key={c} value={c} />)}</datalist>
-        </Flt>
-        <Flt span="min-[1000px]:col-span-3 order-6" label="Улица" icon={<IconPin />}><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltIn} /></Flt>
-        <Flt span="min-[1000px]:col-span-3" label="Статус заказа">
-          <select name="status" defaultValue={ui.F.status} className={fltCtl}><Options list={STATUSES} empty="Все статусы" /></select>
-        </Flt>
-        <div className="col-span-full min-[1000px]:col-span-5 order-7 flex items-center gap-4">
-          <button type="submit" className={cx(buttonClass(), fltBtn, "!bg-brand !border-brand !text-white hover:!bg-brand-deep hover:!border-brand-deep")}>Найти</button>
-          <button type="button" className="bg-transparent border-0 p-0 text-sm text-muted cursor-pointer hover:text-heading hover:underline" onClick={reset}>Сбросить</button>
-          {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "ml-auto gap-2")} onClick={openCreate}><IconPlus />Создать заказ</button>}
+      <form key={ui.formKey} onSubmit={find} onChange={find}
+        className="flex flex-col gap-4 mb-5">
+        <div className="grid grid-cols-2 min-[1000px]:grid-cols-12 items-end gap-x-3 gap-y-4">
+          <Flt span="col-span-full min-[1000px]:col-span-5" label="Поиск" icon={<IconSearch />}><input type="search" name="q" placeholder="Заказ №, клиент, телефон, адрес" defaultValue={ui.query} className={fltIn} /></Flt>
+          <Flt span="min-[1000px]:col-span-3" label="Статус заказа">
+            <select name="status" defaultValue={ui.F.status} className={fltCtl}><Options list={STATUSES} empty="Все статусы" /></select>
+          </Flt>
+          <div className="col-span-full min-[1000px]:col-span-4 flex items-center justify-end gap-4">
+            <button type="button" aria-expanded={moreOpen} className="bg-transparent border-0 p-0 text-sm font-medium text-brand cursor-pointer hover:underline" onClick={() => { ui.more = !moreOpen; refresh(); }}>
+              {moreOpen ? "Меньше фильтров" : `Ещё фильтры${extraActive ? ` (${extraActive})` : ""}`}
+            </button>
+            {filtered ? <button type="button" className="bg-transparent border-0 p-0 text-sm text-muted cursor-pointer hover:text-heading hover:underline" onClick={reset}>Сбросить</button> : null}
+            {warehouse ? null : <button type="button" className={cx(buttonClass("primary"), fltBtn, "gap-2")} onClick={openCreate}><IconPlus />Создать заказ</button>}
+          </div>
+        </div>
+        {/* дополнительные поля остаются в DOM, чтобы введённое не терялось при сворачивании */}
+        <div className={cx("grid-cols-2 min-[1000px]:grid-cols-10 items-end gap-x-3 gap-y-4", moreOpen ? "grid" : "hidden")}>
+          <Flt span="min-[1000px]:col-span-2" label="Дата оформления" icon={<IconCalendar />}><DateField name="created" value={ui.F.created} /></Flt>
+          <Flt span="min-[1000px]:col-span-2" label="Дата завершения" icon={<IconCalendar />}><DateField name="done" value={ui.F.done} /></Flt>
+          <Flt span="min-[1000px]:col-span-2" label="Номер клиента" icon={<IconPhone />}><input type="search" name="phone" defaultValue={ui.F.phone} placeholder="+7 900…" className={fltIn} /></Flt>
+          <Flt span="min-[1000px]:col-span-2" label="Город" icon={<IconPin />}>
+            <input type="search" name="city" defaultValue={ui.F.city} placeholder="Город" list="cityList" className={fltIn} />
+            <datalist id="cityList">{cities.map((c) => <option key={c} value={c} />)}</datalist>
+          </Flt>
+          <Flt span="min-[1000px]:col-span-2" label="Улица" icon={<IconPin />}><input type="search" name="street" defaultValue={ui.F.street} placeholder="Улица, дом" className={fltIn} /></Flt>
         </div>
       </form>
 
-      <Table resize center widths={[8, 12, 12, 18, 8, 13, 12, 17]}>
+      <Table resize widths={[8, 14, 22, 22, 14, 20]}>
         <thead>
           <tr>{COLS.map(([key, title]) => (
             <th key={key}>
@@ -320,16 +332,14 @@ function RequestsList({ user }: { user: Staff }) {
               <td className="tabular-nums">
                 <OrderNo id={r.id} user={user} label={`Открыть карточку заказа №${r.id}`} onOpen={() => openRequest(r.id)}>№{r.id}</OrderNo>
               </td>
-              <td className="tabular-nums whitespace-nowrap text-xs"><span className="inline-flex items-center gap-1"><IconCalendar className="size-3 text-muted" />{dateShort(r.created_at)}</span></td>
-              <td className="tabular-nums whitespace-nowrap text-xs">{r.done_at ? <span className="inline-flex items-center gap-1"><IconCalendar className="size-3 text-muted" />{dateShort(r.done_at)}</span> : <span className={muted}>—</span>}</td>
-              <td style={{ textAlign: "left" }}><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small className="pl-5">{r.client}</small></td>
-              <td className="whitespace-nowrap" style={{ textAlign: "left" }}>{cityOf(r)}</td>
-              <td style={{ textAlign: "left" }}>{streetOf(r)}</td>
-              <td style={{ textAlign: "left" }}>{r.manager_id ? staffName(r.manager_id) : <span className={muted}>—</span>}</td>
+              <td className="tabular-nums whitespace-nowrap text-xs"><span className="inline-flex items-center gap-1"><IconCalendar className="size-3 text-muted" />{dateShort(r.created_at)}</span>{r.done_at ? <small>завершён {dateShort(r.done_at)}</small> : null}</td>
+              <td><b className="flex items-center gap-1.5 tabular-nums whitespace-nowrap font-medium text-heading"><IconPhone className="size-3.5 text-muted" />{r.phone}</b><small className="pl-5">{r.client}</small></td>
+              <td>{streetOf(r)}<small>{cityOf(r)}</small></td>
+              <td>{r.manager_id ? staffName(r.manager_id) : <span className={muted}>—</span>}</td>
               <td className="whitespace-nowrap"><StatusPill id={r.status} /></td>
             </tr>
           )) : (
-            <tr><td colSpan={8}>
+            <tr><td colSpan={6}>
               <Empty title="Заказов нет">{filtered ? "Попробуйте изменить фильтры." : "Здесь появятся заказы с сайта и те, что вы добавите сами."}</Empty>
             </td></tr>
           )}

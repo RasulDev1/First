@@ -218,7 +218,7 @@ export function Panel({ title, actions, className, children }: { title?: ReactNo
     <section className={cx(card, "p-5 sm:p-6 flex flex-col gap-4 min-w-0", className)}>
       {title || actions ? (
         <div className="flex items-center justify-between gap-2.5">
-          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-brand">{title}</h3> : <span />}
+          {title ? <h3 className="font-display text-sm font-semibold leading-tight text-heading">{title}</h3> : <span />}
           {actions}
         </div>
       ) : null}
@@ -237,7 +237,7 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
     <Tag type={onClick ? "button" : undefined} onClick={onClick} className={cx("flex flex-col gap-1 min-w-0 text-left",
       small ? "px-3 py-2.5 rounded-card bg-surface-2" : "p-6 gap-1.5 rounded-card bg-surface border border-black/[.04] shadow-card",
       onClick && "cursor-pointer hover:border-brand")}>
-      <small className="text-[11px] font-bold tracking-[.05em] uppercase text-brand">{label}</small>
+      <small className="text-[11px] font-bold tracking-[.05em] uppercase text-ink-2">{label}</small>
       <b className={cx("font-display font-medium leading-tight whitespace-nowrap tabular-nums text-heading", small ? "text-lg" : "text-[22px] sm:text-[26px]", tone === "bad" && "text-bad")}>{value}</b>
       {sub ? (
         <span className={cx("text-[11px] leading-snug",
@@ -250,6 +250,8 @@ export function Kpi({ label, value, sub, tone, subTone, small, onClick }: { labe
 
 /* ---------- Таблица ---------- */
 // <Table> оборачивает <table>: заголовки, строки, итоговая строка в <tfoot>. Числа справа — className="text-right tabular-nums".
+/** Ячейка с числом: «3 900 ₽», «17 шт.», «4», «12%» (даты, телефоны и номера заказов сюда не попадают) */
+const NUMERIC = /^[−-]?\d[\d ]*([.,]\d+)?\s?(₽|шт\.?|%|м²|м³|мм|кг|м)?$/;
 export function Table({ className, center, widths, resize, children }: { className?: string; center?: boolean; widths?: number[]; resize?: boolean; children: ReactNode }) {
   const wrap = useRef<HTMLDivElement>(null);
   const tbl = useRef<HTMLTableElement>(null);
@@ -260,6 +262,31 @@ export function Table({ className, center, widths, resize, children }: { classNa
     if (!resize || cols || !tbl.current) return;
     const ths = Array.from(tbl.current.querySelectorAll("thead th"));
     if (ths.length) setCols(ths.map((th) => (th as HTMLElement).offsetWidth));
+  });
+  // Числовые колонки (суммы, остатки, цены) выравниваем вправо вместе с заголовком, остальные остаются слева
+  useLayoutEffect(() => {
+    const t = tbl.current;
+    if (!t) return;
+    const rows = Array.from(t.querySelectorAll("tbody tr"));
+    Array.from(t.querySelectorAll("thead th")).forEach((th, i) => {
+      let filled = 0, numeric = 0;
+      for (const tr of rows) {
+        const td = tr.children[i];
+        if (!td) continue;
+        const c = td.cloneNode(true) as HTMLElement;
+        c.querySelectorAll("small,svg").forEach((x) => x.remove());
+        const txt = (c.textContent || "").replace(/\u00a0/g, " ").trim();
+        if (!txt || txt === "—") continue;
+        filled++;
+        if (NUMERIC.test(txt)) numeric++;
+      }
+      const right = filled > 0 && numeric === filled;
+      for (const el of [th, ...rows.map((tr) => tr.children[i])]) {
+        if (!(el instanceof HTMLElement)) continue;
+        if (right) { el.style.textAlign = "right"; el.dataset.num = "1"; }
+        else if (el.dataset.num) { el.style.textAlign = ""; delete el.dataset.num; }
+      }
+    });
   });
   // Без ручной правки таблица подстраивается под ширину окна
   useEffect(() => {
@@ -306,10 +333,10 @@ export function Table({ className, center, widths, resize, children }: { classNa
   return (
     <div ref={wrap} className={cx(card, "overflow-x-auto", className)}>
       <table ref={tbl} style={cols ? { width: cols.reduce((a, b) => a + b, 0), tableLayout: "fixed" } : undefined}
-        className={cx(cols ? "max-w-none" : "w-full", "border-collapse text-sm", center && "[&_td]:text-center", widths && !cols && "table-fixed min-w-[900px]", widths && "[&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
+        className={cx(cols ? "max-w-none" : "w-full", "border-collapse text-sm", widths && !cols && "table-fixed min-w-[900px]", widths && "[&_th]:!whitespace-normal [&_th]:leading-snug [&_td]:px-3 [&_th]:px-3",
         cols && "[&_td]:overflow-hidden [&_td]:text-ellipsis [&_th]:overflow-hidden [&_th]:text-ellipsis",
         resize && "[&_th]:relative",
-        "[&_th]:!text-center","[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:!text-black [&_th_*]:!text-black [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-middle",
+        "[&_th]:text-left","[&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[.08em] [&_th]:uppercase [&_th]:!text-black [&_th_*]:!text-black [&_th]:px-4 [&_th]:py-3.5 [&_th]:border-b [&_th]:border-[#e2e8f0] [&_th]:whitespace-nowrap [&_th]:align-middle",
         "[&_td]:px-4 [&_td]:py-4.5 [&_td]:border-b [&_td]:border-line/70 [&_td]:align-middle",
         "[&_tbody_tr:last-child_td]:border-b-0 [&_tfoot_td]:border-t [&_tfoot_td]:border-b-0 [&_tfoot_td]:bg-surface-2 [&_tfoot_td]:font-semibold",
         "[&_tbody_td]:transition-colors [&_tbody_td]:duration-200 [&_tbody_tr:hover_td]:bg-[#f6f8fc]",
