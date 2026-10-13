@@ -13,8 +13,9 @@ import { expenseTotal } from "@/lib/stock";
 import type { Request, Staff } from "@/lib/types";
 import { AuditLog } from "@/components/audit-log";
 import { Button, Chips, CommentForm, CommentsList, Empty, IconButton, Kv, Options, StatusPill, Table, buttonClass, cx } from "@/components/ui";
-import { SurveyTab, openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
+import { openRequest, openCreate, openNewOrder, openPayment, saveAmount } from "./requests/card";
 import { EstimateTab } from "./requests/estimate";
+import { SurveyView } from "./requests/survey";
 import {
   Expenses, GuardButton, HistoryList, OrderHistory, P, allowed, cityOf, inlineForm, masterName, muted, orderNo, save, sheetCols,
   staffName, streetOf, useGuard,
@@ -212,7 +213,7 @@ function Sheet({ r, user, onClose, onTab, spaceRef }: {
     grip.addEventListener("pointercancel", stop);
   };
 
-  const body = tab === "survey" ? <SurveyTab key={r.id} r={r} user={user} readOnly={warehouse} />
+  const body = tab === "survey" ? <SurveyView survey={r.survey || { rooms: [], routes: [], photos: [], note: "" }} />
     : tab === "estimate" ? <EstimateTab key={r.id} r={r} user={user} readOnly={warehouse} />
     : tab === "pay" ? <SheetPay r={r} user={user} readOnly={warehouse} />
     : tab === "exp" ? <Expenses r={r} button={user.position === "storekeeper"} />

@@ -1,5 +1,5 @@
 "use client";
-// Замеры: помещения, трассы воздуховодов, фото и заметка. В карточке заказа — черновик с правкой, во вкладке «Замеры» — тоже правка с кнопкой «Сохранить».
+// Замеры: помещения, трассы воздуховодов, фото и заметка. В карточке заказа — черновик с правкой, во вкладке «Замеры» — только просмотр.
 import { useState, type FormEvent } from "react";
 import { num, dateTime, formValue } from "@/lib/core";
 import { DIAMETERS, MAX_PHOTOS, shrinkPhoto } from "@/lib/survey";
