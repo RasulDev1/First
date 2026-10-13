@@ -11,7 +11,7 @@ import { P, muted, sheetCols, small, thR } from "./shared";
 /** Правка черновика: применяет изменение, если менеджеру можно; false — нельзя */
 export type SurveyEdit = (fn: (s: Survey) => void) => boolean;
 
-const h4 = "m-0 mb-1.5 text-sm font-semibold";
+const h4 = "m-0 mb-1.5 text-sm font-semibold text-black";
 const surveyForm = "grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-2 items-end mt-2.5 [&>button]:col-span-full";
 
 export function SurveyView({ survey: s, edit }: { survey: Survey; edit?: SurveyEdit }) {

@@ -57,7 +57,7 @@ export function ArmedButton({ question = "Точно?", onConfirm, variant = "se
 export function Field({ label, hint, className, children }: { label: ReactNode; hint?: ReactNode; className?: string; children: ReactNode }) {
   return (
     <label className={cx("flex flex-col gap-1.5 min-w-0", className)}>
-      <span className="text-[13px] font-medium text-ink-2">{label}</span>
+      <span className="text-[13px] font-medium text-black">{label}</span>
       {children}
       {hint ? <small className="text-xs text-muted">{hint}</small> : null}
     </label>
@@ -328,8 +328,8 @@ export const rowClickable = "cursor-pointer hover:[&_td]:bg-surface-2";
 export function DHead({ eyebrow, title, children }: { eyebrow?: ReactNode; title: ReactNode; children?: ReactNode }) {
   return (
     <header className="flex flex-col gap-1.5 pr-9">
-      {eyebrow ? <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-muted">{eyebrow}</p> : null}
-      <h2 className="font-display text-[22px] font-semibold leading-tight wrap-anywhere">{title}</h2>
+      {eyebrow ? <p className="m-0 text-[11px] font-medium tracking-[.05em] uppercase text-black">{eyebrow}</p> : null}
+      <h2 className="font-display text-[22px] font-semibold leading-tight wrap-anywhere text-black">{title}</h2>
       {children}
     </header>
   );
@@ -337,7 +337,7 @@ export function DHead({ eyebrow, title, children }: { eyebrow?: ReactNode; title
 export function DSec({ title, callout, className, children }: { title?: ReactNode; callout?: boolean; className?: string; children: ReactNode }) {
   return (
     <section className={cx("flex flex-col gap-2.5", callout ? "p-5 rounded-card bg-surface-2" : "pt-6 border-t border-line/70", className)}>
-      {title ? <h3 className="text-[11px] font-medium tracking-[.05em] uppercase text-muted">{title}</h3> : null}
+      {title ? <h3 className="text-[11px] font-medium tracking-[.05em] uppercase text-black">{title}</h3> : null}
       {children}
     </section>
   );
