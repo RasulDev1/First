@@ -97,5 +97,5 @@ function Automations() {
   );
 }
 
-const view: View = { title: () => "Автоматизации", Component: Automations };
+const view: View = { title: () => "Автоматизация", Component: Automations };
 export default view;

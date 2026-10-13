@@ -31,7 +31,7 @@ const NAV: [string, string, string][] = [
   ["warehouse", "Склад", "M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10"],
   ["analytics", "Аналитика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["chat", "Чат", "M4 5h16v11H10l-5 4v-4H4z"],
-  ["automations", "Автоматизации", "M13 2 4 14h7l-1 8 9-12h-7z"],
+  ["automations", "Автоматизация", "M13 2 4 14h7l-1 8 9-12h-7z"],
   ["salary", "Зарплата", "M3 7h18v12H3zM3 11h18M16 15h2"],
   ["mystats", "Моя статистика", "M4 20V10M10 20V4M16 20v-7M22 20H2"],
   ["myorders", "Мои заказы", "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"],
