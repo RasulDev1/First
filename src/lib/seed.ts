@@ -81,8 +81,13 @@ const CLIENTS = ["Зарема Мусаева", "ООО «Северный дв�
   "ООО «Грозстрой»", "Магомед Алиев", "Ресторан «Нохчийн»", "Тимур Гериев", "Хава Исмаилова", "ТЦ «Беркат-Плаза»", "Айшат Берсанова",
   "Пекарня «Хлебный дом»", "Аслан Хадизов", "ООО «ТехноСклад»", "Луиза Арсанова", "Стоматология «Дента»", "Зелимхан Висаитов",
   "Аминат Окуева", "Ризван Тагиров", "Раиса Юсупова", "Мовсар Эдильсултанов"];
-const CITIES = ["г. Город", "г. Город", "г. Заречный", "г. Северный"];
-const STREETS = ["ул. Ленина", "ул. Мира", "ул. Садовая", "пр. Победы", "ул. Школьная", "ул. Центральная", "ул. Заводская", "ул. Парковая"];
+// Города и сёла Чечни; в Грозном заказов больше всего. Второе значение — город это (true) или село (false): от этого зависят улицы
+const addressOf = ([town, isCity]: [string, boolean], [cityStreet, villageStreet]: [string, string], house: number) => `${town}, ${isCity ? cityStreet : villageStreet}, ${house}`;
+const CITIES: [string, boolean][] = [["г. Грозный", true], ["г. Грозный", true], ["г. Грозный", true], ["г. Гудермес", true], ["г. Аргун", true], ["г. Шали", true],
+  ["г. Урус-Мартан", true], ["с. Знаменское", false], ["с. Ачхой-Мартан", false], ["с. Гойты", false], ["с. Старые Атаги", false], ["с. Мескер-Юрт", false]];
+// Пары «улица в городе» и «улица в селе»
+const STREETS: [string, string][] = [["ул. Мира", "ул. Нагорная"], ["ул. Школьная", "ул. Школьная"], ["ул. Центральная", "ул. Центральная"], ["ул. Заводская", "ул. Садовая"],
+  ["ул. Исаева", "ул. Новая"], ["ул. Лермонтова", "ул. Гагарина"], ["пр. Кадырова", "ул. Кирова"], ["пр. Победы", "ул. Молодёжная"]];
 const NOTE_BY_SERVICE: Record<string, string> = {
   "Монтаж приточной вентиляции": "Офис на 12 человек, душно, хотят приток с подогревом.",
   "Монтаж вытяжной вентиляции": "Подвал и санузлы, сырость и запах, нужна вытяжка.",
@@ -195,7 +200,7 @@ export function seed(): Data {
     const client = pick(clients);
     requests.push({
       id: 1000 + 46 - i, created_at: iso(created), client_id: client.id, client: client.name, phone: client.phone,
-      address: `${pick(CITIES)}, ${pick(STREETS)}, ${1 + Math.floor(rand() * 180)}`, object: pick(OBJECTS), service, source: pick(SOURCES),
+      address: addressOf(pick(CITIES), pick(STREETS), 1 + Math.floor(rand() * 180)), object: pick(OBJECTS), service, source: pick(SOURCES),
       note: NOTE_BY_SERVICE[service] || pick(NOTES), status, manager_id: manager?.id || null, master_id: master?.id || null,
       visit_at: visitIso,
       amount, items: [], comment: "", comments: [], history,
@@ -290,7 +295,7 @@ export function seed(): Data {
     ["director", null, 26, "Коллеги, доброе утро. На этой неделе приоритет — заказы, где клиент ждёт замер."],
     ["manager", null, 25, "Принято. Три заявки с выходных уже обзвонила, договорилась о выездах."],
     ["buyer", null, 22, "По складу: воздуховоды Ø250 заканчиваются, заказал, привезут завтра."],
-    ["master", null, 20, "Выезд на Ленина завтра в 10:00 подтверждаю."],
+    ["master", null, 20, "Выезд на проспект Кадырова завтра в 10:00 подтверждаю."],
     ["director", "manager", 5, "Мадина, проверь, пожалуйста, смету по ресторану до обеда."],
     ["manager", "director", 4, "Хорошо, посмотрю и отпишусь."],
   ];

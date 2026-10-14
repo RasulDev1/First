@@ -15,7 +15,7 @@ import { openExpense } from "../warehouse";
 export const staffName = (id: unknown) => db.find("staff", id)?.name || "";
 export const masterName = (id: unknown) => db.find("masters", id)?.name || "";
 
-// Адрес хранится строкой «г. Город, ул. Мира, 5»: город — до первой запятой, остальное — улица и дом
+// Адрес хранится строкой «г. Грозный, ул. Мира, 5»: город — до первой запятой, остальное — улица и дом
 export const cityOf = (r: Request) => (r.address.includes(",") ? r.address.split(",")[0].trim() : "");
 export const streetOf = (r: Request) => (r.address.includes(",") ? r.address.slice(r.address.indexOf(",") + 1).trim() : r.address);
 
